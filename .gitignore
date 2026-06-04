@@ -1,1 +1,15 @@
+# Dépendances / outils
+   node_modules/
+   *.log
 
+   # Fichiers OS
+   .DS_Store
+   Thumbs.db
+
+   # Sauvegardes locales / exports de données (à ne pas committer)
+   precompta-*.json
+   *.bak
+
+   # Fichiers temporaires d'analyse
+   _*.cjs
+   _v*.js
