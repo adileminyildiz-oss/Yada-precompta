@@ -8781,7 +8781,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v52 · OCR images prêt ✨';
+    b.textContent='YADA · v53 · fiche fournisseur via SIRET ✨';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:600 11px system-ui,sans-serif;background:rgba(47,109,176,.92);color:#fff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.78;pointer-events:none';
     document.body.appendChild(b); }
@@ -9270,9 +9270,10 @@ ${lignes}
     var d=dstore().find(function(x){return x.id===f.depotId;});
     document.getElementById('modal-c').innerHTML=
       '<h2 style="margin-top:0">📝 Fiche d\'information fournisseur</h2>'
-      +'<div class="sub">Renseignez les informations du nouveau fournisseur'+(d?(' (facture « '+v(d.nom)+' »)'):'')+'. Elles seront transmises à votre cabinet.</div>'
-      +'<div class="row g2"><div class="field"><label>Raison sociale *</label><input id="fi-raison" value="'+v(f.raison)+'"></div>'
-      +'<div class="field"><label>SIRET</label><input id="fi-siret" value="'+v(f.siret)+'"></div></div>'
+      +'<div class="sub">Saisissez le <b>SIRET</b> puis « Compléter » : raison sociale, adresse et n° TVA sont récupérés automatiquement depuis l\'annuaire officiel des entreprises'+(d?(' (facture « '+v(d.nom)+' »)'):'')+'. Transmis à votre cabinet.</div>'
+      +'<div class="row g2"><div class="field"><label>SIRET (14 chiffres)</label><input id="fi-siret" value="'+v(f.siret)+'" placeholder="ex. 552 081 317 00024"></div>'
+      +'<div class="field" style="align-self:end"><button class="btn btn-gold" style="width:100%" onclick="ficheCompletSiret()">🔎 Compléter via le SIRET</button></div></div>'
+      +'<div class="field"><label>Raison sociale *</label><input id="fi-raison" value="'+v(f.raison)+'"></div>'
       +'<div class="row g2"><div class="field"><label>N° TVA intracom.</label><input id="fi-tva" value="'+v(f.tvaIntra)+'"></div>'
       +'<div class="field"><label>E-mail</label><input id="fi-email" value="'+v(f.email)+'"></div></div>'
       +'<div class="row g2"><div class="field"><label>Téléphone</label><input id="fi-tel" value="'+v(f.tel)+'"></div>'
@@ -9282,6 +9283,24 @@ ${lignes}
       +'<div class="field"><label>Ville</label><input id="fi-ville" value="'+v(f.ville)+'"></div></div>'
       +'<div class="right" style="margin-top:10px"><button class="btn btn-ghost" onclick="closeModal()">Annuler</button> <button class="btn btn-pri" onclick="ficheEnregistrer(\''+id+'\')">Transmettre au cabinet</button></div>';
     document.getElementById('modal').classList.add('show');
+  };
+  /* Complétion automatique de la fiche via le SIRET (annuaire officiel des entreprises) */
+  window.ficheCompletSiret=function(){
+    var g=function(x){return document.getElementById(x);};
+    var siret=((g('fi-siret')||{}).value||'').replace(/\D/g,'');
+    if(siret.length!==14 && siret.length!==9) return toast('Saisissez un SIRET (14 chiffres) ou un SIREN (9).');
+    if(typeof lookupSiret!=='function') return toast('Service de recherche indisponible.');
+    toast('Recherche de l\'entreprise…');
+    Promise.resolve(lookupSiret(siret)).then(function(info){
+      if(!info) return toast('Aucune entreprise trouvée.');
+      if(info.raison && g('fi-raison')) g('fi-raison').value=info.raison;
+      if(info.tvaIntra && g('fi-tva')) g('fi-tva').value=info.tvaIntra;
+      if(info.adresse && g('fi-adresse')) g('fi-adresse').value=info.adresse;
+      if(info.cp && g('fi-cp')) g('fi-cp').value=info.cp;
+      if(info.ville && g('fi-ville')) g('fi-ville').value=info.ville;
+      if(info.siret && g('fi-siret')) g('fi-siret').value=info.siret;
+      toast('✓ Fiche complétée'+(info.raison?(' — '+info.raison):'')+' (e-mail, téléphone et IBAN à compléter à la main).');
+    }).catch(function(e){ toast('Échec de la recherche : '+(e&&e.message||'service indisponible')+' (accès réseau requis).'); });
   };
   window.ficheEnregistrer=function(id){ var f=fstore().find(function(x){return x.id===id;}); if(!f)return;
     var g=function(x){return (document.getElementById(x)||{}).value||'';};
