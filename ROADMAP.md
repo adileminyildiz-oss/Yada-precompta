@@ -13,10 +13,12 @@
 7. Validation systématique à chaque addon.
 
 ## Fondations transverses (priorité maximale)
-- **T1 — Clôture & à‑nouveaux & résultat** : OD de résultat (solde 6/7 → 120/129) + report des soldes 1→5 à l'ouverture N+1. *(en cours — addon21)*
-- **T2 — Cohérence des comptes (TVA)** : normaliser `c9` partout ; l'OD TVA doit réellement solder `44571`/`44566`.
-- **T3 — Lettrage unifié** : une seule source (éditeur Sage, compte auxiliaire, règlements).
-- **T4 — États de synthèse** : Bilan + Compte de résultat.
+- ✅ **T1 — Clôture & à‑nouveaux & résultat** : OD de résultat (solde 6/7 → 120/129) + report des soldes 1→5 à l'ouverture N+1. *(addon21)*
+- ✅ **T2 — Cohérence des comptes (TVA)** : normalisation `c9` partout ; l'OD TVA solde réellement `44571`/`44566`. *(addon22)*
+- ✅ **T4 — États de synthèse** : Bilan + Compte de résultat. *(addon23)*
+- ✅ **T3 — Lettrage unifié** : moteur commun `lz*` + lettrage interactif dans l'éditeur (colonne L), compatible compte auxiliaire. *(addon24)*
+
+**→ Fondations terminées. Prochaine phase : modules à risque comptable.**
 
 ## Plan par module (synthèse)
 | Module | À finaliser (clé) | Garde‑fou comptable |

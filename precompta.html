@@ -1586,6 +1586,15 @@ body[data-page="coffre"] .card:hover,body[data-page="coffre"] .kpi:hover,body[da
 .ef-dot{width:16px;height:16px;border-radius:50%;background:var(--gold,#a8801f);flex:0 0 auto;margin-top:1px;box-shadow:0 0 0 3px rgba(168,128,31,.18)}
 .ef-last .ef-dot{background:var(--credit,#1f6b4f);box-shadow:0 0 0 3px rgba(31,107,79,.18)}
 </style>
+<style id="ec-letbar-css">
+/* T3 — lettrage interactif dans l'éditeur d'écritures */
+.ec-letbar{display:flex;align-items:center;gap:8px;padding:5px 12px;background:#eef4fb;border-bottom:1px solid #d4d7dc;font-size:12.5px;flex-wrap:wrap}
+.ec-letbar .ec-llbl{font-weight:600;color:#1b2a3a}
+.ec-letbar .ec-lbtn{font-size:12px;padding:3px 9px;border:1px solid #bcd0e6;background:#fff;border-radius:6px;cursor:pointer;color:#1b2a3a}
+.ec-letbar .ec-lbtn:hover{background:#dceaf8}
+.ec-letbar .ec-lhint{color:#5a6b7b;font-size:11.5px}
+.ec-table tbody tr.ec-lsel td{background:#cdeaf0 !important}
+</style>
 </head>
 <body data-theme="noir">
 <div class="layout">
@@ -8191,6 +8200,68 @@ ${lignes}
     </div>`;
   };
   const _p=pageEditions; pageEditions=function(){ return _p()+t4Card(); };
+})();
+</script>
+
+<script id="yada-addon24">
+/* ============================================================
+   T3 — Lettrage unifié
+   Moteur de lettrage commun (champ l.lettre), avec contrôle d'équilibre
+   Σ débit = Σ crédit. Branché sur l'éditeur d'écritures (colonne L) :
+   on clique les lignes du compte à rapprocher, puis « Lettrer ». Le même
+   champ l.lettre est utilisé par le compte auxiliaire (données partagées).
+   100% additif.
+   ============================================================ */
+(function(){
+  if(typeof c9!=='function') return;
+  function lineOf(ref){ const e=(db.ecritures||[]).find(x=>x.id===ref.e); return e? e.lignes[ref.i] : null; }
+  window.lzProchaineLettre=function(cptC9){ const used={};
+    (db.ecritures||[]).forEach(e=>e.lignes.forEach(l=>{ if(c9(l.compte)===cptC9 && l.lettre) used[l.lettre]=1; }));
+    for(let i=0;i<26;i++){ const x=String.fromCharCode(65+i); if(!used[x]) return x; }
+    for(let i=0;i<26;i++)for(let j=0;j<26;j++){ const x=String.fromCharCode(65+i)+String.fromCharCode(65+j); if(!used[x]) return x; }
+    return '?'; };
+  window.lzLettrer=function(refs){
+    if(!refs||refs.length<2){ toast('Sélectionnez au moins deux lignes à lettrer'); return false; }
+    let d=0,c=0; const ls=[]; refs.forEach(r=>{ const l=lineOf(r); if(l){ ls.push(l); d+=(+l.debit||0); c+=(+l.credit||0); } });
+    if(ls.length<2){ toast('Lignes introuvables'); return false; }
+    if(Math.abs(r2(d-c))>=0.005){ toast('Lettrage impossible : débit ('+eur(r2(d))+') ≠ crédit ('+eur(r2(c))+')'); return false; }
+    const cpt=c9(ls[0].compte); const L=lzProchaineLettre(cpt);
+    ls.forEach(l=>l.lettre=L); save(); toast('Lettrage '+L+' — '+eur(r2(d))+' équilibré'); return true;
+  };
+  window.lzDelettrer=function(refs){ let n=0; (refs||[]).forEach(r=>{ const l=lineOf(r); if(l&&l.lettre){ l.lettre=''; n++; } }); if(n){ save(); toast(n+' ligne(s) délettrée(s)'); } return n; };
+
+  /* ---- intégration éditeur d'écritures (colonne L cliquable) ---- */
+  if(typeof ecRender==='function'){
+    window.ecSel = window.ecSel || [];
+    window.ecToggleSel=function(key){ const i=ecSel.indexOf(key); if(i>=0) ecSel.splice(i,1); else ecSel.push(key); ecRender(); };
+    window.ecLettrerSel=function(){ const refs=ecSel.map(k=>{const p=k.split('|');return {e:p[0],i:+p[1]};}); if(lzLettrer(refs)){ ecSel=[]; ecRender(); } };
+    window.ecDelettrerSel=function(){ const refs=ecSel.map(k=>{const p=k.split('|');return {e:p[0],i:+p[1]};}); lzDelettrer(refs); ecSel=[]; ecRender(); };
+    if(typeof ouvrirEcrituresCompte==='function'){ const _o=ouvrirEcrituresCompte; ouvrirEcrituresCompte=function(code){ window.ecSel=[]; return _o(code); }; }
+    const _er=ecRender;
+    ecRender=function(){
+      _er();
+      try{
+        const win=document.getElementById('ec-win'); if(!win) return;
+        const tb=win.querySelector('.ec-toolbar');
+        if(tb && !win.querySelector('.ec-letbar')){
+          const bar=document.createElement('div'); bar.className='ec-letbar'; const n=(window.ecSel||[]).length;
+          bar.innerHTML='<span class="ec-llbl">Lettrage :</span>'
+            +'<button class="ec-lbtn" onclick="ecLettrerSel()">🔗 Lettrer la sélection'+(n?(' ('+n+')'):'')+'</button>'
+            +'<button class="ec-lbtn" onclick="ecDelettrerSel()">Délettrer</button>'
+            +'<span class="ec-lhint">Cliquez les lignes de ce compte à rapprocher (Σ débit = Σ crédit), puis « Lettrer ».</span>';
+          tb.parentNode.insertBefore(bar, tb.nextSibling);
+        }
+        const list=ecEcritures(); const flat=[];
+        list.forEach(e=>e.lignes.forEach((l,i)=>flat.push({e:e.id,i,mine:ecMatch(l.compte,ecCode)})));
+        const rows=win.querySelectorAll('.ec-table tbody tr.ec-r');
+        rows.forEach((tr,idx)=>{ const f=flat[idx]; if(!f||!f.mine) return; const key=f.e+'|'+f.i;
+          if((window.ecSel||[]).indexOf(key)>=0) tr.classList.add('ec-lsel');
+          tr.style.cursor='pointer';
+          tr.addEventListener('click', function(ev){ const tg=ev.target; if(tg && (tg.tagName==='INPUT'||tg.tagName==='BUTTON')) return; ecToggleSel(key); });
+        });
+      }catch(e){}
+    };
+  }
 })();
 </script>
 
