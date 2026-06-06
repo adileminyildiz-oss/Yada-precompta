@@ -8265,5 +8265,55 @@ ${lignes}
 })();
 </script>
 
+<script id="yada-addon25">
+/* ============================================================
+   Règlements ↔ Banque : un règlement génère l'écriture de trésorerie
+   Avant : « Validé ✓ » changeait le statut sans mouvement 512 → la
+   créance (411) / dette (401) restait ouverte. Désormais : encaissement
+   client = crédit 411 / débit 512 ; paiement fournisseur = débit 401 /
+   crédit 512, puis lettrage de la facture. Continuité trésorerie garantie.
+   100% additif (override de marquerRegle / ecart).
+   ============================================================ */
+(function(){
+  if(typeof posterBanque!=='function' || typeof db==='undefined') return;
+  function regInfo(r){ const f=(db.factures||[]).find(x=>x.id===r.factureId); const t=f?(db.tiers||[]).find(x=>x.id===f.tiersId):null; return {f,t}; }
+  function passerBanqueReglement(r, montant, libPrefixe){
+    const {f,t}=regInfo(r); if(!f) return null;
+    const client = r.sens==='a_encaisser';
+    const compte = client?'411':'401';
+    const sens = client?'C':'D';   // encaissement client : crédit 411 ; paiement fournisseur : débit 401
+    const rec=posterBanque({ mois:ym(todayStr()), jour:(+todayStr().slice(8,10))||1, compte,
+      libelle:(libPrefixe||(client?'ENCAISSEMENT ':'PAIEMENT '))+(t?t.nom:'')+' '+f.numero,
+      sens, montant:r2(montant), suivi:(typeof nextNum==='function'?nextNum('BQ'):''), tiersId:f.tiersId });
+    if(typeof lettrer==='function' && rec) lettrer(rec.id, f.id, r2(montant));
+    return rec;
+  }
+  window.marquerRegle=function(id){
+    const r=(db.reglements||[]).find(x=>x.id===id); if(!r) return; const {f}=regInfo(r); if(!f) return;
+    const montant=r2(r.restant>0?r.restant:f.ttc);
+    if(montant<=0.005){ r.statut='regle'; r.restant=0; save(); render(); return; }
+    passerBanqueReglement(r, montant);
+    if(!(typeof lettrer==='function')){ r.statut='regle'; r.regle=f.ttc; r.restant=0; r.echelonne=false; }
+    r.notes=r.notes||[]; r.notes.push('Paiement validé le '+todayStr()+' — écriture banque (512) générée ('+eur(montant)+')');
+    save(); render(); toast('Règlement validé ✓ — écriture de banque (512) générée');
+  };
+  window.ecart=function(id){
+    const r=(db.reglements||[]).find(x=>x.id===id); if(!r) return; const {f}=regInfo(r); if(!f) return;
+    const part=prompt('Montant déjà réglé (paiement partiel / échelonné) :', r2((r.restant||f.ttc)/2)); if(part===null) return;
+    let m=r2(+part||0); if(m<=0) return toast('Montant invalide'); if(m>r.restant+0.005) m=r.restant;
+    passerBanqueReglement(r, m, r.sens==='a_encaisser'?'ACOMPTE REÇU ':'ACOMPTE VERSÉ ');
+    if(!(typeof lettrer==='function')){ r.echelonne=true; r.statut='partiel'; r.regle=r2(r.regle+m); r.restant=r2(f.ttc-r.regle); }
+    r.notes=r.notes||[]; r.notes.push('Réglé partiellement ('+eur(m)+') le '+todayStr()+' — écriture banque générée');
+    save(); render(); toast('Règlement partiel + écriture de banque générée');
+  };
+  /* note informative en tête de la page Règlements */
+  if(typeof pageReglements==='function'){ const _p=pageReglements;
+    pageReglements=function(){ return _p().replace('</h1>','</h1>')
+      .replace('<div class="card"><h2>Encours</h2>',
+        '<div class="card" style="border-left:4px solid var(--gold)"><div class="hint">💡 « Validé ✓ » et « À écart » génèrent désormais automatiquement l\'écriture de banque (512) et lettrent la facture — la créance/dette est réellement soldée par la trésorerie.</div></div><div class="card"><h2>Encours</h2>'); };
+  }
+})();
+</script>
+
 </body>
 </html>
