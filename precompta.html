@@ -1595,6 +1595,30 @@ body[data-page="coffre"] .card:hover,body[data-page="coffre"] .kpi:hover,body[da
 .ec-letbar .ec-lhint{color:#5a6b7b;font-size:11.5px}
 .ec-table tbody tr.ec-lsel td{background:#cdeaf0 !important}
 </style>
+<style id="fin-divers">
+/* filtre éditeur d'écritures */
+.ec-filtbar{display:flex;align-items:center;gap:8px;padding:5px 12px;background:#eef0f3;border-bottom:1px solid #d4d7dc}
+.ec-filtbar .ec-flbl{font-size:12px;color:#333;font-weight:600}
+.ec-filtbar .ec-flinp{flex:1 1 auto;max-width:380px;font-size:12px;padding:3px 8px;border:1px solid #b9bcc2;border-radius:6px;background:#fff;color:#222}
+.ec-filtbar .ec-flbtn{font-size:12px;padding:3px 9px;border:1px solid #b9bcc2;border-radius:6px;background:#fff;cursor:pointer;color:#222}
+/* GED dépôt de pièces */
+.ged-drop{border:2px dashed var(--gold,#d4af37);border-radius:14px;padding:20px;text-align:center;cursor:pointer;transition:.2s;margin:6px 0 12px}
+.ged-drop.drag{background:rgba(212,175,55,.14)}
+.ged-it{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:rgba(127,127,127,.10);margin-bottom:6px}
+.ged-it .ged-nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ged-it .ged-mt{font-size:11px;color:var(--ink-soft);white-space:nowrap}
+.btn-xs{padding:3px 8px!important;font-size:12px!important}
+/* messagerie */
+.msg-thread{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;padding:10px;border-radius:12px;background:rgba(127,127,127,.07);margin:6px 0}
+.msg{display:flex;flex-direction:column;max-width:78%}
+.msg.me{align-self:flex-end;align-items:flex-end}.msg.them{align-self:flex-start}
+.msg .msg-b{padding:8px 12px;border-radius:14px;background:rgba(127,127,127,.16);font-size:14px;white-space:pre-wrap;word-break:break-word}
+.msg.me .msg-b{background:var(--gold,#d4af37);color:#241c05}
+.msg .msg-m{font-size:10.5px;color:var(--ink-soft);margin-top:3px}
+.msg-form{display:flex;gap:8px;margin:6px 0}.msg-form input{flex:1;padding:8px 10px;border-radius:10px;border:1px solid rgba(127,127,127,.35);background:transparent;color:inherit}
+.dem-it{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:10px;background:rgba(127,127,127,.08);margin-bottom:5px}
+.dem-it.fournie{opacity:.62}.dem-it.fournie .dem-lb{text-decoration:line-through}.dem-it .dem-lb{flex:1}
+</style>
 </head>
 <body data-theme="noir">
 <div class="layout">
@@ -8354,6 +8378,198 @@ ${lignes}
     im.sortie={date:d, prix:r.prix}; save(); render();
     toast('Cession comptabilisée — VNC '+eur(r.vnc)+' / produit '+eur(r.prix)+' ('+(r.plusValue>=0?'+ value ':'- value ')+eur(Math.abs(r.plusValue))+')');
   };
+})();
+</script>
+
+<script id="yada-addon27">
+/* Éditeur d'écritures — filtre / tri (finition « compta »). Affichage seulement. */
+(function(){
+  if(typeof ecRender!=='function' || typeof ecEcritures!=='function') return;
+  window.ecFiltre=window.ecFiltre||''; window.ecSortDir=window.ecSortDir||'asc';
+  const _ee=ecEcritures;
+  ecEcritures=function(){ let list=_ee(); const q=(window.ecFiltre||'').toLowerCase().trim();
+    if(q) list=list.filter(e=> String(e.date||'').includes(q) || String(e.journal||'').toLowerCase().includes(q)
+      || String(e.libelle||'').toLowerCase().includes(q)
+      || (e.lignes||[]).some(l=>String(l.compte||'').includes(q)||String(l.lib||'').toLowerCase().includes(q)||String(l.lettre||'').toLowerCase().includes(q)));
+    list=list.slice().sort((a,b)=> window.ecSortDir==='desc'? String(b.date||'').localeCompare(String(a.date||'')) : String(a.date||'').localeCompare(String(b.date||'')));
+    return list; };
+  window.ecSetFiltre=function(v){ window.ecFiltre=v; ecRender(); const i=document.getElementById('ec-filtre-inp'); if(i){ i.focus(); try{i.setSelectionRange(v.length,v.length);}catch(e){} } };
+  window.ecToggleSort=function(){ window.ecSortDir=window.ecSortDir==='desc'?'asc':'desc'; ecRender(); };
+  if(typeof ouvrirEcrituresCompte==='function'){ const _o=ouvrirEcrituresCompte; ouvrirEcrituresCompte=function(c){ window.ecFiltre=''; return _o(c); }; }
+  const _er=ecRender;
+  ecRender=function(){ _er(); try{ const win=document.getElementById('ec-win'); if(!win)return;
+    const mb=win.querySelector('.ec-menubar'); if(mb && !win.querySelector('.ec-filtbar')){
+      const bar=document.createElement('div'); bar.className='ec-filtbar';
+      bar.innerHTML='<span class="ec-flbl">🔍 Filtre</span>'
+        +'<input id="ec-filtre-inp" class="ec-flinp" placeholder="date, journal, compte, libellé, lettre…" value="'+String(window.ecFiltre||'').replace(/"/g,'&quot;')+'" oninput="ecSetFiltre(this.value)">'
+        +'<button class="ec-flbtn" onclick="ecToggleSort()">Date '+(window.ecSortDir==='desc'?'▼':'▲')+'</button>'
+        +(window.ecFiltre?'<button class="ec-flbtn" onclick="ecSetFiltre(\'\')">✕</button>':'');
+      mb.parentNode.insertBefore(bar, mb.nextSibling);
+    } }catch(e){} };
+})();
+</script>
+
+<script id="yada-addon28">
+/* Tiers — édition / suppression d'une fiche (fiabilisation). Bloqué si mouvementé. */
+(function(){
+  if(typeof pageTiers!=='function') return;
+  function tiersMouvemente(t){ return (db.factures||[]).some(f=>f.tiersId===t.id) || (db.banque||[]).some(b=>b.tiersId===t.id)
+    || (t.compteAux && (db.ecritures||[]).some(e=>e.lignes.some(l=>c9(l.compte)===c9(t.compteAux)))); }
+  window.tiersEditer=function(id){ const t=(db.tiers||[]).find(x=>x.id===id); if(!t)return;
+    const mv=tiersMouvemente(t);
+    const opt=(arr,sel)=>arr.map(c=>'<option value="'+c+'" '+(c===sel?'selected':'')+'>'+c+' — '+(COMPTES[c]||'')+'</option>').join('');
+    const contre=t.type==='client'?COMPTES_PRODUIT:COMPTES_CHARGE; const tva=t.type==='client'?['44571']:['44566','44562'];
+    document.getElementById('modal-c').innerHTML='<div class="modal-h"><h3>Modifier — '+t.nom+'</h3><button class="x" onclick="closeModal()">×</button></div>'
+      +'<div class="modal-b">'+(mv?'<div class="hint" style="color:#c0584f">⚠ Tiers mouvementé : le type et les comptes des écritures passées ne sont pas modifiés rétroactivement.</div>':'')
+      +'<div class="row g2"><div class="field"><label>Dénomination</label><input id="te-nom" value="'+(t.nom||'').replace(/"/g,'&quot;')+'"></div>'
+      +'<div class="field"><label>Taux TVA</label><select id="te-taux">'+[20,10,5.5,2.1,0].map(x=>'<option '+(x==t.taux?'selected':'')+'>'+x+'</option>').join('')+'</select></div></div>'
+      +'<div class="row g2"><div class="field"><label>Compte de contrepartie</label><select id="te-contre">'+opt(contre,t.compteContre)+'</select></div>'
+      +'<div class="field"><label>Compte de TVA</label><select id="te-tva">'+opt(tva,t.compteTVA)+'</select></div></div>'
+      +'<div class="row g3"><div class="field"><label>E-mail</label><input id="te-email" value="'+(t.email||'').replace(/"/g,'&quot;')+'"></div>'
+      +'<div class="field"><label>Téléphone</label><input id="te-tel" value="'+(t.tel||'').replace(/"/g,'&quot;')+'"></div>'
+      +'<div class="field"><label>Adresse</label><input id="te-adr" value="'+(t.adresse||'').replace(/"/g,'&quot;')+'"></div></div>'
+      +'<div class="right" style="gap:8px">'+(mv?'':'<button class="btn btn-ghost" onclick="tiersSupprimer(\''+id+'\')">🗑 Supprimer la fiche</button>')
+      +'<button class="btn btn-pri" onclick="tiersEnregistrer(\''+id+'\')">💾 Enregistrer</button></div></div>';
+    document.getElementById('modal').classList.add('show'); };
+  window.tiersEnregistrer=function(id){ const t=(db.tiers||[]).find(x=>x.id===id); if(!t)return; const g=i=>{const e=document.getElementById(i);return e?e.value:'';};
+    t.nom=g('te-nom').trim()||t.nom; t.taux=+g('te-taux'); t.compteContre=g('te-contre'); t.compteTVA=g('te-tva');
+    t.email=g('te-email'); t.tel=g('te-tel'); t.adresse=g('te-adr'); save(); closeModal(); render(); toast('Fiche tiers mise à jour'); };
+  window.tiersSupprimer=function(id){ const t=(db.tiers||[]).find(x=>x.id===id); if(!t)return;
+    if(tiersMouvemente(t)) return toast('Tiers mouvementé : suppression impossible');
+    if(!confirm('Supprimer la fiche « '+t.nom+' » ?'))return; db.tiers=db.tiers.filter(x=>x.id!==id); save(); closeModal(); render(); toast('Fiche supprimée'); };
+  /* rendre les noms de tiers éditables : ajoute un bouton ✎ via greffe de openTiers (la fiche consultation garde un accès édition) */
+  if(typeof openTiers==='function'){ const _o=openTiers; openTiers=function(id){ _o(id);
+    try{ const mb=document.querySelector('#modal-c .modal-h'); if(mb && !document.getElementById('te-edit-btn')){
+      const b=document.createElement('button'); b.id='te-edit-btn'; b.className='btn btn-ghost btn-sm'; b.textContent='✎ Modifier'; b.style.marginRight='8px';
+      b.onclick=function(){ tiersEditer(id); }; mb.insertBefore(b, mb.querySelector('.x')); } }catch(e){} }; }
+})();
+</script>
+
+<script id="yada-addon29">
+/* Éditions — balance âgée clients & fournisseurs (fiabilisation). Lecture seule. */
+(function(){
+  if(typeof pageEditions!=='function' || typeof reglementDe!=='function') return;
+  function ageRows(type){ const sens=type==='client'?'a_encaisser':'a_payer'; const today=todayStr(); const buckets={};
+    (db.reglements||[]).filter(r=>r.sens===sens && r.statut!=='regle' && r.restant>0.005).forEach(r=>{ const f=(db.factures||[]).find(x=>x.id===r.factureId); if(!f)return;
+      const t=(db.tiers||[]).find(x=>x.id===f.tiersId); const nom=t?t.nom:'—'; const ech=r.echeance||f.date;
+      const jours=Math.floor((new Date(today)-new Date(ech))/86400000);
+      const b=buckets[nom]||(buckets[nom]={c:0,'0':0,'30':0,'60':0,'90':0}); b.c+=r.restant;
+      if(jours<=0)b['0']+=r.restant; else if(jours<=30)b['30']+=r.restant; else if(jours<=60)b['60']+=r.restant; else b['90']+=r.restant; });
+    return buckets; }
+  function ageTable(type){ const b=ageRows(type); const noms=Object.keys(b).sort();
+    if(!noms.length) return '<div class="empty">Aucun encours '+(type==='client'?'client':'fournisseur')+'.</div>';
+    let T={c:0,'0':0,'30':0,'60':0,'90':0};
+    const rows=noms.map(n=>{ const x=b[n]; ['c','0','30','60','90'].forEach(k=>T[k]+=x[k]);
+      return '<tr><td><b>'+n+'</b></td><td class="r num">'+eur(r2(x['0']))+'</td><td class="r num">'+eur(r2(x['30']))+'</td><td class="r num">'+eur(r2(x['60']))+'</td><td class="r num '+(x['90']>0?'deb':'')+'">'+eur(r2(x['90']))+'</td><td class="r num"><b>'+eur(r2(x.c))+'</b></td></tr>'; }).join('');
+    return '<table><thead><tr><th>'+(type==='client'?'Client':'Fournisseur')+'</th><th class="r">Non échu</th><th class="r">≤ 30 j</th><th class="r">31–60 j</th><th class="r">+60 j</th><th class="r">Total dû</th></tr></thead>'
+      +'<tbody>'+rows+'<tr class="totrow"><td>Total</td><td class="r num">'+eur(r2(T['0']))+'</td><td class="r num">'+eur(r2(T['30']))+'</td><td class="r num">'+eur(r2(T['60']))+'</td><td class="r num">'+eur(r2(T['90']))+'</td><td class="r num">'+eur(r2(T.c))+'</td></tr></tbody></table>'; }
+  window.balanceAgeeCard=function(){ return '<div class="card"><h2>Balance âgée</h2>'
+    +'<div class="sub">Encours non soldés ventilés par ancienneté (échéance). Source : règlements ouverts.</div>'
+    +'<h3 style="font-family:Fraunces,serif;font-size:15px;margin:8px 0 6px">Clients</h3>'+ageTable('client')
+    +'<h3 style="font-family:Fraunces,serif;font-size:15px;margin:14px 0 6px">Fournisseurs</h3>'+ageTable('fournisseur')+'</div>'; };
+  const _p=pageEditions; pageEditions=function(){ return _p()+balanceAgeeCard(); };
+})();
+</script>
+
+<script id="yada-addon30">
+/* Tableau de bord — trésorerie réelle (solde 512) + CA/charges depuis les écritures (fiabilisation). */
+(function(){
+  if(typeof dashCompta!=='function') return;
+  window.soldeTresorerie=function(){ let s=0; (db.ecritures||[]).forEach(e=>e.lignes.forEach(l=>{ if(c9(l.compte).slice(0,3)==='512') s+=(+l.debit||0)-(+l.credit||0); })); return r2(s); };
+  function caChargesEcr(){ let ca=0,ch=0; (db.ecritures||[]).forEach(e=>{ if((e.libelle||'').indexOf('OD RÉSULTAT')>=0) return; e.lignes.forEach(l=>{ const cl=c9(l.compte)[0]; if(cl==='7')ca+=(+l.credit||0)-(+l.debit||0); if(cl==='6')ch+=(+l.debit||0)-(+l.credit||0); }); }); return {ca:r2(ca),ch:r2(ch)}; }
+  window.dashTresoCard=function(){ const t=soldeTresorerie(); const x=caChargesEcr();
+    return '<div class="grid g3"><div class="kpi blue"><div class="lbl">Trésorerie réelle (512)</div><div class="val">'+eur(t)+'</div><div class="meta">solde des comptes banque</div></div>'
+      +'<div class="kpi green"><div class="lbl">Produits (écritures 7)</div><div class="val cre">'+eur(x.ca)+'</div></div>'
+      +'<div class="kpi red"><div class="lbl">Charges (écritures 6)</div><div class="val deb">'+eur(x.ch)+'</div></div></div>'; };
+  const _d=dashCompta; dashCompta=function(){ return _d()+dashTresoCard(); };
+})();
+</script>
+
+<script id="yada-addon31">
+/* GED — dépôt glisser-déposer de vrais fichiers, stockés dans db.parametres.pieces (par dossier). */
+(function(){
+  if(typeof pageEspaceClient!=='function') return;
+  function store(){ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.pieces))db.parametres.pieces=[]; return db.parametres.pieces; }
+  window.gedStore=store;
+  function sz(n){ return !n?'':(n<1024?n+' o':(n<1048576?Math.round(n/1024)+' Ko':(n/1048576).toFixed(1)+' Mo')); }
+  window.gedAdd=function(file,silent){ return new Promise(res=>{ const r=new FileReader();
+    r.onload=()=>{ try{ store().push({id:uid(),nom:file.name,mime:file.type||'',taille:file.size||0,data:r.result,date:todayStr()}); save(); if(!silent)toast('Pièce « '+file.name+' » ajoutée'); res(true);}catch(e){ toast('Fichier trop volumineux'); res(false);} };
+    r.onerror=()=>res(false); r.readAsDataURL(file); }); };
+  async function addList(fs){ for(let i=0;i<fs.length;i++) await gedAdd(fs[i]); render(); }
+  window.gedDrop=function(ev){ ev.preventDefault(); try{ev.currentTarget.classList.remove('drag');}catch(e){} const fs=ev.dataTransfer&&ev.dataTransfer.files; if(fs&&fs.length)addList(fs); };
+  window.gedPick=function(){ const el=document.getElementById('ged-file'); if(el)el.click(); };
+  window.gedFile=function(ev){ const fs=ev.target.files; if(fs&&fs.length)addList(fs); };
+  window.gedVoir=function(id){ const p=store().find(x=>x.id===id); if(!p)return; const w=window.open(); if(w)w.document.write('<iframe src="'+p.data+'" style="border:0;position:fixed;inset:0;width:100%;height:100%"></iframe>'); };
+  window.gedDl=function(id){ const p=store().find(x=>x.id===id); if(!p)return; const a=document.createElement('a'); a.href=p.data; a.download=p.nom||'piece'; document.body.appendChild(a); a.click(); a.remove(); };
+  window.gedDel=function(id){ const s=store(); const i=s.findIndex(x=>x.id===id); if(i<0)return; if(!confirm('Supprimer « '+s[i].nom+' » ?'))return; s.splice(i,1); save(); render(); };
+  function ico(p){ const n=(p.nom||'').toLowerCase(); if((p.mime||'').includes('pdf')||n.endsWith('.pdf'))return '📕'; if((p.mime||'').includes('image')||/\.(jpe?g|png|gif|webp)$/.test(n))return '🖼'; return '📄'; }
+  window.gedCard=function(){ const s=store();
+    const liste=s.length?s.slice().reverse().map(p=>'<div class="ged-it"><span>'+ico(p)+'</span><span class="ged-nm" title="'+String(p.nom||'').replace(/"/g,'&quot;')+'">'+(p.nom||'pièce')+'</span><span class="ged-mt">'+frDate(p.date)+(p.taille?' · '+sz(p.taille):'')+'</span><span><button class="btn btn-ghost btn-xs" onclick="gedVoir(\''+p.id+'\')">Ouvrir</button> <button class="btn btn-ghost btn-xs" onclick="gedDl(\''+p.id+'\')">⤓</button> <button class="btn btn-ghost btn-xs" onclick="gedDel(\''+p.id+'\')">✕</button></span></div>').join(''):'<div class="hint">Aucune pièce déposée.</div>';
+    return '<div class="card"><h2>Pièces du dossier (GED)</h2><div class="sub">Glissez-déposez vos PDF / photos : ils sont réellement stockés (consultables, téléchargeables).</div>'
+      +'<div class="ged-drop" onclick="gedPick()" ondragover="event.preventDefault();this.classList.add(\'drag\')" ondragleave="this.classList.remove(\'drag\')" ondrop="gedDrop(event)"><div style="font-size:24px">⬆</div><div style="font-weight:700">Déposez vos fichiers ici</div><div class="hint">ou cliquez — pdf, jpg, png</div>'
+      +'<input type="file" id="ged-file" hidden multiple accept=".pdf,.jpg,.jpeg,.png,image/*" onchange="gedFile(event)"></div>'+liste+'</div>'; };
+  const _p=pageEspaceClient; pageEspaceClient=function(){ return _p()+gedCard(); };
+})();
+</script>
+
+<script id="yada-addon32">
+/* Mode Client séparé — accès dédié n'affichant que l'Espace Client. */
+(function(){
+  if(typeof render!=='function') return;
+  window.sessionRole=window.sessionRole||'cabinet'; window.selClientMode=window.selClientMode||false;
+  window.choisirDossierClient=function(id){ if(typeof choisirDossier==='function') choisirDossier(id); window.sessionRole='client'; window.selClientMode=false; current='client'; render(); };
+  window.quitterEspaceClient=function(){ if(typeof persistActif==='function')persistActif(); window.sessionRole='cabinet'; window.selClientMode=true; connecte=false; if(typeof selRecherche!=='undefined')selRecherche=''; render(); };
+  if(typeof ecranSelectionDossier==='function'){ const _es=ecranSelectionDossier; ecranSelectionDossier=function(){ let h=_es();
+    if(window.selClientMode){ h=h.replace(/choisirDossier\(/g,'choisirDossierClient(').replace('Sélectionnez un dossier','Espace client — sélectionnez votre dossier'); }
+    const btn=window.selClientMode?'<button class="btn btn-ghost" onclick="selClientMode=false;render()">↩ Accès cabinet</button>':'<button class="btn btn-ghost" onclick="selClientMode=true;render()">👤 Accès client</button>';
+    return h.replace('<div class="login-actions">','<div class="login-actions">'+btn); }; }
+  const _bn=buildNav; buildNav=function(){ if(window.sessionRole==='client'){ const nav=document.getElementById('nav'); if(!nav)return; nav.innerHTML='';
+      const sec=document.createElement('div'); sec.className='nav-sec'; sec.textContent='Espace Client'; nav.appendChild(sec);
+      const b=document.createElement('button'); b.className='nav-btn active'; b.innerHTML='<span class="ico">🧑</span>Mon espace'; b.onclick=()=>{current='client';render();}; nav.appendChild(b); return; }
+    return _bn(); };
+  function applyRole(){ const client=(connecte&&window.sessionRole==='client'); document.body.setAttribute('data-role',client?'client':'cabinet');
+    const foot=document.querySelector('.side-foot'); if(foot) foot.querySelectorAll('button').forEach(b=>{ const t=b.textContent||'';
+      if(/Exporter|Importer|Réinitialiser/.test(t)) b.style.display=client?'none':'';
+      if(/Changer de dossier|Quitter l'espace/.test(t)) b.textContent=client?"⎋ Quitter l'espace client":'⇆ Changer de dossier'; }); }
+  const _r=render; render=function(){ if(connecte&&window.sessionRole==='client'&&current!=='client')current='client'; const res=_r.apply(this,arguments); try{applyRole();}catch(e){} return res; };
+  if(typeof retourSelectionDossier==='function'){ const _ret=retourSelectionDossier; retourSelectionDossier=function(){ if(window.sessionRole==='client'){ quitterEspaceClient(); return; } return _ret(); }; }
+  if(typeof dashRoute==='function'){ const _dr=dashRoute; dashRoute=function(type,name){ if(connecte&&window.sessionRole==='client'){ toast('Pièce reçue — votre cabinet la traitera.'); current='client'; render(); return; } return _dr(type,name); }; }
+})();
+</script>
+
+<script id="yada-addon33">
+/* Messagerie client ↔ cabinet + pièces demandées (db.parametres.messages / .demandes). */
+(function(){
+  if(typeof pageEspaceClient!=='function') return;
+  function ms(){ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.messages))db.parametres.messages=[]; return db.parametres.messages; }
+  function ds(){ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.demandes))db.parametres.demandes=[]; return db.parametres.demandes; }
+  window.msgStore=ms; window.demStore=ds;
+  function role(){ return window.sessionRole==='client'?'client':'cabinet'; }
+  window.msgEnvoyer=function(){ const i=document.getElementById('msg-inp'); const t=(i&&i.value||'').trim(); if(!t)return; ms().push({id:uid(),de:role(),texte:t,date:new Date().toISOString()}); save(); render(); };
+  window.demAjouter=function(){ const i=document.getElementById('dem-inp'); const t=(i&&i.value||'').trim(); if(!t)return; ds().push({id:uid(),libelle:t,statut:'demandee',date:todayStr()}); save(); render(); toast('Pièce demandée au client'); };
+  window.demBascule=function(id){ const d=ds().find(x=>x.id===id); if(d){ d.statut=d.statut==='fournie'?'demandee':'fournie'; save(); render(); } };
+  window.demSupprimer=function(id){ const s=ds(); const i=s.findIndex(x=>x.id===id); if(i>=0){s.splice(i,1);save();render();} };
+  window.messagerieCard=function(){ const r=role(); const msgs=ms();
+    const thread=msgs.length?msgs.map(m=>'<div class="msg '+(m.de===r?'me':'them')+'"><div class="msg-b">'+String(m.texte||'').replace(/</g,'&lt;')+'</div><div class="msg-m">'+(m.de==='client'?'Client':'Cabinet')+' · '+frDate(String(m.date||'').slice(0,10))+'</div></div>').join(''):'<div class="hint">Aucun message.</div>';
+    const dem=ds(); const dl=dem.length?dem.map(d=>'<div class="dem-it '+d.statut+'"><span>'+(d.statut==='fournie'?'✓':'⏳')+'</span><span class="dem-lb">'+String(d.libelle||'').replace(/</g,'&lt;')+'</span><span><button class="btn btn-ghost btn-xs" onclick="demBascule(\''+d.id+'\')">'+(d.statut==='fournie'?'À fournir':'Fournie')+'</button>'+(r==='cabinet'?' <button class="btn btn-ghost btn-xs" onclick="demSupprimer(\''+d.id+'\')">✕</button>':'')+'</span></div>').join(''):'<div class="hint">Aucune pièce demandée.</div>';
+    return '<div class="card"><h2>Messagerie '+(r==='client'?'— mon cabinet':'— mon client')+'</h2><div class="sub">Échange direct et suivi des pièces demandées.</div>'
+      +'<div class="msg-thread">'+thread+'</div>'
+      +'<div class="msg-form"><input id="msg-inp" placeholder="Écrire un message…" onkeydown="if(event.key===\'Enter\')msgEnvoyer()"><button class="btn btn-pri" onclick="msgEnvoyer()">Envoyer</button></div>'
+      +'<h3 style="font-size:14px;margin:14px 0 4px">Pièces demandées</h3>'
+      +(r==='cabinet'?'<div class="msg-form"><input id="dem-inp" placeholder="Demander une pièce (ex. relevé bancaire mars)…" onkeydown="if(event.key===\'Enter\')demAjouter()"><button class="btn btn-gold" onclick="demAjouter()">Demander</button></div>':'<div class="hint">Déposez les pièces dans « Pièces du dossier (GED) » puis marquez-les fournies.</div>')
+      +dl+'</div>'; };
+  const _p=pageEspaceClient; pageEspaceClient=function(){ return _p()+messagerieCard(); };
+})();
+</script>
+
+<script id="yada-addon34">
+/* FEC inverse — bouton « Ouvrir l'exercice précédent (N-1) » pour saisir les à-nouveaux. */
+(function(){
+  if(typeof pageFEC!=='function' || typeof exPrecedent!=='function') return;
+  window.fecOuvrirPrecedent=function(){ if(confirm("Ouvrir l'exercice précédent (N-1) ? Vous pourrez y saisir les à-nouveaux / la reprise de balance, puis revenir via « Exercice suivant ».")) exPrecedent(); };
+  const _p=pageFEC; pageFEC=function(){ return _p()
+    +'<div class="card"><h2>Reprise antérieure (FEC inverse)</h2><div class="sub">Si le FEC importé démarre en N mais que vous devez reprendre les soldes de N-1, ouvrez l\'exercice précédent pour saisir les à-nouveaux, puis générez le report depuis Éditions → Clôture.</div>'
+    +'<div class="right"><button class="btn btn-gold" onclick="fecOuvrirPrecedent()">↩ Ouvrir l\'exercice précédent (N-1)</button></div></div>'; };
 })();
 </script>
 
