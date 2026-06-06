@@ -94,6 +94,9 @@ Application web de **pré‑comptabilité française** « **YADA / Précompta** 
 - **Suppression de dossier** (addon17) — `dossiersGestionCard()` dans la page Dossier + `supprimerDossier(id)` (gère le dossier actif → retour accueil).
 - **Panneau IA fournisseurs embarqué** (addon18) — `iaFournisseursCard()` greffé en bas d'`pageAchats`.
 - **Espace Client** (addon19, page `client`) — `pageEspaceClient()` : chiffres clés + trésorerie, dépôt de pièces (`dashRoute`), mes devis & factures, `relancesCard()`, suivi par client (`ecTresorerie/ecEncoursParClient`).
+- **Pièces légales — ouvrir/joindre K-bis & Statuts** (addon21, dans `pageInfoSociete`) — carte « Pièces légales du dossier » : `ouvrirKbis()/ouvrirStatuts()` (visualisation du PDF stocké en dataURL via `window.open`+iframe) et `joindreKbis()/joindreStatuts()` (FileReader → `db.societe.kbisPdf/statutsPdf`). Insérée juste avant la carte « Enregistrer ».
+- **Pastille compteur menu « Assistant IA »** (addon22, greffe `buildNav`) — badge `.ia-badge` ajouté sur l'entrée IA du menu, comptant les `db.propositions` au statut `a_valider`.
+- **Sélecteur d'exercice visible** (addon23, greffe `head()`) — encart `.exo-sel` dans l'en-tête de page (Exercice AAAA + dates), boutons ‹/› reliés à `exPrecedent()/exSuivant()`.
 - **Facturation électronique — opérateur relié** (addon20, dans `pageFacturation`) — `efacturationCard()` : connexion d'un opérateur agréé **PPF/PDP** (`efactCfg/efactConnecter/efactDeconnecter`), **transmission** au format **Factur-X** (`efactTransmettre`), **cycle de vie** (Déposée→Émise→Mise à disposition→Approuvée→Encaissée, branche Refusée — `efactAvancer/efactRefuser`), **flux horodaté** (`efactFlux`), **Factur-X (XML CII) téléchargeable** (`efactXML`). Config dans `db.parametres.efact`, statut par facture dans `doc.efact`. Simulation hors‑ligne ; Factur-X représentatif.
 - **Import FEC multi‑exercice** — un FEC année N crée le dossier avec **exercices N et N+1** (`exercices:[N, N+1]`), bascule N+1 sans re‑création.
 - **Sauvegarde automatique** — `save()` → `localStorage`, rechargé à l'INIT.
@@ -104,9 +107,9 @@ Application web de **pré‑comptabilité française** « **YADA / Précompta** 
 - Dépôt **glisser‑déposer** de vrais fichiers (PDF/photos) stockés dans le dossier.
 - Lettrage interactif (colonne L) dans l'éditeur Sage ; filtre/tri dans sa barre d'outils.
 - Variante **IA en ligne réelle** (lecture PDF/photo via API + clé) pour pré‑remplir automatiquement.
-- Bouton « Ouvrir le K‑bis / les Statuts » dans la fiche société.
-- Compteur/pastille sur l'entrée « Assistant IA » du menu.
-- Cas FEC inverse (N → ouvrir aussi N‑1 pour les À‑nouveaux) ; sélecteur d'exercice visible en haut.
+- Cas FEC inverse (N → ouvrir aussi N‑1 pour les À‑nouveaux).
+
+> ✅ **Faits (quick wins, addons 21→23)** : bouton « Ouvrir/Joindre K‑bis & Statuts » dans la fiche société · pastille compteur sur l'entrée « Assistant IA » du menu · sélecteur d'exercice visible dans l'en‑tête.
 
 ## 9. À dire en début de nouvelle conversation
 > « Je reprends le projet YADA/Précompta (fichier unique `precompta.html` ci‑joint). Voici le document de passation. Continue en repartant de MON fichier, par ajouts chirurgicaux sans rien casser, en validant via node --check + Playwright sur les 2 démos. »

@@ -1586,6 +1586,22 @@ body[data-page="coffre"] .card:hover,body[data-page="coffre"] .kpi:hover,body[da
 .ef-dot{width:16px;height:16px;border-radius:50%;background:var(--gold,#a8801f);flex:0 0 auto;margin-top:1px;box-shadow:0 0 0 3px rgba(168,128,31,.18)}
 .ef-last .ef-dot{background:var(--credit,#1f6b4f);box-shadow:0 0 0 3px rgba(31,107,79,.18)}
 </style>
+<style id="ia-nav-badge">
+/* #10 — pastille compteur sur l'entrée « Assistant IA » du menu */
+.nav-btn{position:relative}
+.nav-btn .ia-badge{position:absolute;right:10px;top:50%;transform:translateY(-50%);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#f0a93b;color:#2a1d00;font-size:11px;font-weight:700;line-height:18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.nav-btn.active .ia-badge{background:#2a1d00;color:#f6cd7e}
+</style>
+<style id="exo-selector">
+/* #7 — sélecteur d'exercice visible dans l'en-tête de page */
+.page-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.exo-sel{display:inline-flex;align-items:center;gap:6px;background:rgba(212,175,55,.10);border:1px solid var(--gold,#d4af37);border-radius:12px;padding:4px 8px;flex:0 0 auto}
+.exo-sel .exo-nav{cursor:pointer;border:0;background:transparent;color:var(--gold,#d4af37);font-size:20px;line-height:1;width:26px;height:26px;border-radius:8px;font-weight:700}
+.exo-sel .exo-nav:hover{background:rgba(212,175,55,.20)}
+.exo-sel .exo-mid{display:flex;flex-direction:column;align-items:center;min-width:118px;line-height:1.25}
+.exo-sel .exo-y{font-weight:700;font-size:13px}
+.exo-sel .exo-d{font-size:11px;color:var(--ink-soft)}
+</style>
 </head>
 <body data-theme="noir">
 <div class="layout">
@@ -7952,5 +7968,98 @@ ${lignes}
 })();
 
 </script>
+
+<script id="yada-addon21">
+/* ============================================================
+   #9 — Pièces légales : ouvrir / joindre K-bis & Statuts
+   Greffe non destructive sur pageInfoSociete.
+   ============================================================ */
+(function(){
+  if(typeof pageInfoSociete!=='function') return;
+  function klOuvrePdf(data){ if(!data){ toast('Aucune pièce jointe'); return; } const w=window.open(); if(w) w.document.write('<iframe src="'+data+'" style="border:0;position:fixed;inset:0;width:100%;height:100%"></iframe>'); }
+  window.ouvrirKbis=function(){ klOuvrePdf(db.societe&&db.societe.kbisPdf); };
+  window.ouvrirStatuts=function(){ klOuvrePdf(db.societe&&db.societe.statutsPdf); };
+  function klJoindre(ev,champPdf,champNom,champRecu,libok){ const f=ev.target.files&&ev.target.files[0]; if(!f)return;
+    const r=new FileReader(); r.onload=()=>{ try{ db.societe[champPdf]=r.result; db.societe[champNom]=f.name; db.societe[champRecu]=true; save(); render(); toast(libok); }catch(e){ toast('PDF trop volumineux pour le stockage local'); } }; r.readAsDataURL(f); }
+  window.joindreKbis=function(ev){ klJoindre(ev,'kbisPdf','kbisNom','kbisRecu','Extrait K-bis joint'); };
+  window.joindreStatuts=function(ev){ klJoindre(ev,'statutsPdf','statutsNom','statutsRecu','Statuts joints'); };
+  function piece(label,has,nom,openFn,fileId,changeFn){
+    return `<div class="field"><label>${label}</label>
+      ${has?`<button class="btn btn-gold" onclick="${openFn}()">📖 Ouvrir</button>
+             <button class="btn btn-ghost" style="margin-left:6px" onclick="document.getElementById('${fileId}').click()">Remplacer</button>
+             ${nom?`<div class="hint">${nom}</div>`:''}`
+           :`<button class="btn btn-ghost" onclick="document.getElementById('${fileId}').click()">📎 Joindre le PDF</button>
+             <div class="hint">Aucune pièce jointe.</div>`}
+      <input type="file" id="${fileId}" hidden accept=".pdf" onchange="${changeFn}(event)"></div>`;
+  }
+  function piecesLegalesCard(){
+    const s=db.societe||{};
+    return `<div class="card"><h2>Pièces légales du dossier</h2>
+      <div class="sub">Extrait K-bis et statuts du dossier — déposés à la création, consultables et remplaçables ici.</div>
+      <div class="row g2">
+        ${piece('Extrait K-bis', !!s.kbisPdf, s.kbisNom, 'ouvrirKbis', 'is-kbis-file', 'joindreKbis')}
+        ${piece('Statuts', !!s.statutsPdf, s.statutsNom, 'ouvrirStatuts', 'is-statuts-file', 'joindreStatuts')}
+      </div></div>`;
+  }
+  const _p=pageInfoSociete;
+  const saveCard='<div class="card"><div class="right"><button class="btn btn-pri" onclick="enregistrerInfoSociete()">💾 Enregistrer les informations</button></div></div>';
+  pageInfoSociete=function(){ let h=_p(); return h.includes(saveCard)? h.replace(saveCard, piecesLegalesCard()+saveCard) : h+piecesLegalesCard(); };
+})();
+</script>
+
+<script id="yada-addon22">
+/* ============================================================
+   #10 — Pastille compteur sur l'entrée « Assistant IA » du menu
+   Greffe non destructive sur buildNav.
+   ============================================================ */
+(function(){
+  if(typeof buildNav!=='function') return;
+  const _bn=buildNav;
+  buildNav=function(){
+    _bn();
+    try{
+      const n=((db&&db.propositions)||[]).filter(p=>p&&p.statut==='a_valider').length;
+      if(!n) return;
+      const nav=document.getElementById('nav'); if(!nav) return;
+      nav.querySelectorAll('.nav-btn').forEach(b=>{
+        if(b.textContent.indexOf('Assistant IA')>=0 && !b.querySelector('.ia-badge')){
+          const s=document.createElement('span'); s.className='ia-badge';
+          s.textContent=n>99?'99+':n; s.title=n+' proposition(s) à valider';
+          b.appendChild(s);
+        }
+      });
+    }catch(e){}
+  };
+})();
+</script>
+
+<script id="yada-addon23">
+/* ============================================================
+   #7 — Sélecteur d'exercice visible dans l'en-tête de page
+   Greffe non destructive sur head() ; navigation via exSuivant/exPrecedent.
+   ============================================================ */
+(function(){
+  if(typeof head!=='function') return;
+  const _h=head;
+  head=function(title,desc){
+    let base=_h(title,desc);
+    try{
+      if(typeof connecte!=='undefined' && connecte && db && db.societe && db.societe.exoDebut){
+        const s=db.societe;
+        const lbl=frDate(s.exoDebut)+' → '+frDate(s.exoFin);
+        const sel=`<div class="exo-sel" title="Exercice comptable courant — utilisez ‹ › pour changer d'exercice">`
+          +`<button class="exo-nav" onclick="exPrecedent()" title="Exercice précédent (N-1)">‹</button>`
+          +`<div class="exo-mid"><span class="exo-y">Exercice ${(s.exoDebut||'').slice(0,4)}</span><span class="exo-d">${lbl}</span></div>`
+          +`<button class="exo-nav" onclick="exSuivant()" title="Exercice suivant (N+1)">›</button>`
+          +`</div>`;
+        const i=base.lastIndexOf('</div></div>');
+        if(i>=0) base=base.slice(0,i)+'</div>'+sel+'</div>';
+      }
+    }catch(e){}
+    return base;
+  };
+})();
+</script>
+
 </body>
 </html>
