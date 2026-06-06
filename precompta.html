@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pré-Compta — Système intégré</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="YADA">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -8811,7 +8818,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v59 · sauvegarde auto + indicateur ✨';
+    b.textContent='YADA · v60 · installable (PWA) ✨';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:600 11px system-ui,sans-serif;background:rgba(47,109,176,.92);color:#fff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.78;pointer-events:none';
     document.body.appendChild(b); }
@@ -9946,6 +9953,34 @@ ${lignes}
   /* filet de sécurité */
   try{ window.addEventListener('beforeunload', function(){ try{ _save(); }catch(e){} }); }catch(e){}
   try{ setInterval(function(){ try{ _save(); markSaved(); }catch(e){} }, 60000); }catch(e){}
+})();
+</script>
+<script id="yada-addon60">
+/* Installation sur l'ordinateur (PWA) : enregistre le service worker (cache
+   hors-ligne) et propose un bouton « Installer » quand le navigateur le permet. */
+(function(){
+  try{
+    if('serviceWorker' in navigator){
+      window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+    }
+  }catch(e){}
+  var deferred=null;
+  function instBtn(){ return document.getElementById('yada-install'); }
+  function showInstall(){ if(instBtn()||!document.body) return;
+    var b=document.createElement('button'); b.id='yada-install'; b.textContent='⤓ Installer YADA';
+    b.title='Installer l\'application sur cet ordinateur';
+    b.style.cssText='position:fixed;left:12px;bottom:40px;z-index:9999;font:600 12px system-ui,sans-serif;background:linear-gradient(120deg,#2f9e6e,#15694a);color:#fff;border:none;padding:8px 13px;border-radius:9px;box-shadow:0 6px 18px rgba(0,0,0,.35);cursor:pointer';
+    b.onclick=function(){ if(!deferred) return; deferred.prompt(); deferred.userChoice.then(function(){ deferred=null; var x=instBtn(); if(x)x.remove(); }); };
+    document.body.appendChild(b);
+  }
+  window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred=e; showInstall(); });
+  window.addEventListener('appinstalled', function(){ var x=instBtn(); if(x)x.remove(); if(typeof toast==='function')toast('YADA installé sur cet appareil ✓'); });
+  /* Réglage : aide à l'installation dans Paramétrage */
+  if(typeof pageParametrage==='function'){ var _pp=pageParametrage; pageParametrage=function(){
+    return _pp()+'<div class="card"><h2>Installer l\'application</h2>'
+      +'<div class="sub">YADA peut s\'installer comme une application de bureau (PWA), avec une icône et un fonctionnement hors-ligne.</div>'
+      +'<div class="hint">• <b>Chrome / Edge</b> : icône « Installer » dans la barre d\'adresse, ou menu ⋮ → « Installer YADA ».<br>• <b>Bouton ci-dessous</b> si proposé par le navigateur.<br>• <b>Safari (Mac)</b> : Fichier → « Ajouter au Dock ».<br>• Une fois installée, elle s\'ouvre dans sa propre fenêtre et fonctionne sans connexion.</div>'
+      +'<div class="right"><button class="btn btn-pri" onclick="(function(){var b=document.getElementById(\'yada-install\'); if(b){b.click();} else { toast(\'Utilisez l\\\'icône « Installer » de la barre d\\\'adresse (Chrome/Edge) ou le menu du navigateur.\'); }})()">⤓ Installer maintenant</button></div></div>'; }; }
 })();
 </script>
 </body>
