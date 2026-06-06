@@ -1690,6 +1690,21 @@ tr{transition:background .15s ease}
 .ec-tile .ec-tile-lbl{font-weight:600;font-size:13.5px;text-align:center}
 body[data-theme="noir"] #ec-hero{background:linear-gradient(120deg,#1a4e86,#0a1422);border:1px solid #2f6db0}
 </style>
+<style id="ec-spacing">
+/* Espace Client : espacement & agencement des modules (ciblé page client) */
+body[data-page="client"] .mod-wrap{max-width:1080px;margin:0 auto;padding:26px 26px 64px}
+body[data-page="client"] #ec-hero{margin-bottom:28px}
+body[data-page="client"] .ec-shortcuts{gap:18px;margin-bottom:32px}
+body[data-page="client"] .mod-wrap > .card{margin-bottom:30px;padding:22px 24px;border-radius:16px}
+body[data-page="client"] .mod-wrap > .grid{gap:22px;margin-bottom:30px}
+body[data-page="client"] .mod-wrap .grid{gap:20px}
+body[data-page="client"] .mod-wrap .card h2{margin-bottom:6px}
+body[data-page="client"] .mod-wrap .card .sub{margin-bottom:16px}
+body[data-page="client"] .mod-wrap .card:last-child{margin-bottom:0}
+body[data-page="client"] .mod-wrap table{margin-top:6px}
+/* tuiles de raccourcis un peu plus hautes pour respirer */
+body[data-page="client"] .ec-tile{padding:22px 14px}
+</style>
 </head>
 <body data-theme="noir">
 <div class="layout">
@@ -8742,7 +8757,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v40 · espace client ✨';
+    b.textContent='YADA · v40 · agencement ✨';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:600 11px system-ui,sans-serif;background:rgba(47,109,176,.92);color:#fff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.78;pointer-events:none';
     document.body.appendChild(b); }
