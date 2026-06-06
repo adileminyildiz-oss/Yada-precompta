@@ -1586,6 +1586,39 @@ body[data-page="coffre"] .card:hover,body[data-page="coffre"] .kpi:hover,body[da
 .ef-dot{width:16px;height:16px;border-radius:50%;background:var(--gold,#a8801f);flex:0 0 auto;margin-top:1px;box-shadow:0 0 0 3px rgba(168,128,31,.18)}
 .ef-last .ef-dot{background:var(--credit,#1f6b4f);box-shadow:0 0 0 3px rgba(31,107,79,.18)}
 </style>
+<style id="ec-letbar-css">
+/* T3 — lettrage interactif dans l'éditeur d'écritures */
+.ec-letbar{display:flex;align-items:center;gap:8px;padding:5px 12px;background:#eef4fb;border-bottom:1px solid #d4d7dc;font-size:12.5px;flex-wrap:wrap}
+.ec-letbar .ec-llbl{font-weight:600;color:#1b2a3a}
+.ec-letbar .ec-lbtn{font-size:12px;padding:3px 9px;border:1px solid #bcd0e6;background:#fff;border-radius:6px;cursor:pointer;color:#1b2a3a}
+.ec-letbar .ec-lbtn:hover{background:#dceaf8}
+.ec-letbar .ec-lhint{color:#5a6b7b;font-size:11.5px}
+.ec-table tbody tr.ec-lsel td{background:#cdeaf0 !important}
+</style>
+<style id="fin-divers">
+/* filtre éditeur d'écritures */
+.ec-filtbar{display:flex;align-items:center;gap:8px;padding:5px 12px;background:#eef0f3;border-bottom:1px solid #d4d7dc}
+.ec-filtbar .ec-flbl{font-size:12px;color:#333;font-weight:600}
+.ec-filtbar .ec-flinp{flex:1 1 auto;max-width:380px;font-size:12px;padding:3px 8px;border:1px solid #b9bcc2;border-radius:6px;background:#fff;color:#222}
+.ec-filtbar .ec-flbtn{font-size:12px;padding:3px 9px;border:1px solid #b9bcc2;border-radius:6px;background:#fff;cursor:pointer;color:#222}
+/* GED dépôt de pièces */
+.ged-drop{border:2px dashed var(--gold,#d4af37);border-radius:14px;padding:20px;text-align:center;cursor:pointer;transition:.2s;margin:6px 0 12px}
+.ged-drop.drag{background:rgba(212,175,55,.14)}
+.ged-it{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:rgba(127,127,127,.10);margin-bottom:6px}
+.ged-it .ged-nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ged-it .ged-mt{font-size:11px;color:var(--ink-soft);white-space:nowrap}
+.btn-xs{padding:3px 8px!important;font-size:12px!important}
+/* messagerie */
+.msg-thread{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;padding:10px;border-radius:12px;background:rgba(127,127,127,.07);margin:6px 0}
+.msg{display:flex;flex-direction:column;max-width:78%}
+.msg.me{align-self:flex-end;align-items:flex-end}.msg.them{align-self:flex-start}
+.msg .msg-b{padding:8px 12px;border-radius:14px;background:rgba(127,127,127,.16);font-size:14px;white-space:pre-wrap;word-break:break-word}
+.msg.me .msg-b{background:var(--gold,#d4af37);color:#241c05}
+.msg .msg-m{font-size:10.5px;color:var(--ink-soft);margin-top:3px}
+.msg-form{display:flex;gap:8px;margin:6px 0}.msg-form input{flex:1;padding:8px 10px;border-radius:10px;border:1px solid rgba(127,127,127,.35);background:transparent;color:inherit}
+.dem-it{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:10px;background:rgba(127,127,127,.08);margin-bottom:5px}
+.dem-it.fournie{opacity:.62}.dem-it.fournie .dem-lb{text-decoration:line-through}.dem-it .dem-lb{flex:1}
+</style>
 </head>
 <body data-theme="noir">
 <div class="layout">
@@ -3387,7 +3420,7 @@ function pageSaisieBq(){
   const tousTriers=db.banque.slice().sort((a,b)=>a.date<b.date?-1:(a.date>b.date?1:0));
   let bal=0; const soldeApres={};
   tousTriers.forEach(b=>{ const e=db.ecritures.find(x=>x.id===b.ecritureId); if(!e)return;
-    const l512=e.lignes.find(l=>l.compte==='512'); bal=r2(bal+(l512?l512.debit-l512.credit:0)); soldeApres[b.id]=bal; });
+    const l512=e.lignes.find(l=>c9(l.compte)==='512000000'); bal=r2(bal+(l512?l512.debit-l512.credit:0)); soldeApres[b.id]=bal; });
   // lignes du mois sélectionné
   const moisB=tousTriers.filter(b=>ym(b.date)===sjMois);
   let rows='', td=0, tc=0;
@@ -8047,6 +8080,556 @@ ${lignes}
     </div>`;
   };
   if(typeof pageEditions==='function'){ const _p=pageEditions; pageEditions=function(){ return _p()+t1Card(); }; }
+})();
+</script>
+
+<script id="yada-addon22">
+/* ============================================================
+   T2 — Cohérence des comptes (TVA) : normalisation c9 (9 chiffres)
+   Problème résolu : les factures alimentaient 44571/44566 (codes courts)
+   tandis que l'OD TVA soldait 445710000/445660000 — comptes distincts en
+   stockage → la déclaration ne soldait pas réellement les comptes de TVA.
+   Solution : normaliser TOUS les comptes d'écriture en c9. Après quoi
+   44571→445710000 = compte de l'OD TVA, donc l'OD solde réellement la TVA.
+   100% additif (+ 1 correctif chirurgical du solde banque, ligne ~3390).
+   ============================================================ */
+(function(){
+  if(typeof c9!=='function') return;
+  function normDS(){ /* normalise le dataset courant (db.*) */
+    (db.ecritures||[]).forEach(e=>(e.lignes||[]).forEach(l=>{ if(l && l.compte!=null) l.compte=c9(l.compte); }));
+    (db.banque||[]).forEach(b=>{ if(b && b.compte!=null) b.compte=c9(b.compte); });
+  }
+  window.t2Normaliser=normDS;
+  /* Migration unique : dossier actif + tous les autres dossiers du portefeuille */
+  (function migrate(){ try{
+    normDS();
+    if(db.dossiersData) Object.keys(db.dossiersData).forEach(id=>{ const d=db.dossiersData[id]; if(!d) return;
+      (d.ecritures||[]).forEach(e=>(e.lignes||[]).forEach(l=>{ if(l && l.compte!=null) l.compte=c9(l.compte); }));
+      (d.banque||[]).forEach(b=>{ if(b && b.compte!=null) b.compte=c9(b.compte); }); });
+  }catch(e){} })();
+  /* Normalisation continue : à chaque enregistrement (toute source d'écriture) */
+  if(typeof save==='function'){ const _s=save; save=function(){ try{ normDS(); }catch(e){} return _s.apply(this,arguments); }; }
+  /* tvaDuMois : comparer en c9 (44571→445710000, 44566→445660000, 44562→445620000) */
+  if(typeof tvaDuMois==='function'){
+    tvaDuMois=function(m){ let col=0,ded=0;
+      (db.ecritures||[]).filter(e=>ym(e.date)===m && e.journal!=='BQ').forEach(e=>e.lignes.forEach(l=>{
+        const k=c9(l.compte);
+        if(k==='445710000') col+=(+l.credit||0);
+        if(k==='445660000'||k==='445620000') ded+=(+l.debit||0);
+      }));
+      col=r2(col); ded=r2(ded); const net=r2(col-ded);
+      return {col, ded, net, aDecaisser:net>0?net:0, credit:net<0?-net:0};
+    };
+  }
+  /* Verrouille la migration en mémoire dans le stockage */
+  try{ if(typeof save==='function') save(); }catch(e){}
+})();
+</script>
+
+<script id="yada-addon23">
+/* ============================================================
+   T4 — États de synthèse : Bilan + Compte de résultat
+   Calculés depuis les soldes (comptes normalisés c9). Le compte de résultat
+   est calculé HORS « OD RÉSULTAT » (valable avant comme après clôture).
+   Le bilan est toujours équilibré (Actif = Passif), le résultat non encore
+   affecté en 120/129 étant ajouté en capitaux propres. Greffe : carte +
+   états imprimables dans la page Éditions. 100% additif.
+   ============================================================ */
+(function(){
+  if(typeof pageEditions!=='function' || typeof sageNum!=='function') return;
+  const S=()=>db.societe;
+  function soldes(classes, d0, d1, excludeLib){
+    const acc={};
+    (db.ecritures||[]).forEach(e=>{ if(d0&&e.date<d0)return; if(d1&&e.date>d1)return;
+      if(excludeLib && (e.libelle||'').indexOf(excludeLib)>=0) return;
+      (e.lignes||[]).forEach(l=>{ const cl=String(l.compte)[0]; if(classes.indexOf(cl)<0)return;
+        const k=c9(l.compte); const a=acc[k]||(acc[k]={d:0,c:0,lib:l.lib||COMPTES[l.compte]||COMPTES[k]||k});
+        a.d+=(+l.debit||0); a.c+=(+l.credit||0); }); });
+    return acc;
+  }
+  function netCredit(code){ let n=0; (db.ecritures||[]).forEach(e=>{ if(e.date>S().exoFin)return;
+    (e.lignes||[]).forEach(l=>{ if(c9(l.compte)===code) n+=(+l.credit||0)-(+l.debit||0); }); }); return r2(n); }
+
+  function etatCR(){
+    const acc=soldes(['6','7'], S().exoDebut, S().exoFin, 'OD RÉSULTAT');
+    const prod=[], charge=[]; let tp=0,tc=0;
+    Object.keys(acc).sort().forEach(k=>{ const a=acc[k];
+      if(k[0]==='7'){ const v=r2(a.c-a.d); if(Math.abs(v)>0.005){ prod.push({k,lib:a.lib,v}); tp+=v; } }
+      else { const v=r2(a.d-a.c); if(Math.abs(v)>0.005){ charge.push({k,lib:a.lib,v}); tc+=v; } } });
+    return {prod, charge, tp:r2(tp), tc:r2(tc), res:r2(tp-tc)};
+  }
+  function etatBilan(){
+    const acc=soldes(['1','2','3','4','5'], null, S().exoFin);
+    const actif=[], passif=[]; let ta=0,tp=0;
+    Object.keys(acc).sort().forEach(k=>{ const a=acc[k]; const sd=r2(a.d-a.c); if(Math.abs(sd)<0.005)return;
+      if(sd>0){ actif.push({k,lib:a.lib,v:sd}); ta+=sd; } else { passif.push({k,lib:a.lib,v:-sd}); tp+=(-sd); } });
+    const cr=etatCR();
+    const resDejaBooked=r2(netCredit('120000000')+netCredit('129000000'));
+    const resAjout=r2(cr.res-resDejaBooked);
+    const totP=r2(tp + (Math.abs(resAjout)>0.005?resAjout:0));
+    return {actif, passif, ta:r2(ta), tp:r2(tp), totP, res:cr.res, resAjout};
+  }
+
+  function crDocHTML(){
+    const C=etatCR(); const f=v=>sageNum(v);
+    const ch=C.charge.map(x=>`<tr><td class="l cpt">${x.k}</td><td class="l">${x.lib}</td><td>${f(x.v)}</td></tr>`).join('');
+    const pr=C.prod.map(x=>`<tr><td class="l cpt">${x.k}</td><td class="l">${x.lib}</td><td>${f(x.v)}</td></tr>`).join('');
+    return `<div class="doc-page">
+      <div class="doc-h1"><span class="doc-soc">${S().raison}</span><span>page</span></div>
+      <div class="doc-title">COMPTE DE RÉSULTAT</div>${docEnteteCourte()}
+      <table class="doc-t"><thead><tr><th class="l">Compte</th><th class="l">CHARGES (classe 6)</th><th>Montant</th></tr></thead><tbody>${ch||'<tr><td colspan=3 style="text-align:center;padding:8px">—</td></tr>'}
+        <tr class="tg"><td></td><td class="l">Total des charges</td><td>${f(C.tc)}</td></tr></tbody></table>
+      <table class="doc-t" style="margin-top:14px"><thead><tr><th class="l">Compte</th><th class="l">PRODUITS (classe 7)</th><th>Montant</th></tr></thead><tbody>${pr||'<tr><td colspan=3 style="text-align:center;padding:8px">—</td></tr>'}
+        <tr class="tg"><td></td><td class="l">Total des produits</td><td>${f(C.tp)}</td></tr></tbody></table>
+      <div class="doc-res">${C.res>=0?'Bénéfice':'Perte'} de l'exercice : ${f(Math.abs(C.res))} Euros</div>
+      <div class="doc-foot">${S().raison}</div></div>`;
+  }
+  function bilanDocHTML(){
+    const B=etatBilan(); const f=v=>sageNum(v);
+    const arows=B.actif.map(x=>`<tr><td class="l cpt">${x.k}</td><td class="l">${x.lib}</td><td>${f(x.v)}</td></tr>`).join('');
+    let prows=B.passif.map(x=>`<tr><td class="l cpt">${x.k}</td><td class="l">${x.lib}</td><td>${f(x.v)}</td></tr>`).join('');
+    if(Math.abs(B.resAjout)>0.005) prows+=`<tr><td class="l"></td><td class="l"><b>Résultat de l'exercice (à affecter)</b></td><td>${f(B.resAjout)}</td></tr>`;
+    return `<div class="doc-page">
+      <div class="doc-h1"><span class="doc-soc">${S().raison}</span><span>page</span></div>
+      <div class="doc-title">BILAN</div>${docEnteteCourte()}
+      <table class="doc-t"><thead><tr><th class="l">Compte</th><th class="l">ACTIF</th><th>Net</th></tr></thead><tbody>${arows||'<tr><td colspan=3 style="text-align:center;padding:8px">—</td></tr>'}
+        <tr class="tg"><td></td><td class="l">TOTAL ACTIF</td><td>${f(B.ta)}</td></tr></tbody></table>
+      <table class="doc-t" style="margin-top:14px"><thead><tr><th class="l">Compte</th><th class="l">PASSIF</th><th>Net</th></tr></thead><tbody>${prows||'<tr><td colspan=3 style="text-align:center;padding:8px">—</td></tr>'}
+        <tr class="tg"><td></td><td class="l">TOTAL PASSIF</td><td>${f(B.totP)}</td></tr></tbody></table>
+      <div class="doc-res">${Math.abs(B.ta-B.totP)<0.01?'Bilan équilibré ✓ (Actif = Passif)':'⚠ Écart de bilan : '+f(Math.abs(B.ta-B.totP))}</div>
+      <div class="doc-foot">${S().raison}</div></div>`;
+  }
+  window.t4Afficher=function(kind){
+    const html=kind==='bilan'?bilanDocHTML():crDocHTML();
+    try{ lastDocHTML='<div class="doc">'+html+'</div>'; }catch(e){}
+    const pv=document.getElementById('doc-preview'); if(pv) pv.innerHTML='<div class="doc">'+html+'</div>';
+    toast(kind==='bilan'?'Bilan généré':'Compte de résultat généré');
+  };
+  window.t4Card=function(){
+    const C=etatCR(); const B=etatBilan(); const eq=Math.abs(B.ta-B.totP)<0.01;
+    return `<div class="card"><h2>États de synthèse — Bilan & Compte de résultat</h2>
+      <div class="sub">Calculés depuis les soldes (comptes normalisés c9). Le compte de résultat est établi hors « OD RÉSULTAT » (valable avant comme après clôture). Le bilan est équilibré : le résultat non encore affecté en 120/129 est ajouté en capitaux propres.</div>
+      <div class="grid g3" style="margin-bottom:10px">
+        <div class="kpi green"><div class="lbl">Total produits (7)</div><div class="val cre">${eur(C.tp)}</div></div>
+        <div class="kpi red"><div class="lbl">Total charges (6)</div><div class="val deb">${eur(C.tc)}</div></div>
+        <div class="kpi blue"><div class="lbl">Résultat</div><div class="val">${eur(C.res)}</div></div>
+      </div>
+      <div class="docbar">
+        <button class="btn btn-gold" onclick="t4Afficher('cr')">Générer le compte de résultat</button>
+        <button class="btn btn-gold" onclick="t4Afficher('bilan')">Générer le bilan</button>
+        <span style="margin-left:auto"></span>
+        <button class="btn btn-pri" onclick="imprimerDoc()">🖶 Imprimer / PDF</button>
+      </div>
+      <div class="hint">Total actif ${eur(B.ta)} · total passif ${eur(B.totP)} — ${eq?'équilibré ✓':'écart à vérifier'}.</div>
+    </div>`;
+  };
+  const _p=pageEditions; pageEditions=function(){ return _p()+t4Card(); };
+})();
+</script>
+
+<script id="yada-addon24">
+/* ============================================================
+   T3 — Lettrage unifié
+   Moteur de lettrage commun (champ l.lettre), avec contrôle d'équilibre
+   Σ débit = Σ crédit. Branché sur l'éditeur d'écritures (colonne L) :
+   on clique les lignes du compte à rapprocher, puis « Lettrer ». Le même
+   champ l.lettre est utilisé par le compte auxiliaire (données partagées).
+   100% additif.
+   ============================================================ */
+(function(){
+  if(typeof c9!=='function') return;
+  function lineOf(ref){ const e=(db.ecritures||[]).find(x=>x.id===ref.e); return e? e.lignes[ref.i] : null; }
+  window.lzProchaineLettre=function(cptC9){ const used={};
+    (db.ecritures||[]).forEach(e=>e.lignes.forEach(l=>{ if(c9(l.compte)===cptC9 && l.lettre) used[l.lettre]=1; }));
+    for(let i=0;i<26;i++){ const x=String.fromCharCode(65+i); if(!used[x]) return x; }
+    for(let i=0;i<26;i++)for(let j=0;j<26;j++){ const x=String.fromCharCode(65+i)+String.fromCharCode(65+j); if(!used[x]) return x; }
+    return '?'; };
+  window.lzLettrer=function(refs){
+    if(!refs||refs.length<2){ toast('Sélectionnez au moins deux lignes à lettrer'); return false; }
+    let d=0,c=0; const ls=[]; refs.forEach(r=>{ const l=lineOf(r); if(l){ ls.push(l); d+=(+l.debit||0); c+=(+l.credit||0); } });
+    if(ls.length<2){ toast('Lignes introuvables'); return false; }
+    if(Math.abs(r2(d-c))>=0.005){ toast('Lettrage impossible : débit ('+eur(r2(d))+') ≠ crédit ('+eur(r2(c))+')'); return false; }
+    const cpt=c9(ls[0].compte); const L=lzProchaineLettre(cpt);
+    ls.forEach(l=>l.lettre=L); save(); toast('Lettrage '+L+' — '+eur(r2(d))+' équilibré'); return true;
+  };
+  window.lzDelettrer=function(refs){ let n=0; (refs||[]).forEach(r=>{ const l=lineOf(r); if(l&&l.lettre){ l.lettre=''; n++; } }); if(n){ save(); toast(n+' ligne(s) délettrée(s)'); } return n; };
+
+  /* ---- intégration éditeur d'écritures (colonne L cliquable) ---- */
+  if(typeof ecRender==='function'){
+    window.ecSel = window.ecSel || [];
+    window.ecToggleSel=function(key){ const i=ecSel.indexOf(key); if(i>=0) ecSel.splice(i,1); else ecSel.push(key); ecRender(); };
+    window.ecLettrerSel=function(){ const refs=ecSel.map(k=>{const p=k.split('|');return {e:p[0],i:+p[1]};}); if(lzLettrer(refs)){ ecSel=[]; ecRender(); } };
+    window.ecDelettrerSel=function(){ const refs=ecSel.map(k=>{const p=k.split('|');return {e:p[0],i:+p[1]};}); lzDelettrer(refs); ecSel=[]; ecRender(); };
+    if(typeof ouvrirEcrituresCompte==='function'){ const _o=ouvrirEcrituresCompte; ouvrirEcrituresCompte=function(code){ window.ecSel=[]; return _o(code); }; }
+    const _er=ecRender;
+    ecRender=function(){
+      _er();
+      try{
+        const win=document.getElementById('ec-win'); if(!win) return;
+        const tb=win.querySelector('.ec-toolbar');
+        if(tb && !win.querySelector('.ec-letbar')){
+          const bar=document.createElement('div'); bar.className='ec-letbar'; const n=(window.ecSel||[]).length;
+          bar.innerHTML='<span class="ec-llbl">Lettrage :</span>'
+            +'<button class="ec-lbtn" onclick="ecLettrerSel()">🔗 Lettrer la sélection'+(n?(' ('+n+')'):'')+'</button>'
+            +'<button class="ec-lbtn" onclick="ecDelettrerSel()">Délettrer</button>'
+            +'<span class="ec-lhint">Cliquez les lignes de ce compte à rapprocher (Σ débit = Σ crédit), puis « Lettrer ».</span>';
+          tb.parentNode.insertBefore(bar, tb.nextSibling);
+        }
+        const list=ecEcritures(); const flat=[];
+        list.forEach(e=>e.lignes.forEach((l,i)=>flat.push({e:e.id,i,mine:ecMatch(l.compte,ecCode)})));
+        const rows=win.querySelectorAll('.ec-table tbody tr.ec-r');
+        rows.forEach((tr,idx)=>{ const f=flat[idx]; if(!f||!f.mine) return; const key=f.e+'|'+f.i;
+          if((window.ecSel||[]).indexOf(key)>=0) tr.classList.add('ec-lsel');
+          tr.style.cursor='pointer';
+          tr.addEventListener('click', function(ev){ const tg=ev.target; if(tg && (tg.tagName==='INPUT'||tg.tagName==='BUTTON')) return; ecToggleSel(key); });
+        });
+      }catch(e){}
+    };
+  }
+})();
+</script>
+
+<script id="yada-addon25">
+/* ============================================================
+   Règlements ↔ Banque : un règlement génère l'écriture de trésorerie
+   Avant : « Validé ✓ » changeait le statut sans mouvement 512 → la
+   créance (411) / dette (401) restait ouverte. Désormais : encaissement
+   client = crédit 411 / débit 512 ; paiement fournisseur = débit 401 /
+   crédit 512, puis lettrage de la facture. Continuité trésorerie garantie.
+   100% additif (override de marquerRegle / ecart).
+   ============================================================ */
+(function(){
+  if(typeof posterBanque!=='function' || typeof db==='undefined') return;
+  function regInfo(r){ const f=(db.factures||[]).find(x=>x.id===r.factureId); const t=f?(db.tiers||[]).find(x=>x.id===f.tiersId):null; return {f,t}; }
+  function passerBanqueReglement(r, montant, libPrefixe){
+    const {f,t}=regInfo(r); if(!f) return null;
+    const client = r.sens==='a_encaisser';
+    const compte = client?'411':'401';
+    const sens = client?'C':'D';   // encaissement client : crédit 411 ; paiement fournisseur : débit 401
+    const rec=posterBanque({ mois:ym(todayStr()), jour:(+todayStr().slice(8,10))||1, compte,
+      libelle:(libPrefixe||(client?'ENCAISSEMENT ':'PAIEMENT '))+(t?t.nom:'')+' '+f.numero,
+      sens, montant:r2(montant), suivi:(typeof nextNum==='function'?nextNum('BQ'):''), tiersId:f.tiersId });
+    if(typeof lettrer==='function' && rec) lettrer(rec.id, f.id, r2(montant));
+    return rec;
+  }
+  window.marquerRegle=function(id){
+    const r=(db.reglements||[]).find(x=>x.id===id); if(!r) return; const {f}=regInfo(r); if(!f) return;
+    const montant=r2(r.restant>0?r.restant:f.ttc);
+    if(montant<=0.005){ r.statut='regle'; r.restant=0; save(); render(); return; }
+    passerBanqueReglement(r, montant);
+    if(!(typeof lettrer==='function')){ r.statut='regle'; r.regle=f.ttc; r.restant=0; r.echelonne=false; }
+    r.notes=r.notes||[]; r.notes.push('Paiement validé le '+todayStr()+' — écriture banque (512) générée ('+eur(montant)+')');
+    save(); render(); toast('Règlement validé ✓ — écriture de banque (512) générée');
+  };
+  window.ecart=function(id){
+    const r=(db.reglements||[]).find(x=>x.id===id); if(!r) return; const {f}=regInfo(r); if(!f) return;
+    const part=prompt('Montant déjà réglé (paiement partiel / échelonné) :', r2((r.restant||f.ttc)/2)); if(part===null) return;
+    let m=r2(+part||0); if(m<=0) return toast('Montant invalide'); if(m>r.restant+0.005) m=r.restant;
+    passerBanqueReglement(r, m, r.sens==='a_encaisser'?'ACOMPTE REÇU ':'ACOMPTE VERSÉ ');
+    if(!(typeof lettrer==='function')){ r.echelonne=true; r.statut='partiel'; r.regle=r2(r.regle+m); r.restant=r2(f.ttc-r.regle); }
+    r.notes=r.notes||[]; r.notes.push('Réglé partiellement ('+eur(m)+') le '+todayStr()+' — écriture banque générée');
+    save(); render(); toast('Règlement partiel + écriture de banque générée');
+  };
+  /* note informative en tête de la page Règlements */
+  if(typeof pageReglements==='function'){ const _p=pageReglements;
+    pageReglements=function(){ return _p().replace('</h1>','</h1>')
+      .replace('<div class="card"><h2>Encours</h2>',
+        '<div class="card" style="border-left:4px solid var(--gold)"><div class="hint">💡 « Validé ✓ » et « À écart » génèrent désormais automatiquement l\'écriture de banque (512) et lettrent la facture — la créance/dette est réellement soldée par la trésorerie.</div></div><div class="card"><h2>Encours</h2>'); };
+  }
+})();
+</script>
+
+<script id="yada-addon26">
+/* ============================================================
+   Immobilisations — Cession : génère l'écriture de sortie
+   Avant : imCeder n'enregistrait que la date/prix sans écriture.
+   Désormais (OD équilibrée) :
+     675 (VCEAC)        D = VNC
+     28x (amort cumulés) D = cumul amortissements
+     21x (immo brute)    C = montant HT
+     512 (banque)        D = prix de cession
+     775 (PCEA)          C = prix de cession
+   (VNC + cumul = montant HT → écriture équilibrée). 100% additif.
+   ============================================================ */
+(function(){
+  if(typeof posterOD!=='function' || typeof immoRowAnnee!=='function') return;
+  COMPTES['675000000']=COMPTES['675000000']||"Valeurs comptables des éléments d'actif cédés";
+  COMPTES['775000000']=COMPTES['775000000']||"Produits des cessions d'éléments d'actif";
+  function cessionLib(im){ return 'CESSION IMMOBILISATION '+im.numero; }
+  window.imCederComptabilise=function(im, dateCession, prix){
+    prix=r2(+prix||0); const an=+String(dateCession).slice(0,4);
+    const row=immoRowAnnee(im, an); const cumul=r2(row.cumul); const vnc=r2(im.montantHT-cumul);
+    const cptImmo=c9(im.compte), cptAmort=c9(im.compteAmort||compteAmortDe(im.compte));
+    const lignes=[];
+    if(vnc>0.005) lignes.push({compte:'675000000', lib:'VNC '+im.numero, debit:vnc, credit:0});
+    if(cumul>0.005) lignes.push({compte:cptAmort, lib:'Amort. cumulés '+im.numero, debit:cumul, credit:0});
+    lignes.push({compte:cptImmo, lib:'Sortie immobilisation '+im.numero, debit:0, credit:r2(im.montantHT)});
+    if(prix>0.005){ lignes.push({compte:'512000000', lib:'Cession '+im.numero, debit:prix, credit:0});
+      lignes.push({compte:'775000000', lib:'Produit cession '+im.numero, debit:0, credit:prix}); }
+    posterOD({date:dateCession, libelle:cessionLib(im), lignes, journal:'OD'});
+    return {vnc, cumul, prix, plusValue:r2(prix-vnc)};
+  };
+  window.imCeder=function(id){
+    const im=(db.immos||[]).find(x=>x.id===id); if(!im) return;
+    if((db.ecritures||[]).some(e=>(e.libelle||'').indexOf(cessionLib(im))>=0)) return toast('Cession déjà comptabilisée pour '+im.numero);
+    const d=prompt('Date de cession (AAAA-MM-JJ) :', (typeof imYear==='function'?imYear():'2026')+'-12-31'); if(!d) return;
+    const prixS=prompt('Prix de cession HT (€) :','0'); if(prixS===null) return;
+    const r=imCederComptabilise(im, d, prixS);
+    im.sortie={date:d, prix:r.prix}; save(); render();
+    toast('Cession comptabilisée — VNC '+eur(r.vnc)+' / produit '+eur(r.prix)+' ('+(r.plusValue>=0?'+ value ':'- value ')+eur(Math.abs(r.plusValue))+')');
+  };
+})();
+</script>
+
+<script id="yada-addon27">
+/* Éditeur d'écritures — filtre / tri (finition « compta »). Affichage seulement. */
+(function(){
+  if(typeof ecRender!=='function' || typeof ecEcritures!=='function') return;
+  window.ecFiltre=window.ecFiltre||''; window.ecSortDir=window.ecSortDir||'asc';
+  const _ee=ecEcritures;
+  ecEcritures=function(){ let list=_ee(); const q=(window.ecFiltre||'').toLowerCase().trim();
+    if(q) list=list.filter(e=> String(e.date||'').includes(q) || String(e.journal||'').toLowerCase().includes(q)
+      || String(e.libelle||'').toLowerCase().includes(q)
+      || (e.lignes||[]).some(l=>String(l.compte||'').includes(q)||String(l.lib||'').toLowerCase().includes(q)||String(l.lettre||'').toLowerCase().includes(q)));
+    list=list.slice().sort((a,b)=> window.ecSortDir==='desc'? String(b.date||'').localeCompare(String(a.date||'')) : String(a.date||'').localeCompare(String(b.date||'')));
+    return list; };
+  window.ecSetFiltre=function(v){ window.ecFiltre=v; ecRender(); const i=document.getElementById('ec-filtre-inp'); if(i){ i.focus(); try{i.setSelectionRange(v.length,v.length);}catch(e){} } };
+  window.ecToggleSort=function(){ window.ecSortDir=window.ecSortDir==='desc'?'asc':'desc'; ecRender(); };
+  if(typeof ouvrirEcrituresCompte==='function'){ const _o=ouvrirEcrituresCompte; ouvrirEcrituresCompte=function(c){ window.ecFiltre=''; return _o(c); }; }
+  const _er=ecRender;
+  ecRender=function(){ _er(); try{ const win=document.getElementById('ec-win'); if(!win)return;
+    const mb=win.querySelector('.ec-menubar'); if(mb && !win.querySelector('.ec-filtbar')){
+      const bar=document.createElement('div'); bar.className='ec-filtbar';
+      bar.innerHTML='<span class="ec-flbl">🔍 Filtre</span>'
+        +'<input id="ec-filtre-inp" class="ec-flinp" placeholder="date, journal, compte, libellé, lettre…" value="'+String(window.ecFiltre||'').replace(/"/g,'&quot;')+'" oninput="ecSetFiltre(this.value)">'
+        +'<button class="ec-flbtn" onclick="ecToggleSort()">Date '+(window.ecSortDir==='desc'?'▼':'▲')+'</button>'
+        +(window.ecFiltre?'<button class="ec-flbtn" onclick="ecSetFiltre(\'\')">✕</button>':'');
+      mb.parentNode.insertBefore(bar, mb.nextSibling);
+    } }catch(e){} };
+})();
+</script>
+
+<script id="yada-addon28">
+/* Tiers — édition / suppression d'une fiche (fiabilisation). Bloqué si mouvementé. */
+(function(){
+  if(typeof pageTiers!=='function') return;
+  function tiersMouvemente(t){ return (db.factures||[]).some(f=>f.tiersId===t.id) || (db.banque||[]).some(b=>b.tiersId===t.id)
+    || (t.compteAux && (db.ecritures||[]).some(e=>e.lignes.some(l=>c9(l.compte)===c9(t.compteAux)))); }
+  window.tiersEditer=function(id){ const t=(db.tiers||[]).find(x=>x.id===id); if(!t)return;
+    const mv=tiersMouvemente(t);
+    const opt=(arr,sel)=>arr.map(c=>'<option value="'+c+'" '+(c===sel?'selected':'')+'>'+c+' — '+(COMPTES[c]||'')+'</option>').join('');
+    const contre=t.type==='client'?COMPTES_PRODUIT:COMPTES_CHARGE; const tva=t.type==='client'?['44571']:['44566','44562'];
+    document.getElementById('modal-c').innerHTML='<div class="modal-h"><h3>Modifier — '+t.nom+'</h3><button class="x" onclick="closeModal()">×</button></div>'
+      +'<div class="modal-b">'+(mv?'<div class="hint" style="color:#c0584f">⚠ Tiers mouvementé : le type et les comptes des écritures passées ne sont pas modifiés rétroactivement.</div>':'')
+      +'<div class="row g2"><div class="field"><label>Dénomination</label><input id="te-nom" value="'+(t.nom||'').replace(/"/g,'&quot;')+'"></div>'
+      +'<div class="field"><label>Taux TVA</label><select id="te-taux">'+[20,10,5.5,2.1,0].map(x=>'<option '+(x==t.taux?'selected':'')+'>'+x+'</option>').join('')+'</select></div></div>'
+      +'<div class="row g2"><div class="field"><label>Compte de contrepartie</label><select id="te-contre">'+opt(contre,t.compteContre)+'</select></div>'
+      +'<div class="field"><label>Compte de TVA</label><select id="te-tva">'+opt(tva,t.compteTVA)+'</select></div></div>'
+      +'<div class="row g3"><div class="field"><label>E-mail</label><input id="te-email" value="'+(t.email||'').replace(/"/g,'&quot;')+'"></div>'
+      +'<div class="field"><label>Téléphone</label><input id="te-tel" value="'+(t.tel||'').replace(/"/g,'&quot;')+'"></div>'
+      +'<div class="field"><label>Adresse</label><input id="te-adr" value="'+(t.adresse||'').replace(/"/g,'&quot;')+'"></div></div>'
+      +'<div class="right" style="gap:8px">'+(mv?'':'<button class="btn btn-ghost" onclick="tiersSupprimer(\''+id+'\')">🗑 Supprimer la fiche</button>')
+      +'<button class="btn btn-pri" onclick="tiersEnregistrer(\''+id+'\')">💾 Enregistrer</button></div></div>';
+    document.getElementById('modal').classList.add('show'); };
+  window.tiersEnregistrer=function(id){ const t=(db.tiers||[]).find(x=>x.id===id); if(!t)return; const g=i=>{const e=document.getElementById(i);return e?e.value:'';};
+    t.nom=g('te-nom').trim()||t.nom; t.taux=+g('te-taux'); t.compteContre=g('te-contre'); t.compteTVA=g('te-tva');
+    t.email=g('te-email'); t.tel=g('te-tel'); t.adresse=g('te-adr'); save(); closeModal(); render(); toast('Fiche tiers mise à jour'); };
+  window.tiersSupprimer=function(id){ const t=(db.tiers||[]).find(x=>x.id===id); if(!t)return;
+    if(tiersMouvemente(t)) return toast('Tiers mouvementé : suppression impossible');
+    if(!confirm('Supprimer la fiche « '+t.nom+' » ?'))return; db.tiers=db.tiers.filter(x=>x.id!==id); save(); closeModal(); render(); toast('Fiche supprimée'); };
+  /* rendre les noms de tiers éditables : ajoute un bouton ✎ via greffe de openTiers (la fiche consultation garde un accès édition) */
+  if(typeof openTiers==='function'){ const _o=openTiers; openTiers=function(id){ _o(id);
+    try{ const mb=document.querySelector('#modal-c .modal-h'); if(mb && !document.getElementById('te-edit-btn')){
+      const b=document.createElement('button'); b.id='te-edit-btn'; b.className='btn btn-ghost btn-sm'; b.textContent='✎ Modifier'; b.style.marginRight='8px';
+      b.onclick=function(){ tiersEditer(id); }; mb.insertBefore(b, mb.querySelector('.x')); } }catch(e){} }; }
+})();
+</script>
+
+<script id="yada-addon29">
+/* Éditions — balance âgée clients & fournisseurs (fiabilisation). Lecture seule. */
+(function(){
+  if(typeof pageEditions!=='function' || typeof reglementDe!=='function') return;
+  function ageRows(type){ const sens=type==='client'?'a_encaisser':'a_payer'; const today=todayStr(); const buckets={};
+    (db.reglements||[]).filter(r=>r.sens===sens && r.statut!=='regle' && r.restant>0.005).forEach(r=>{ const f=(db.factures||[]).find(x=>x.id===r.factureId); if(!f)return;
+      const t=(db.tiers||[]).find(x=>x.id===f.tiersId); const nom=t?t.nom:'—'; const ech=r.echeance||f.date;
+      const jours=Math.floor((new Date(today)-new Date(ech))/86400000);
+      const b=buckets[nom]||(buckets[nom]={c:0,'0':0,'30':0,'60':0,'90':0}); b.c+=r.restant;
+      if(jours<=0)b['0']+=r.restant; else if(jours<=30)b['30']+=r.restant; else if(jours<=60)b['60']+=r.restant; else b['90']+=r.restant; });
+    return buckets; }
+  function ageTable(type){ const b=ageRows(type); const noms=Object.keys(b).sort();
+    if(!noms.length) return '<div class="empty">Aucun encours '+(type==='client'?'client':'fournisseur')+'.</div>';
+    let T={c:0,'0':0,'30':0,'60':0,'90':0};
+    const rows=noms.map(n=>{ const x=b[n]; ['c','0','30','60','90'].forEach(k=>T[k]+=x[k]);
+      return '<tr><td><b>'+n+'</b></td><td class="r num">'+eur(r2(x['0']))+'</td><td class="r num">'+eur(r2(x['30']))+'</td><td class="r num">'+eur(r2(x['60']))+'</td><td class="r num '+(x['90']>0?'deb':'')+'">'+eur(r2(x['90']))+'</td><td class="r num"><b>'+eur(r2(x.c))+'</b></td></tr>'; }).join('');
+    return '<table><thead><tr><th>'+(type==='client'?'Client':'Fournisseur')+'</th><th class="r">Non échu</th><th class="r">≤ 30 j</th><th class="r">31–60 j</th><th class="r">+60 j</th><th class="r">Total dû</th></tr></thead>'
+      +'<tbody>'+rows+'<tr class="totrow"><td>Total</td><td class="r num">'+eur(r2(T['0']))+'</td><td class="r num">'+eur(r2(T['30']))+'</td><td class="r num">'+eur(r2(T['60']))+'</td><td class="r num">'+eur(r2(T['90']))+'</td><td class="r num">'+eur(r2(T.c))+'</td></tr></tbody></table>'; }
+  window.balanceAgeeCard=function(){ return '<div class="card"><h2>Balance âgée</h2>'
+    +'<div class="sub">Encours non soldés ventilés par ancienneté (échéance). Source : règlements ouverts.</div>'
+    +'<h3 style="font-family:Fraunces,serif;font-size:15px;margin:8px 0 6px">Clients</h3>'+ageTable('client')
+    +'<h3 style="font-family:Fraunces,serif;font-size:15px;margin:14px 0 6px">Fournisseurs</h3>'+ageTable('fournisseur')+'</div>'; };
+  const _p=pageEditions; pageEditions=function(){ return _p()+balanceAgeeCard(); };
+})();
+</script>
+
+<script id="yada-addon30">
+/* Tableau de bord — trésorerie réelle (solde 512) + CA/charges depuis les écritures (fiabilisation). */
+(function(){
+  if(typeof dashCompta!=='function') return;
+  window.soldeTresorerie=function(){ let s=0; (db.ecritures||[]).forEach(e=>e.lignes.forEach(l=>{ if(c9(l.compte).slice(0,3)==='512') s+=(+l.debit||0)-(+l.credit||0); })); return r2(s); };
+  function caChargesEcr(){ let ca=0,ch=0; (db.ecritures||[]).forEach(e=>{ if((e.libelle||'').indexOf('OD RÉSULTAT')>=0) return; e.lignes.forEach(l=>{ const cl=c9(l.compte)[0]; if(cl==='7')ca+=(+l.credit||0)-(+l.debit||0); if(cl==='6')ch+=(+l.debit||0)-(+l.credit||0); }); }); return {ca:r2(ca),ch:r2(ch)}; }
+  window.dashTresoCard=function(){ const t=soldeTresorerie(); const x=caChargesEcr();
+    return '<div class="grid g3"><div class="kpi blue"><div class="lbl">Trésorerie réelle (512)</div><div class="val">'+eur(t)+'</div><div class="meta">solde des comptes banque</div></div>'
+      +'<div class="kpi green"><div class="lbl">Produits (écritures 7)</div><div class="val cre">'+eur(x.ca)+'</div></div>'
+      +'<div class="kpi red"><div class="lbl">Charges (écritures 6)</div><div class="val deb">'+eur(x.ch)+'</div></div></div>'; };
+  const _d=dashCompta; dashCompta=function(){ return _d()+dashTresoCard(); };
+})();
+</script>
+
+<script id="yada-addon31">
+/* GED — dépôt glisser-déposer de vrais fichiers, stockés dans db.parametres.pieces (par dossier). */
+(function(){
+  if(typeof pageEspaceClient!=='function') return;
+  function store(){ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.pieces))db.parametres.pieces=[]; return db.parametres.pieces; }
+  window.gedStore=store;
+  function sz(n){ return !n?'':(n<1024?n+' o':(n<1048576?Math.round(n/1024)+' Ko':(n/1048576).toFixed(1)+' Mo')); }
+  window.gedAdd=function(file,silent){ return new Promise(res=>{ const r=new FileReader();
+    r.onload=()=>{ try{ store().push({id:uid(),nom:file.name,mime:file.type||'',taille:file.size||0,data:r.result,date:todayStr()}); save(); if(!silent)toast('Pièce « '+file.name+' » ajoutée'); res(true);}catch(e){ toast('Fichier trop volumineux'); res(false);} };
+    r.onerror=()=>res(false); r.readAsDataURL(file); }); };
+  async function addList(fs){ for(let i=0;i<fs.length;i++) await gedAdd(fs[i]); render(); }
+  window.gedDrop=function(ev){ ev.preventDefault(); try{ev.currentTarget.classList.remove('drag');}catch(e){} const fs=ev.dataTransfer&&ev.dataTransfer.files; if(fs&&fs.length)addList(fs); };
+  window.gedPick=function(){ const el=document.getElementById('ged-file'); if(el)el.click(); };
+  window.gedFile=function(ev){ const fs=ev.target.files; if(fs&&fs.length)addList(fs); };
+  window.gedVoir=function(id){ const p=store().find(x=>x.id===id); if(!p)return; const w=window.open(); if(w)w.document.write('<iframe src="'+p.data+'" style="border:0;position:fixed;inset:0;width:100%;height:100%"></iframe>'); };
+  window.gedDl=function(id){ const p=store().find(x=>x.id===id); if(!p)return; const a=document.createElement('a'); a.href=p.data; a.download=p.nom||'piece'; document.body.appendChild(a); a.click(); a.remove(); };
+  window.gedDel=function(id){ const s=store(); const i=s.findIndex(x=>x.id===id); if(i<0)return; if(!confirm('Supprimer « '+s[i].nom+' » ?'))return; s.splice(i,1); save(); render(); };
+  function ico(p){ const n=(p.nom||'').toLowerCase(); if((p.mime||'').includes('pdf')||n.endsWith('.pdf'))return '📕'; if((p.mime||'').includes('image')||/\.(jpe?g|png|gif|webp)$/.test(n))return '🖼'; return '📄'; }
+  window.gedCard=function(){ const s=store();
+    const liste=s.length?s.slice().reverse().map(p=>'<div class="ged-it"><span>'+ico(p)+'</span><span class="ged-nm" title="'+String(p.nom||'').replace(/"/g,'&quot;')+'">'+(p.nom||'pièce')+'</span><span class="ged-mt">'+frDate(p.date)+(p.taille?' · '+sz(p.taille):'')+'</span><span><button class="btn btn-ghost btn-xs" onclick="gedVoir(\''+p.id+'\')">Ouvrir</button> <button class="btn btn-ghost btn-xs" onclick="gedDl(\''+p.id+'\')">⤓</button> <button class="btn btn-ghost btn-xs" onclick="gedDel(\''+p.id+'\')">✕</button></span></div>').join(''):'<div class="hint">Aucune pièce déposée.</div>';
+    return '<div class="card"><h2>Pièces du dossier (GED)</h2><div class="sub">Glissez-déposez vos PDF / photos : ils sont réellement stockés (consultables, téléchargeables).</div>'
+      +'<div class="ged-drop" onclick="gedPick()" ondragover="event.preventDefault();this.classList.add(\'drag\')" ondragleave="this.classList.remove(\'drag\')" ondrop="gedDrop(event)"><div style="font-size:24px">⬆</div><div style="font-weight:700">Déposez vos fichiers ici</div><div class="hint">ou cliquez — pdf, jpg, png</div>'
+      +'<input type="file" id="ged-file" hidden multiple accept=".pdf,.jpg,.jpeg,.png,image/*" onchange="gedFile(event)"></div>'+liste+'</div>'; };
+  const _p=pageEspaceClient; pageEspaceClient=function(){ return _p()+gedCard(); };
+})();
+</script>
+
+<script id="yada-addon32">
+/* Mode Client séparé — accès dédié n'affichant que l'Espace Client. */
+(function(){
+  if(typeof render!=='function') return;
+  window.sessionRole=window.sessionRole||'cabinet'; window.selClientMode=window.selClientMode||false;
+  window.choisirDossierClient=function(id){ if(typeof choisirDossier==='function') choisirDossier(id); window.sessionRole='client'; window.selClientMode=false; current='client'; render(); };
+  window.quitterEspaceClient=function(){ if(typeof persistActif==='function')persistActif(); window.sessionRole='cabinet'; window.selClientMode=true; connecte=false; if(typeof selRecherche!=='undefined')selRecherche=''; render(); };
+  if(typeof ecranSelectionDossier==='function'){ const _es=ecranSelectionDossier; ecranSelectionDossier=function(){ let h=_es();
+    if(window.selClientMode){ h=h.replace(/choisirDossier\(/g,'choisirDossierClient(').replace('Sélectionnez un dossier','Espace client — sélectionnez votre dossier'); }
+    const btn=window.selClientMode?'<button class="btn btn-ghost" onclick="selClientMode=false;render()">↩ Accès cabinet</button>':'<button class="btn btn-ghost" onclick="selClientMode=true;render()">👤 Accès client</button>';
+    return h.replace('<div class="login-actions">','<div class="login-actions">'+btn); }; }
+  const _bn=buildNav; buildNav=function(){ if(window.sessionRole==='client'){ const nav=document.getElementById('nav'); if(!nav)return; nav.innerHTML='';
+      const sec=document.createElement('div'); sec.className='nav-sec'; sec.textContent='Espace Client'; nav.appendChild(sec);
+      const b=document.createElement('button'); b.className='nav-btn active'; b.innerHTML='<span class="ico">🧑</span>Mon espace'; b.onclick=()=>{current='client';render();}; nav.appendChild(b); return; }
+    return _bn(); };
+  function applyRole(){ const client=(connecte&&window.sessionRole==='client'); document.body.setAttribute('data-role',client?'client':'cabinet');
+    const foot=document.querySelector('.side-foot'); if(foot) foot.querySelectorAll('button').forEach(b=>{ const t=b.textContent||'';
+      if(/Exporter|Importer|Réinitialiser/.test(t)) b.style.display=client?'none':'';
+      if(/Changer de dossier|Quitter l'espace/.test(t)) b.textContent=client?"⎋ Quitter l'espace client":'⇆ Changer de dossier'; }); }
+  const _r=render; render=function(){ if(connecte&&window.sessionRole==='client'&&current!=='client')current='client'; const res=_r.apply(this,arguments); try{applyRole();}catch(e){} return res; };
+  if(typeof retourSelectionDossier==='function'){ const _ret=retourSelectionDossier; retourSelectionDossier=function(){ if(window.sessionRole==='client'){ quitterEspaceClient(); return; } return _ret(); }; }
+  if(typeof dashRoute==='function'){ const _dr=dashRoute; dashRoute=function(type,name){ if(connecte&&window.sessionRole==='client'){ toast('Pièce reçue — votre cabinet la traitera.'); current='client'; render(); return; } return _dr(type,name); }; }
+})();
+</script>
+
+<script id="yada-addon33">
+/* Messagerie client ↔ cabinet + pièces demandées (db.parametres.messages / .demandes). */
+(function(){
+  if(typeof pageEspaceClient!=='function') return;
+  function ms(){ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.messages))db.parametres.messages=[]; return db.parametres.messages; }
+  function ds(){ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.demandes))db.parametres.demandes=[]; return db.parametres.demandes; }
+  window.msgStore=ms; window.demStore=ds;
+  function role(){ return window.sessionRole==='client'?'client':'cabinet'; }
+  window.msgEnvoyer=function(){ const i=document.getElementById('msg-inp'); const t=(i&&i.value||'').trim(); if(!t)return; ms().push({id:uid(),de:role(),texte:t,date:new Date().toISOString()}); save(); render(); };
+  window.demAjouter=function(){ const i=document.getElementById('dem-inp'); const t=(i&&i.value||'').trim(); if(!t)return; ds().push({id:uid(),libelle:t,statut:'demandee',date:todayStr()}); save(); render(); toast('Pièce demandée au client'); };
+  window.demBascule=function(id){ const d=ds().find(x=>x.id===id); if(d){ d.statut=d.statut==='fournie'?'demandee':'fournie'; save(); render(); } };
+  window.demSupprimer=function(id){ const s=ds(); const i=s.findIndex(x=>x.id===id); if(i>=0){s.splice(i,1);save();render();} };
+  window.messagerieCard=function(){ const r=role(); const msgs=ms();
+    const thread=msgs.length?msgs.map(m=>'<div class="msg '+(m.de===r?'me':'them')+'"><div class="msg-b">'+String(m.texte||'').replace(/</g,'&lt;')+'</div><div class="msg-m">'+(m.de==='client'?'Client':'Cabinet')+' · '+frDate(String(m.date||'').slice(0,10))+'</div></div>').join(''):'<div class="hint">Aucun message.</div>';
+    const dem=ds(); const dl=dem.length?dem.map(d=>'<div class="dem-it '+d.statut+'"><span>'+(d.statut==='fournie'?'✓':'⏳')+'</span><span class="dem-lb">'+String(d.libelle||'').replace(/</g,'&lt;')+'</span><span><button class="btn btn-ghost btn-xs" onclick="demBascule(\''+d.id+'\')">'+(d.statut==='fournie'?'À fournir':'Fournie')+'</button>'+(r==='cabinet'?' <button class="btn btn-ghost btn-xs" onclick="demSupprimer(\''+d.id+'\')">✕</button>':'')+'</span></div>').join(''):'<div class="hint">Aucune pièce demandée.</div>';
+    return '<div class="card"><h2>Messagerie '+(r==='client'?'— mon cabinet':'— mon client')+'</h2><div class="sub">Échange direct et suivi des pièces demandées.</div>'
+      +'<div class="msg-thread">'+thread+'</div>'
+      +'<div class="msg-form"><input id="msg-inp" placeholder="Écrire un message…" onkeydown="if(event.key===\'Enter\')msgEnvoyer()"><button class="btn btn-pri" onclick="msgEnvoyer()">Envoyer</button></div>'
+      +'<h3 style="font-size:14px;margin:14px 0 4px">Pièces demandées</h3>'
+      +(r==='cabinet'?'<div class="msg-form"><input id="dem-inp" placeholder="Demander une pièce (ex. relevé bancaire mars)…" onkeydown="if(event.key===\'Enter\')demAjouter()"><button class="btn btn-gold" onclick="demAjouter()">Demander</button></div>':'<div class="hint">Déposez les pièces dans « Pièces du dossier (GED) » puis marquez-les fournies.</div>')
+      +dl+'</div>'; };
+  const _p=pageEspaceClient; pageEspaceClient=function(){ return _p()+messagerieCard(); };
+})();
+</script>
+
+<script id="yada-addon34">
+/* FEC inverse — bouton « Ouvrir l'exercice précédent (N-1) » pour saisir les à-nouveaux. */
+(function(){
+  if(typeof pageFEC!=='function' || typeof exPrecedent!=='function') return;
+  window.fecOuvrirPrecedent=function(){ if(confirm("Ouvrir l'exercice précédent (N-1) ? Vous pourrez y saisir les à-nouveaux / la reprise de balance, puis revenir via « Exercice suivant ».")) exPrecedent(); };
+  const _p=pageFEC; pageFEC=function(){ return _p()
+    +'<div class="card"><h2>Reprise antérieure (FEC inverse)</h2><div class="sub">Si le FEC importé démarre en N mais que vous devez reprendre les soldes de N-1, ouvrez l\'exercice précédent pour saisir les à-nouveaux, puis générez le report depuis Éditions → Clôture.</div>'
+    +'<div class="right"><button class="btn btn-gold" onclick="fecOuvrirPrecedent()">↩ Ouvrir l\'exercice précédent (N-1)</button></div></div>'; };
+})();
+</script>
+
+<script id="yada-addon35">
+/* ============================================================
+   Autoliquidation de TVA sur achats (UE / hors-UE / sous-traitance)
+   Le fournisseur facture HT ; l'acheteur auto-déclare la TVA :
+     60x (HT)                 D
+     445660000 (TVA déd.)     D
+        401 (HT)              C
+        445710000 (TVA coll.) C
+   → impact trésorerie nul (TVA collectée = déductible), mais déclarée sur
+   la CA3 (les deux remontent dans tvaDuMois et sont soldées par l'OD TVA).
+   100% additif (case à cocher dans Achats + override validerAchat/majAc).
+   ============================================================ */
+(function(){
+  if(typeof posterFacture!=='function' || typeof pageAchats!=='function') return;
+  window.posterAchatAutoliq=function(o){
+    const m=calcMontants(o.base, o.taux, 'HT'); const t=(db.tiers||[]).find(x=>x.id===o.tiersId);
+    const numero=o.numero||nextNumUnique('ACH');
+    const f={ id:uid(), type:'achat', tiersId:o.tiersId, date:o.date, numero, taux:+o.taux,
+      ht:m.ht, tva:m.tva, ttc:m.ht /* net dû = HT (TVA autoliquidée) */, compteContre:o.compteContre,
+      compteTVA:'445660000', source:o.source||'manuelle', modeReglement:o.modeReglement||'', autoliq:true, recuLe:o.date };
+    const lignes=[
+      {compte:o.compteContre, lib:(COMPTES[o.compteContre]||'Charge')+' (autoliq.)', debit:m.ht, credit:0},
+      {compte:'445660000', lib:'TVA déductible autoliquidée', debit:m.tva, credit:0},
+      {compte:'401', lib:'Fournisseur '+(t?t.nom:''), debit:0, credit:m.ht},
+      {compte:'445710000', lib:'TVA collectée autoliquidée', debit:0, credit:m.tva},
+    ];
+    const ecr={ id:uid(), factureId:f.id, date:o.date, journal:'ACH', libelle:numero+' · '+(t?t.nom:'')+' (autoliquidation)', lignes };
+    f.ecritureId=ecr.id;
+    const reg={ id:uid(), factureId:f.id, type:'achat', sens:'a_payer', statut:'attente', echeance:o.echeance||o.date, regle:0, restant:m.ht, notes:[], echelonne:false };
+    db.factures.push(f); db.ecritures.push(ecr); db.reglements.push(reg); save();
+    return f;
+  };
+  /* case à cocher dans le formulaire d'achat */
+  const _pa=pageAchats; pageAchats=function(){ let h=_pa();
+    const ctrl='<div class="field" style="margin-top:2px"><label class="md-check" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="ac-autoliq" onchange="majAc()"> <b>Autoliquidation de TVA</b> (achat UE / hors-UE / sous-traitance) — le fournisseur facture <b>HT</b>, la TVA est auto-déclarée</label></div>';
+    return h.replace('<div id="ac-apercu"></div>', ctrl+'<div id="ac-apercu"></div>'); };
+  /* aperçu autoliquidé */
+  const _ma=majAc; window.majAc=function(){ const cb=document.getElementById('ac-autoliq'); if(!cb||!cb.checked) return _ma();
+    const ht=+document.getElementById('ac-ttc').value||0, taux=+document.getElementById('ac-taux').value; const m=calcMontants(ht,taux,'HT');
+    const sel=document.getElementById('ac-contre'); const fid=document.getElementById('ac-four').value; const t=(db.tiers||[]).find(x=>x.id===fid);
+    if(sel && (sel.options.length===0||sel.dataset.f!==fid)){ sel.innerHTML=optComptes(COMPTES_CHARGE, t?t.compteContre:'606400'); sel.dataset.f=fid; }
+    const cc=sel?sel.value:'606400';
+    document.getElementById('ac-apercu').innerHTML='<div class="ecr"><div class="ecr-h"><span>Écriture AUTOLIQUIDÉE (journal ACH)</span><span class="balance-ok">Équilibrée ✓</span></div><table><tbody>'
+      +'<tr><td class="num">'+cc+'</td><td>'+(COMPTES[cc]||'')+'</td><td class="r num deb">'+eur(m.ht)+'</td><td class="r num"></td></tr>'
+      +'<tr><td class="num">445660000</td><td>TVA déductible autoliquidée ('+taux+'%)</td><td class="r num deb">'+eur(m.tva)+'</td><td class="r num"></td></tr>'
+      +'<tr><td class="num">401</td><td>Fournisseur '+(t?t.nom:'')+' (HT)</td><td class="r num"></td><td class="r num cre">'+eur(m.ht)+'</td></tr>'
+      +'<tr><td class="num">445710000</td><td>TVA collectée autoliquidée</td><td class="r num"></td><td class="r num cre">'+eur(m.tva)+'</td></tr>'
+      +'<tr class="totrow"><td colspan=2>Totaux</td><td class="r num">'+eur(r2(m.ht+m.tva))+'</td><td class="r num">'+eur(r2(m.ht+m.tva))+'</td></tr>'
+      +'</tbody></table><div class="hint">Le montant saisi est le <b>HT</b>. La TVA ('+taux+'%) est collectée ET déductible → trésorerie nulle, mais déclarée sur la CA3.</div></div>'; };
+  /* validation : route vers l'autoliquidation si coché */
+  const _va=validerAchat; window.validerAchat=function(){ const cb=document.getElementById('ac-autoliq');
+    if(cb && cb.checked){ const t=(db.tiers||[]).find(x=>x.id===document.getElementById('ac-four').value); if(!t) return toast('Ajoutez un fournisseur d\'abord');
+      posterAchatAutoliq({ tiersId:t.id, date:document.getElementById('ac-date').value, base:+document.getElementById('ac-ttc').value||0,
+        taux:+document.getElementById('ac-taux').value, compteContre:document.getElementById('ac-contre').value,
+        source:(typeof acSource!=='undefined'?acSource:'manuelle'), modeReglement:document.getElementById('ac-mode').value });
+      toast('Écriture d\'achat AUTOLIQUIDÉE générée — TVA collectée + déductible déclarées'); render(); return; }
+    return _va(); };
 })();
 </script>
 

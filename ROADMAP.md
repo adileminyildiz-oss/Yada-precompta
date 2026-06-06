@@ -13,10 +13,12 @@
 7. Validation systématique à chaque addon.
 
 ## Fondations transverses (priorité maximale)
-- **T1 — Clôture & à‑nouveaux & résultat** : OD de résultat (solde 6/7 → 120/129) + report des soldes 1→5 à l'ouverture N+1. *(en cours — addon21)*
-- **T2 — Cohérence des comptes (TVA)** : normaliser `c9` partout ; l'OD TVA doit réellement solder `44571`/`44566`.
-- **T3 — Lettrage unifié** : une seule source (éditeur Sage, compte auxiliaire, règlements).
-- **T4 — États de synthèse** : Bilan + Compte de résultat.
+- ✅ **T1 — Clôture & à‑nouveaux & résultat** : OD de résultat (solde 6/7 → 120/129) + report des soldes 1→5 à l'ouverture N+1. *(addon21)*
+- ✅ **T2 — Cohérence des comptes (TVA)** : normalisation `c9` partout ; l'OD TVA solde réellement `44571`/`44566`. *(addon22)*
+- ✅ **T4 — États de synthèse** : Bilan + Compte de résultat. *(addon23)*
+- ✅ **T3 — Lettrage unifié** : moteur commun `lz*` + lettrage interactif dans l'éditeur (colonne L), compatible compte auxiliaire. *(addon24)*
+
+**→ Fondations terminées. Prochaine phase : modules à risque comptable.**
 
 ## Plan par module (synthèse)
 | Module | À finaliser (clé) | Garde‑fou comptable |
@@ -45,8 +47,10 @@
 | `coffre` | Chiffrement local | Hors compta |
 | `parametrage` | Mapping TVA appliqué à la saisie ; `c9` | Compte mouvementé non supprimable |
 
-## Ordre d'exécution
-1. **Fondations** : T1 → T2 → T4 → T3.
-2. **Risque compta** : `tva`, `reglements`↔`banque`, `immos` (cession), `rappro` auto, `fec` inverse.
-3. **Fiabilisation/UX** : `compta` (éditeur), `tiers`, `dash`/`client`, `editions`.
-4. **Fonctionnalités** : mode client, messagerie, OCR/IA en ligne, e‑reporting.
+## Ordre d'exécution — AVANCEMENT
+1. OK **Fondations** : T1 (addon21) -> T2 (22) -> T4 (23) -> T3 (24).
+2. OK **Risque compta** : `tva` (T2), `reglements`<->`banque` (25), `immos` cession (26), `fec` inverse (34). *(rappro : pointage total + justification deja presents)*
+3. OK **Fiabilisation/UX** : `compta` editeur filtre+lettrage (24/27), `tiers` edition (28), `editions` balance agee (29), `dash` tresorerie reelle (30).
+4. OK/EN COURS **Fonctionnalites** : GED (31), mode client (32), messagerie (33) livres ; **OCR reel + IA en ligne** (reseau/cle API) et **e-reporting** restent hors perimetre hors-ligne.
+
+**Etat : feuille de route traitee. Reste non faisable hors-ligne : OCR/IA en ligne reelle, e-reporting (a brancher quand une API sera disponible).**
