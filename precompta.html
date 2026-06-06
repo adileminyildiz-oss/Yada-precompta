@@ -1578,6 +1578,14 @@ body[data-page="coffre"] .card:hover,body[data-page="coffre"] .kpi:hover,body[da
 .cd-body{padding:16px 18px}
 .cd-foot{display:flex;justify-content:flex-end;gap:10px;padding:6px 2px 10px}
 </style>
+<style id="efact-mod">
+.ef-on{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--paper-2,#eee);border:1px solid var(--line,#ccc);border-radius:9px;padding:10px 13px;margin-bottom:6px}
+.ef-timeline{margin-top:8px;display:flex;flex-direction:column;gap:0}
+.ef-step{display:flex;gap:12px;align-items:flex-start;padding:0 0 16px 4px;position:relative}
+.ef-step:not(.ef-last):before{content:"";position:absolute;left:9px;top:14px;bottom:-2px;width:2px;background:var(--line-strong,#bbb)}
+.ef-dot{width:16px;height:16px;border-radius:50%;background:var(--gold,#a8801f);flex:0 0 auto;margin-top:1px;box-shadow:0 0 0 3px rgba(168,128,31,.18)}
+.ef-last .ef-dot{background:var(--credit,#1f6b4f);box-shadow:0 0 0 3px rgba(31,107,79,.18)}
+</style>
 </head>
 <body data-theme="noir">
 <div class="layout">
@@ -7766,5 +7774,281 @@ function pageEspaceClient(){
 }
 
 </script>
+<script id="yada-addon20">
+/* ============================================================
+   YADA — Facturation électronique : opérateur relié (PPF / PDP)
+   Intégré à la page Facturation client. Simulation conforme à
+   l'esprit de la réforme : connexion d'un opérateur agréé,
+   transmission des factures, statuts du cycle de vie e-invoicing,
+   flux horodaté et génération d'un Factur-X (XML CII) téléchargeable.
+   Bloc additif.
+   ============================================================ */
+const EFACT_ETAPES = ['Déposée','Émise par la plateforme','Mise à disposition du client','Approuvée','Encaissée'];
+
+function efactCfg(){
+  if(!db.parametres) db.parametres={};
+  if(!db.parametres.efact) db.parametres.efact={operateur:'', idOp:'', mode:'PDP', connecte:false};
+  return db.parametres.efact;
+}
+function efactStatutTag(s){
+  if(!s) return '<span class="tag t-att">à transmettre</span>';
+  if(s==='Refusée') return '<span class="tag t-ecart">refusée</span>';
+  if(s==='Encaissée'||s==='Approuvée') return '<span class="tag t-pay">'+s.toLowerCase()+'</span>';
+  return '<span class="tag t-part">'+s.toLowerCase()+'</span>';
+}
+
+function efacturationCard(){
+  const c=efactCfg();
+  const facts=db.docs.filter(d=>d.type==='facture' && d.statut==='valide').slice().reverse();
+  const transmises=facts.filter(d=>d.efact).length;
+
+  const config = c.connecte
+    ? `<div class="ef-on">
+         <div><b>✓ Opérateur relié :</b> ${c.operateur||'(non nommé)'} <span class="mini">— mode ${c.mode}${c.idOp?' · ID '+c.idOp:''}</span></div>
+         <button class="btn btn-ghost btn-sm" onclick="efactDeconnecter()">Déconnecter</button>
+       </div>`
+    : `<div class="row g3">
+         <div class="field"><label>Type de plateforme</label><select id="ef-mode">
+           <option value="PDP">PDP — Plateforme de Dématérialisation Partenaire</option>
+           <option value="PPF">PPF — Portail Public de Facturation</option></select></div>
+         <div class="field"><label>Nom de l'opérateur</label><input id="ef-op" placeholder="Ex : mon opérateur agréé"></div>
+         <div class="field"><label>Identifiant / SIRET opérateur</label><input id="ef-id" placeholder="N° d'immatriculation"></div>
+       </div>
+       <div class="right"><button class="btn btn-gold" onclick="efactConnecter()">🔌 Relier l'opérateur</button></div>`;
+
+  const rows = facts.map(d=>{ const cl=db.tiers.find(x=>x.id===d.clientId); const s=d.efact?d.efact.statut:'';
+    const term = (s==='Encaissée'||s==='Refusée');
+    const actions = !c.connecte
+      ? `<span class="mini">opérateur non relié</span>`
+      : (!d.efact
+          ? `<button class="btn btn-gold btn-sm" onclick="efactTransmettre('${d.id}')">📡 Transmettre</button>`
+          : `${!term?`<button class="btn btn-ghost btn-sm" onclick="efactAvancer('${d.id}')">▸ Étape suivante</button>
+               <button class="btn btn-ghost btn-sm" onclick="efactRefuser('${d.id}')" title="Simuler un refus">✖</button>`:''}
+             <button class="btn btn-ghost btn-sm" onclick="efactFlux('${d.id}')">Flux</button>
+             <button class="btn btn-ghost btn-sm" onclick="efactXML('${d.id}')">🧾 Factur-X</button>`);
+    return `<tr><td class="num">${d.numero}</td><td>${cl?cl.nom:''}</td><td class="num">${d.date}</td>
+      <td class="r num">${eur(d.ttc)}</td><td>${efactStatutTag(s)}</td>
+      <td class="r" style="white-space:nowrap">${actions}</td></tr>`;
+  }).join('') || '<tr><td colspan="6" class="empty">Aucune facture validée à transmettre. Validez une facture pour l\'envoyer via l\'opérateur.</td></tr>';
+
+  return `<div class="card"><h2>Facturation électronique — opérateur relié</h2>
+    <div class="sub">Connectez votre opérateur agréé (PPF ou PDP) puis transmettez vos factures au format <b>Factur-X</b>. Le cycle de vie (dépôt → mise à disposition → approbation → encaissement) est suivi ici.</div>
+    ${config}
+    <div class="hint">⚠ Réforme de la facturation électronique B2B : un PDF par e-mail ne suffira plus — les factures devront transiter par une <b>plateforme agréée (PPF/PDP)</b> au format structuré (Factur-X / XML). Le calendrier officiel a été décalé plusieurs fois : vérifiez les dates en vigueur avant la mise en production.</div>
+    <table style="margin-top:12px"><thead><tr><th>N° facture</th><th>Client</th><th>Date</th><th class="r">TTC</th><th>Statut e-invoice</th><th></th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    <div class="mini" style="margin-top:8px">${transmises}/${facts.length} facture(s) transmise(s) à l'opérateur.</div>
+  </div>`;
+}
+
+function efactConnecter(){
+  const c=efactCfg();
+  const g=id=>{const e=document.getElementById(id);return e?e.value.trim():'';};
+  c.mode=g('ef-mode')||'PDP'; c.operateur=g('ef-op'); c.idOp=g('ef-id');
+  if(!c.operateur) return toast('Indiquez le nom de l\'opérateur');
+  c.connecte=true; save(); render(); toast('Opérateur relié : '+c.operateur+' ('+c.mode+')');
+}
+function efactDeconnecter(){ const c=efactCfg(); c.connecte=false; save(); render(); toast('Opérateur déconnecté'); }
+
+function efactTransmettre(id){
+  const c=efactCfg(); if(!c.connecte) return toast('Reliez d\'abord un opérateur');
+  const d=db.docs.find(x=>x.id===id); if(!d) return;
+  if(d.statut!=='valide') return toast('La facture doit être validée');
+  const now=todayStr();
+  d.efact={ statut:'Émise par la plateforme', operateur:c.operateur, mode:c.mode,
+    flux:[{etape:'Déposée', date:now},{etape:'Émise par la plateforme', date:now}] };
+  save(); render(); toast('📡 Facture '+d.numero+' transmise via '+c.operateur+' (Factur-X)');
+}
+function efactAvancer(id){
+  const d=db.docs.find(x=>x.id===id); if(!d||!d.efact) return;
+  const i=EFACT_ETAPES.indexOf(d.efact.statut);
+  if(i<0||i>=EFACT_ETAPES.length-1) return;
+  const suiv=EFACT_ETAPES[i+1]; d.efact.statut=suiv; d.efact.flux.push({etape:suiv, date:todayStr()});
+  save(); render(); toast('Statut e-invoice : '+suiv);
+}
+function efactRefuser(id){
+  const d=db.docs.find(x=>x.id===id); if(!d||!d.efact) return;
+  d.efact.statut='Refusée'; d.efact.flux.push({etape:'Refusée par le destinataire', date:todayStr()});
+  save(); render(); toast('Facture marquée « refusée » par le destinataire');
+}
+function efactFlux(id){
+  const d=db.docs.find(x=>x.id===id); if(!d||!d.efact) return;
+  const items=d.efact.flux.map((f,i)=>`<div class="ef-step ${i===d.efact.flux.length-1?'ef-last':''}">
+    <span class="ef-dot"></span><div><b>${f.etape}</b><div class="mini">${frDate?frDate(f.date):f.date}</div></div></div>`).join('');
+  document.getElementById('modal-c').innerHTML=`<div class="modal-h"><h3>Flux e-invoice — ${d.numero}</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-b"><div class="sub">Opérateur : ${d.efact.operateur||''} (${d.efact.mode||''})</div>
+      <div class="ef-timeline">${items}</div></div>`;
+  document.getElementById('modal').classList.add('show');
+}
+
+/* Génération Factur-X (XML Cross Industry Invoice, profil simplifié) */
+function efactXML(id){
+  const d=db.docs.find(x=>x.id===id); if(!d) return;
+  const s=db.societe||{}; const cl=db.tiers.find(x=>x.id===d.clientId)||{};
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const d2=(d.date||todayStr()).replace(/-/g,'');
+  const lignes=(d.lignes||[]).map((l,i)=>{
+    const q=+l.qte||1, pu=+l.pu||0, taux=+l.taux||0, ht=r2(q*pu);
+    return `    <ram:IncludedSupplyChainTradeLineItem>
+      <ram:AssociatedDocumentLineDocument><ram:LineID>${i+1}</ram:LineID></ram:AssociatedDocumentLineDocument>
+      <ram:SpecifiedTradeProduct><ram:Name>${esc(l.desc||'Prestation')}</ram:Name></ram:SpecifiedTradeProduct>
+      <ram:SpecifiedLineTradeAgreement><ram:NetPriceProductTradePrice><ram:ChargeAmount>${pu.toFixed(2)}</ram:ChargeAmount></ram:NetPriceProductTradePrice></ram:SpecifiedLineTradeAgreement>
+      <ram:SpecifiedLineTradeDelivery><ram:BilledQuantity unitCode="C62">${q}</ram:BilledQuantity></ram:SpecifiedLineTradeDelivery>
+      <ram:SpecifiedLineTradeSettlement>
+        <ram:ApplicableTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>${taux.toFixed(2)}</ram:RateApplicablePercent></ram:ApplicableTradeTax>
+        <ram:SpecifiedTradeSettlementLineMonetarySummation><ram:LineTotalAmount>${ht.toFixed(2)}</ram:LineTotalAmount></ram:SpecifiedTradeSettlementLineMonetarySummation>
+      </ram:SpecifiedLineTradeSettlement>
+    </ram:IncludedSupplyChainTradeLineItem>`;
+  }).join('\n');
+  const xml=`<?xml version="1.0" encoding="UTF-8"?>
+<rsm:CrossIndustryInvoice xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100" xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100" xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">
+  <rsm:ExchangedDocumentContext>
+    <ram:GuidelineSpecifiedDocumentContextParameter><ram:ID>urn:factur-x.eu:1p0:basicwl</ram:ID></ram:GuidelineSpecifiedDocumentContextParameter>
+  </rsm:ExchangedDocumentContext>
+  <rsm:ExchangedDocument>
+    <ram:ID>${esc(d.numero)}</ram:ID>
+    <ram:TypeCode>380</ram:TypeCode>
+    <ram:IssueDateTime><udt:DateTimeString format="102">${d2}</udt:DateTimeString></ram:IssueDateTime>
+  </rsm:ExchangedDocument>
+  <rsm:SupplyChainTradeTransaction>
+${lignes}
+    <ram:ApplicableHeaderTradeAgreement>
+      <ram:SellerTradeParty>
+        <ram:Name>${esc(s.raison)}</ram:Name>
+        <ram:SpecifiedLegalOrganization><ram:ID schemeID="0002">${esc(s.siret||s.siren)}</ram:ID></ram:SpecifiedLegalOrganization>
+        <ram:PostalTradeAddress><ram:PostcodeCode>${esc(s.cp)}</ram:PostcodeCode><ram:LineOne>${esc(s.adresse)}</ram:LineOne><ram:CityName>${esc(s.ville)}</ram:CityName><ram:CountryID>FR</ram:CountryID></ram:PostalTradeAddress>
+        <ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">${esc(s.tvaIntra)}</ram:ID></ram:SpecifiedTaxRegistration>
+      </ram:SellerTradeParty>
+      <ram:BuyerTradeParty>
+        <ram:Name>${esc(cl.nom)}</ram:Name>
+        <ram:SpecifiedLegalOrganization><ram:ID schemeID="0002">${esc(cl.siret||cl.siren||'')}</ram:ID></ram:SpecifiedLegalOrganization>
+      </ram:BuyerTradeParty>
+    </ram:ApplicableHeaderTradeAgreement>
+    <ram:ApplicableHeaderTradeDelivery/>
+    <ram:ApplicableHeaderTradeSettlement>
+      <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
+      <ram:ApplicableTradeTax><ram:CalculatedAmount>${(+d.tva||0).toFixed(2)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode><ram:BasisAmount>${(+d.ht||0).toFixed(2)}</ram:BasisAmount></ram:ApplicableTradeTax>
+      <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+        <ram:LineTotalAmount>${(+d.ht||0).toFixed(2)}</ram:LineTotalAmount>
+        <ram:TaxBasisTotalAmount>${(+d.ht||0).toFixed(2)}</ram:TaxBasisTotalAmount>
+        <ram:TaxTotalAmount currencyID="EUR">${(+d.tva||0).toFixed(2)}</ram:TaxTotalAmount>
+        <ram:GrandTotalAmount>${(+d.ttc||0).toFixed(2)}</ram:GrandTotalAmount>
+        <ram:DuePayableAmount>${(+d.ttc||0).toFixed(2)}</ram:DuePayableAmount>
+      </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+    </ram:ApplicableHeaderTradeSettlement>
+  </rsm:SupplyChainTradeTransaction>
+</rsm:CrossIndustryInvoice>`;
+  const blob=new Blob([xml],{type:'application/xml'}); const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=esc(d.numero)+'-facturx.xml'; a.click();
+  toast('Factur-X généré : '+d.numero+'-facturx.xml');
+}
+
+/* Greffe : carte opérateur relié en bas de la page Facturation client */
+(function(){
+  if(typeof pageFacturation==='function'){
+    const _pf=pageFacturation;
+    pageFacturation=function(){ return _pf()+efacturationCard(); };
+  }
+})();
+
+</script>
+
+<script id="yada-addon21">
+/* ============================================================
+   T1 — Clôture de l'exercice : OD de résultat + report des À-Nouveaux
+   Continuité comptable : 1) solder charges/produits (6/7) dans le résultat
+   (120 bénéfice / 129 perte) ; 2) reporter les soldes de bilan (classes 1→5)
+   au 1ᵉ jour de l'exercice suivant. Écritures équilibrées via posterOD.
+   Greffe : carte ajoutée à pageEditions. 100% additif.
+   ============================================================ */
+(function(){
+  if(typeof posterOD!=='function') return;
+  const CPT_BEN='120000000', CPT_PER='129000000';
+  function jPlus(iso,n){ const d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+  /* soldes par compte (clé c9) sur une plage de dates, pour des classes données */
+  function soldesPlage(classes, d0, d1){
+    const acc={};
+    (db.ecritures||[]).forEach(e=>{ if(d0 && e.date<d0) return; if(d1 && e.date>d1) return;
+      (e.lignes||[]).forEach(l=>{ const cl=String(l.compte)[0]; if(classes.indexOf(cl)<0) return;
+        const k=c9(l.compte); const a=acc[k]||(acc[k]={d:0,c:0,lib:l.lib||COMPTES[l.compte]||COMPTES[k]||k});
+        a.d+=(+l.debit||0); a.c+=(+l.credit||0); }); });
+    return acc;
+  }
+  function libResultat(){ return 'OD RÉSULTAT '+db.societe.exoDebut.slice(0,4); }
+  function anStart(){ return jPlus(db.societe.exoFin,1); }
+  function libAN(){ return 'À-NOUVEAUX '+anStart().slice(0,4); }
+  window.t1ResultatPoste=function(){ return (db.ecritures||[]).some(e=>(e.libelle||'').indexOf(libResultat())>=0); };
+  window.t1ANPoste=function(){ return (db.ecritures||[]).some(e=>(e.libelle||'').indexOf(libAN())>=0); };
+
+  window.t1ResultatLignes=function(){
+    const s=db.societe; const acc=soldesPlage(['6','7'], s.exoDebut, s.exoFin);
+    const lignes=[]; let prod=0, charge=0;
+    Object.keys(acc).sort().forEach(k=>{ const a=acc[k]; const solde=r2(a.d-a.c); if(Math.abs(solde)<0.005) return;
+      if(solde>0) lignes.push({compte:k, lib:'Solde '+(a.lib||k), debit:0, credit:solde});   // charge → on crédite pour solder
+      else lignes.push({compte:k, lib:'Solde '+(a.lib||k), debit:-solde, credit:0});           // produit → on débite pour solder
+      if(k[0]==='7') prod+=r2(a.c-a.d); else charge+=r2(a.d-a.c);
+    });
+    const res=r2(prod-charge);
+    if(res>0) lignes.push({compte:CPT_BEN, lib:"Résultat de l'exercice (bénéfice)", debit:0, credit:res});
+    else if(res<0) lignes.push({compte:CPT_PER, lib:"Résultat de l'exercice (perte)", debit:-res, credit:0});
+    return {lignes, prod:r2(prod), charge:r2(charge), res};
+  };
+  window.t1ANLignes=function(){
+    const acc=soldesPlage(['1','2','3','4','5'], null, db.societe.exoFin);
+    const lignes=[]; let td=0, tc=0;
+    Object.keys(acc).sort().forEach(k=>{ const a=acc[k]; const sd=r2(a.d-a.c); if(Math.abs(sd)<0.005) return;
+      lignes.push({compte:k, lib:'À-nouveau '+(a.lib||k), debit:sd>0?sd:0, credit:sd<0?-sd:0});
+      td+=sd>0?sd:0; tc+=sd<0?-sd:0; });
+    return {lignes, td:r2(td), tc:r2(tc)};
+  };
+
+  window.t1GenererResultat=function(){
+    if(t1ResultatPoste()) return toast('OD de résultat déjà générée pour '+db.societe.exoDebut.slice(0,4));
+    const R=t1ResultatLignes(); if(!R.lignes.length) return toast('Aucun compte de charge/produit à solder');
+    posterOD({date:db.societe.exoFin, libelle:libResultat(), lignes:R.lignes, journal:'OD'});
+    save(); render(); toast('OD de résultat générée — '+(R.res>=0?'bénéfice ':'perte ')+eur(Math.abs(R.res)));
+  };
+  window.t1GenererAN=function(){
+    if(!t1ResultatPoste()) return toast("Générez d'abord l'OD de résultat (sinon les à-nouveaux ne s'équilibrent pas)");
+    if(t1ANPoste()) return toast('À-nouveaux déjà reportés pour '+anStart().slice(0,4));
+    const A=t1ANLignes(); if(!A.lignes.length) return toast('Aucun solde de bilan à reporter');
+    if(Math.abs(A.td-A.tc)>0.01) return toast('Report déséquilibré ('+eur(A.td)+' vs '+eur(A.tc)+') — vérifiez le résultat');
+    posterOD({date:anStart(), libelle:libAN(), lignes:A.lignes, journal:'OD'});
+    save(); render(); toast('À-nouveaux '+anStart().slice(0,4)+' reportés ('+eur(A.td)+')');
+  };
+  window.t1SupprimerCloture=function(){
+    if(!confirm("Supprimer l'OD de résultat et les à-nouveaux générés pour cet exercice ?")) return;
+    const libs=[libResultat(), libAN()];
+    const ids=(db.ecritures||[]).filter(e=>libs.some(l=>(e.libelle||'').indexOf(l)>=0)).map(e=>e.id);
+    db.ecritures=db.ecritures.filter(e=>ids.indexOf(e.id)<0);
+    db.odiv=(db.odiv||[]).filter(o=>!libs.some(l=>(o.libelle||'').indexOf(l)>=0));
+    save(); render(); toast('Clôture annulée — écritures retirées');
+  };
+
+  window.t1Card=function(){
+    const R=t1ResultatLignes(); const A=t1ANLignes();
+    const resPoste=t1ResultatPoste(), anPoste=t1ANPoste();
+    const eqAN=Math.abs(A.td-A.tc)<0.01;
+    return `<div class="card"><h2>Clôture de l'exercice & report des à‑nouveaux</h2>
+      <div class="sub">Continuité comptable : 1) solder les comptes de charges/produits dans le résultat (120 bénéfice / 129 perte) ; 2) reporter les soldes de bilan (classes 1→5) au 1ᵉ jour de l'exercice suivant (${anStart().slice(0,4)}). Écritures équilibrées générées en journal OD.</div>
+      <div class="grid g3" style="margin-bottom:10px">
+        <div class="kpi green"><div class="lbl">Produits (classe 7)</div><div class="val cre">${eur(R.prod)}</div></div>
+        <div class="kpi red"><div class="lbl">Charges (classe 6)</div><div class="val deb">${eur(R.charge)}</div></div>
+        <div class="kpi blue"><div class="lbl">Résultat ${db.societe.exoDebut.slice(0,4)}</div><div class="val">${eur(R.res)}</div><div class="meta">${R.res>=0?'bénéfice (120)':'perte (129)'}</div></div>
+      </div>
+      <div class="right" style="gap:8px;flex-wrap:wrap">
+        ${resPoste?`<span class="balance-ok" style="margin-right:auto">✓ OD de résultat générée (${db.societe.exoFin.slice(0,4)})</span>`
+                  :`<button class="btn btn-pri" style="margin-right:auto" onclick="t1GenererResultat()">1 · Générer l'OD de résultat ${db.societe.exoFin.slice(0,4)}</button>`}
+        ${anPoste?`<span class="balance-ok">✓ À‑nouveaux ${anStart().slice(0,4)} reportés</span>`
+                 :`<button class="btn btn-gold" ${resPoste?'':'disabled'} onclick="t1GenererAN()">2 · Reporter les à‑nouveaux ${anStart().slice(0,4)}</button>`}
+        ${(resPoste||anPoste)?`<button class="btn btn-ghost btn-sm" onclick="t1SupprimerCloture()">Annuler la clôture</button>`:''}
+      </div>
+      <div class="hint">Report d'ouverture N+1 : Σ débit ${eur(A.td)} = Σ crédit ${eur(A.tc)} ${eqAN?'✓ équilibré':'(générez le résultat avant)'}. Les à‑nouveaux apparaissent dans l'exercice ${anStart().slice(0,4)} (Consultation, Journal, Balance).</div>
+    </div>`;
+  };
+  if(typeof pageEditions==='function'){ const _p=pageEditions; pageEditions=function(){ return _p()+t1Card(); }; }
+})();
+</script>
+
 </body>
 </html>
