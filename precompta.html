@@ -8781,7 +8781,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v48 · saisie complète & pré-remplissage ✨';
+    b.textContent='YADA · v49 · montants exacts en compta ✨';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:600 11px system-ui,sans-serif;background:rgba(47,109,176,.92);color:#fff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.78;pointer-events:none';
     document.body.appendChild(b); }
@@ -9385,6 +9385,21 @@ ${lignes}
       ecr.lignes.forEach(function(l){ if(c9(l.compte)===coll){ l.compte=t.compteAux; l.lib=(opts.type==='achat'?'Fournisseur ':'Client ')+t.nom; } }); }
     save(); return f;
   }
+  /* Comptabilisation avec les MONTANTS EXACTS de la facture (HT + TVA transmis), compte auxiliaire */
+  function posterFactureMontants(o,t){
+    var ht=r2(o.ht||0), tva=r2(o.tva||0), ttc=r2(ht+tva);
+    var f={ id:uid(), type:o.type, tiersId:o.tiersId, date:o.date,
+      numero:o.numero||nextNumUnique(o.type==='achat'?'ACH':'FAC'),
+      taux:+o.taux||0, ht:ht, tva:tva, ttc:ttc, compteContre:o.compteContre, compteTVA:o.compteTVA,
+      source:o.source||'depot', modeReglement:'', recuLe:o.date, remise:r2(o.remise||0) };
+    var ecr=genEcriture(f); f.ecritureId=ecr.id;
+    if(t && t.compteAux){ var coll=c9(o.type==='achat'?'401':'411');
+      ecr.lignes.forEach(function(l){ if(c9(l.compte)===coll){ l.compte=t.compteAux; l.lib=(o.type==='achat'?'Fournisseur ':'Client ')+t.nom; } }); }
+    var reg={ id:uid(), factureId:f.id, type:o.type, sens:o.type==='achat'?'a_payer':'a_encaisser',
+      statut:'attente', echeance:o.date, regle:0, restant:ttc, notes:[], echelonne:false };
+    db.factures.push(f); db.ecritures.push(ecr); db.reglements.push(reg); save();
+    return f;
+  }
 
   /* Délettrage d'une écriture : efface le code lettre sur toutes les lignes liées */
   function delettrerEcriture(ecr){ if(!ecr)return 0; var codes={}; (ecr.lignes||[]).forEach(function(l){ if(l.lettre)codes[l.lettre]=1; });
@@ -9410,7 +9425,7 @@ ${lignes}
 
   function compareModal(p,fOld){
     var t=db.tiers.find(function(x){return x.id===p.tiersId;});
-    var m=calcMontants(p.ttc,p.taux,'TTC');
+    var m={ht:r2(p.ht||0),tva:r2(p.tva||0),ttc:r2((p.ht||0)+(p.tva||0))};
     var depNew=dstore().find(function(d){return d.id===p.depId;});
     var depOld=dstore().find(function(d){return d.factureId===fOld.id;});
     var existExtra=(fOld.type==='achat')?('<button class="btn btn-ghost btn-sm" onclick="voirFactureAchat(\''+fOld.id+'\')">👁 Détail</button>'):'';
@@ -9430,13 +9445,13 @@ ${lignes}
     document.getElementById('modal').classList.add('show');
   }
 
-  function faireComptabilisation(d,tiersId,numero,date,ttc,taux){
+  function faireComptabilisation(d,tiersId,numero,date,ht,tva,taux){
     var t=db.tiers.find(function(x){return x.id===tiersId;}); if(!t)return toast('Tiers introuvable.');
     if(!t.compteAux){ try{ t.compteAux=genAux(t.type,t.nom); }catch(e){} }
-    var contre=t.compteContre||(d.cat==='achat'?'606000':'706000'); var tva=(d.cat==='achat'?'44566':'44571');
-    var f=posterFactureAux({type:d.cat,tiersId:tiersId,date:date,base:ttc,baseEst:'TTC',taux:taux,compteContre:contre,compteTVA:tva,numero:(numero||undefined),source:'depot'},t);
+    var contre=t.compteContre||(d.cat==='achat'?'606000':'706000'); var tvaC=(d.cat==='achat'?'44566':'44571');
+    var f=posterFactureMontants({type:d.cat,tiersId:tiersId,date:date,ht:ht,tva:tva,taux:taux,remise:d.remise,compteContre:contre,compteTVA:tvaC,numero:(numero||undefined),source:'depot'},t);
     d.statut='comptabilisee'; d.tiersId=tiersId; d.numero=f.numero; d.dateFacture=date; d.ttc=f.ttc; d.ht=f.ht; d.tva=f.tva; d.taux=taux; d.ecritureId=f.ecritureId; d.factureId=f.id;
-    markNotifLuDep(d.id); save(); toast('✅ Facture '+f.numero+' comptabilisée (compte '+(t.compteAux||'401')+').'); render();
+    markNotifLuDep(d.id); save(); toast('✅ Facture '+f.numero+' comptabilisée (HT '+eur(f.ht)+' + TVA '+eur(f.tva)+' = '+eur(f.ttc)+', compte '+(t.compteAux||'401')+').'); render();
   }
 
   /* Override : comptabilisation avec contrôle de doublon + compte auxiliaire */
@@ -9447,22 +9462,24 @@ ${lignes}
     var tiersId=(g('cmp-tiers-'+id)||{}).value||'';
     var numero=(g('cmp-num-'+id)||{}).value||'';
     var date=(g('cmp-date-'+id)||{}).value||d.date;
-    var ttc=+((g('cmp-ttc-'+id)||{}).value)||0;
-    var taux=+((g('cmp-taux-'+id)||{}).value)||20;
+    var ht=+((g('cmp-ht-'+id)||{}).value); if(isNaN(ht))ht=(d.ht||0);
+    var tva=+((g('cmp-tva-'+id)||{}).value); if(isNaN(tva))tva=(d.tva||0);
+    var taux=+((g('cmp-taux-'+id)||{}).value)||0;
+    var ttc=r2(ht+tva);
     if(!tiersId)return toast(d.cat==='achat'?'Sélectionnez le fournisseur':'Sélectionnez le client');
-    if(ttc<=0)return toast('Indiquez le montant TTC');
+    if(ttc<=0)return toast('Indiquez les montants HT / TVA de la facture');
     var fOld=factureDoublon(d.cat,tiersId,numero,date,ttc,null);
-    if(fOld){ window._depotComptaPending={depId:id,tiersId:tiersId,numero:numero,date:date,ttc:ttc,taux:taux,oldId:fOld.id}; compareModal(window._depotComptaPending,fOld); return; }
+    if(fOld){ window._depotComptaPending={depId:id,tiersId:tiersId,numero:numero,date:date,ht:ht,tva:tva,ttc:ttc,taux:taux,oldId:fOld.id}; compareModal(window._depotComptaPending,fOld); return; }
     if(d.doublon && !confirm('Ce dépôt est marqué comme doublon (même fichier). Comptabiliser quand même ?')) return;
-    faireComptabilisation(d,tiersId,numero,date,ttc,taux);
+    faireComptabilisation(d,tiersId,numero,date,ht,tva,taux);
   };
   window.depotComptaGarderLesDeux=function(){ var p=window._depotComptaPending; if(!p)return; var d=dstore().find(function(x){return x.id===p.depId;});
-    if(typeof closeModal==='function')closeModal(); if(d) faireComptabilisation(d,p.tiersId,p.numero,p.date,p.ttc,p.taux); window._depotComptaPending=null; };
+    if(typeof closeModal==='function')closeModal(); if(d) faireComptabilisation(d,p.tiersId,p.numero,p.date,p.ht,p.tva,p.taux); window._depotComptaPending=null; };
   window.depotComptaRemplacer=function(){ var p=window._depotComptaPending; if(!p)return; var d=dstore().find(function(x){return x.id===p.depId;}); if(!d)return;
     var fOld=db.factures.find(function(x){return x.id===p.oldId;}); var nLet=0;
     if(fOld){ nLet=supprimerFactureEtEcriture(fOld); }
     if(typeof closeModal==='function')closeModal();
-    faireComptabilisation(d,p.tiersId,p.numero,p.date,p.ttc,p.taux);
+    faireComptabilisation(d,p.tiersId,p.numero,p.date,p.ht,p.tva,p.taux);
     window._depotComptaPending=null;
     toast('Ancienne facture remplacée'+(nLet?(' (délettrage de '+nLet+' ligne(s))'):'')+'.');
   };
@@ -9483,6 +9500,10 @@ ${lignes}
   function statutTagDep(s){ if(s==='recue')return '<span class="tag t-part">réception validée</span>'; if(s==='comptabilisee')return '<span class="tag t-pay">comptabilisée ✓</span>'; if(s==='refusee')return '<span class="tag t-late">refusée</span>'; return '<span class="tag t-att">déposée · à valider</span>'; }
   function markNotifLu(depotId){ nstore().forEach(function(n){ if(n.depotId===depotId)n.lu=true; }); }
   function tauxOpts(sel){ return [20,10,5.5,0].map(function(x){ return '<option '+((sel!=null&&parseFloat(sel)===x)?'selected':'')+'>'+x+'</option>'; }).join(''); }
+  /* Recalcul du TTC affiché dans la saisie cabinet (TTC = HT + TVA) */
+  window.depotCmpCalc=function(id){ var g=function(x){return document.getElementById(x);};
+    var ht=+((g('cmp-ht-'+id)||{}).value)||0, tva=+((g('cmp-tva-'+id)||{}).value)||0;
+    if(g('cmp-ttc-'+id))g('cmp-ttc-'+id).value=eur(r2(ht+tva)); };
 
   /* ---- Calcul live du formulaire de dépôt achat ---- */
   window.depotCalcAchat=function(){
@@ -9576,16 +9597,16 @@ ${lignes}
           +' · HT <b>'+eur(d.ht||0)+'</b>'+((d.remise&&d.remise>0)?(' · Remise <b>'+eur(d.remise)+'</b>'):'')+' · TVA '+(d.taux!=null?d.taux:'')+'% <b>'+eur(d.tva||0)+'</b> · TTC <b>'+eur(d.ttc||0)+'</b></span>'
           +(d.fichierId?'<button class="btn btn-gold btn-xs" onclick="gedVoir(\''+d.fichierId+'\')">📎 Comparer avec la facture</button>':'<span class="ged-mt">aucun fichier joint</span>')+'</div>';
         row+='<div class="dep-cmp">'+recap
-          +'<div class="sub" style="margin:2px 0 8px">Vérifiez les informations ci-dessous (reprises automatiquement de la facture) puis validez :</div>'
+          +'<div class="sub" style="margin:2px 0 8px">Montants repris automatiquement de la facture (modifiables après vérification) puis validez :</div>'
           +'<div class="row g4">'
           +'<div class="field"><label>'+(cat==='achat'?'Fournisseur':'Client')+'</label><select id="cmp-tiers-'+d.id+'">'+opts+'</select></div>'
           +'<div class="field"><label>N° facture</label><input id="cmp-num-'+d.id+'" value="'+String(d.numero||'').replace(/"/g,'&quot;')+'" placeholder="(auto si vide)"></div>'
           +'<div class="field"><label>Date facture</label><input type="date" id="cmp-date-'+d.id+'" value="'+(d.dateFacture||d.date||todayStr())+'"></div>'
-          +'<div class="field"><label>Montant TTC</label><input type="number" id="cmp-ttc-'+d.id+'" value="'+(d.ttc>0?d.ttc:'')+'" placeholder="0.00"></div>'
+          +'<div class="field"><label>Taux TVA %</label><select id="cmp-taux-'+d.id+'">'+tauxOpts(d.taux)+'</select></div>'
           +'</div><div class="row g4">'
-          +'<div class="field"><label>TVA %</label><select id="cmp-taux-'+d.id+'">'+tauxOpts(d.taux)+'</select></div>'
-          +'<div class="field"><label>dont HT</label><input value="'+eur(d.ht||0)+'" disabled></div>'
-          +'<div class="field"><label>dont remise</label><input value="'+eur(d.remise||0)+'" disabled></div>'
+          +'<div class="field"><label>Montant HT</label><input type="number" id="cmp-ht-'+d.id+'" value="'+(d.ht>0?d.ht:'')+'" placeholder="0.00" oninput="depotCmpCalc(\''+d.id+'\')"></div>'
+          +'<div class="field"><label>Montant TVA</label><input type="number" id="cmp-tva-'+d.id+'" value="'+(d.tva>0?d.tva:'')+'" placeholder="0.00" oninput="depotCmpCalc(\''+d.id+'\')"></div>'
+          +'<div class="field"><label>Total TTC</label><input type="text" id="cmp-ttc-'+d.id+'" value="'+eur(r2((d.ht||0)+(d.tva||0)))+'" disabled></div>'
           +'<div class="field" style="align-self:end"><button class="btn btn-pri" style="width:100%" onclick="depotComptabiliser(\''+d.id+'\')">📒 Valider la comptabilisation</button></div>'
           +'</div></div>';
       }
