@@ -1578,6 +1578,14 @@ body[data-page="coffre"] .card:hover,body[data-page="coffre"] .kpi:hover,body[da
 .cd-body{padding:16px 18px}
 .cd-foot{display:flex;justify-content:flex-end;gap:10px;padding:6px 2px 10px}
 </style>
+<style id="efact-mod">
+.ef-on{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--paper-2,#eee);border:1px solid var(--line,#ccc);border-radius:9px;padding:10px 13px;margin-bottom:6px}
+.ef-timeline{margin-top:8px;display:flex;flex-direction:column;gap:0}
+.ef-step{display:flex;gap:12px;align-items:flex-start;padding:0 0 16px 4px;position:relative}
+.ef-step:not(.ef-last):before{content:"";position:absolute;left:9px;top:14px;bottom:-2px;width:2px;background:var(--line-strong,#bbb)}
+.ef-dot{width:16px;height:16px;border-radius:50%;background:var(--gold,#a8801f);flex:0 0 auto;margin-top:1px;box-shadow:0 0 0 3px rgba(168,128,31,.18)}
+.ef-last .ef-dot{background:var(--credit,#1f6b4f);box-shadow:0 0 0 3px rgba(31,107,79,.18)}
+</style>
 </head>
 <body data-theme="noir">
 <div class="layout">
@@ -7764,6 +7772,184 @@ function pageEspaceClient(){
       <tbody>${suivi}</tbody></table>
   </div>`;
 }
+
+</script>
+<script id="yada-addon20">
+/* ============================================================
+   YADA — Facturation électronique : opérateur relié (PPF / PDP)
+   Intégré à la page Facturation client. Simulation conforme à
+   l'esprit de la réforme : connexion d'un opérateur agréé,
+   transmission des factures, statuts du cycle de vie e-invoicing,
+   flux horodaté et génération d'un Factur-X (XML CII) téléchargeable.
+   Bloc additif.
+   ============================================================ */
+const EFACT_ETAPES = ['Déposée','Émise par la plateforme','Mise à disposition du client','Approuvée','Encaissée'];
+
+function efactCfg(){
+  if(!db.parametres) db.parametres={};
+  if(!db.parametres.efact) db.parametres.efact={operateur:'', idOp:'', mode:'PDP', connecte:false};
+  return db.parametres.efact;
+}
+function efactStatutTag(s){
+  if(!s) return '<span class="tag t-att">à transmettre</span>';
+  if(s==='Refusée') return '<span class="tag t-ecart">refusée</span>';
+  if(s==='Encaissée'||s==='Approuvée') return '<span class="tag t-pay">'+s.toLowerCase()+'</span>';
+  return '<span class="tag t-part">'+s.toLowerCase()+'</span>';
+}
+
+function efacturationCard(){
+  const c=efactCfg();
+  const facts=db.docs.filter(d=>d.type==='facture' && d.statut==='valide').slice().reverse();
+  const transmises=facts.filter(d=>d.efact).length;
+
+  const config = c.connecte
+    ? `<div class="ef-on">
+         <div><b>✓ Opérateur relié :</b> ${c.operateur||'(non nommé)'} <span class="mini">— mode ${c.mode}${c.idOp?' · ID '+c.idOp:''}</span></div>
+         <button class="btn btn-ghost btn-sm" onclick="efactDeconnecter()">Déconnecter</button>
+       </div>`
+    : `<div class="row g3">
+         <div class="field"><label>Type de plateforme</label><select id="ef-mode">
+           <option value="PDP">PDP — Plateforme de Dématérialisation Partenaire</option>
+           <option value="PPF">PPF — Portail Public de Facturation</option></select></div>
+         <div class="field"><label>Nom de l'opérateur</label><input id="ef-op" placeholder="Ex : mon opérateur agréé"></div>
+         <div class="field"><label>Identifiant / SIRET opérateur</label><input id="ef-id" placeholder="N° d'immatriculation"></div>
+       </div>
+       <div class="right"><button class="btn btn-gold" onclick="efactConnecter()">🔌 Relier l'opérateur</button></div>`;
+
+  const rows = facts.map(d=>{ const cl=db.tiers.find(x=>x.id===d.clientId); const s=d.efact?d.efact.statut:'';
+    const term = (s==='Encaissée'||s==='Refusée');
+    const actions = !c.connecte
+      ? `<span class="mini">opérateur non relié</span>`
+      : (!d.efact
+          ? `<button class="btn btn-gold btn-sm" onclick="efactTransmettre('${d.id}')">📡 Transmettre</button>`
+          : `${!term?`<button class="btn btn-ghost btn-sm" onclick="efactAvancer('${d.id}')">▸ Étape suivante</button>
+               <button class="btn btn-ghost btn-sm" onclick="efactRefuser('${d.id}')" title="Simuler un refus">✖</button>`:''}
+             <button class="btn btn-ghost btn-sm" onclick="efactFlux('${d.id}')">Flux</button>
+             <button class="btn btn-ghost btn-sm" onclick="efactXML('${d.id}')">🧾 Factur-X</button>`);
+    return `<tr><td class="num">${d.numero}</td><td>${cl?cl.nom:''}</td><td class="num">${d.date}</td>
+      <td class="r num">${eur(d.ttc)}</td><td>${efactStatutTag(s)}</td>
+      <td class="r" style="white-space:nowrap">${actions}</td></tr>`;
+  }).join('') || '<tr><td colspan="6" class="empty">Aucune facture validée à transmettre. Validez une facture pour l\'envoyer via l\'opérateur.</td></tr>';
+
+  return `<div class="card"><h2>Facturation électronique — opérateur relié</h2>
+    <div class="sub">Connectez votre opérateur agréé (PPF ou PDP) puis transmettez vos factures au format <b>Factur-X</b>. Le cycle de vie (dépôt → mise à disposition → approbation → encaissement) est suivi ici.</div>
+    ${config}
+    <div class="hint">⚠ Réforme de la facturation électronique B2B : un PDF par e-mail ne suffira plus — les factures devront transiter par une <b>plateforme agréée (PPF/PDP)</b> au format structuré (Factur-X / XML). Le calendrier officiel a été décalé plusieurs fois : vérifiez les dates en vigueur avant la mise en production.</div>
+    <table style="margin-top:12px"><thead><tr><th>N° facture</th><th>Client</th><th>Date</th><th class="r">TTC</th><th>Statut e-invoice</th><th></th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    <div class="mini" style="margin-top:8px">${transmises}/${facts.length} facture(s) transmise(s) à l'opérateur.</div>
+  </div>`;
+}
+
+function efactConnecter(){
+  const c=efactCfg();
+  const g=id=>{const e=document.getElementById(id);return e?e.value.trim():'';};
+  c.mode=g('ef-mode')||'PDP'; c.operateur=g('ef-op'); c.idOp=g('ef-id');
+  if(!c.operateur) return toast('Indiquez le nom de l\'opérateur');
+  c.connecte=true; save(); render(); toast('Opérateur relié : '+c.operateur+' ('+c.mode+')');
+}
+function efactDeconnecter(){ const c=efactCfg(); c.connecte=false; save(); render(); toast('Opérateur déconnecté'); }
+
+function efactTransmettre(id){
+  const c=efactCfg(); if(!c.connecte) return toast('Reliez d\'abord un opérateur');
+  const d=db.docs.find(x=>x.id===id); if(!d) return;
+  if(d.statut!=='valide') return toast('La facture doit être validée');
+  const now=todayStr();
+  d.efact={ statut:'Émise par la plateforme', operateur:c.operateur, mode:c.mode,
+    flux:[{etape:'Déposée', date:now},{etape:'Émise par la plateforme', date:now}] };
+  save(); render(); toast('📡 Facture '+d.numero+' transmise via '+c.operateur+' (Factur-X)');
+}
+function efactAvancer(id){
+  const d=db.docs.find(x=>x.id===id); if(!d||!d.efact) return;
+  const i=EFACT_ETAPES.indexOf(d.efact.statut);
+  if(i<0||i>=EFACT_ETAPES.length-1) return;
+  const suiv=EFACT_ETAPES[i+1]; d.efact.statut=suiv; d.efact.flux.push({etape:suiv, date:todayStr()});
+  save(); render(); toast('Statut e-invoice : '+suiv);
+}
+function efactRefuser(id){
+  const d=db.docs.find(x=>x.id===id); if(!d||!d.efact) return;
+  d.efact.statut='Refusée'; d.efact.flux.push({etape:'Refusée par le destinataire', date:todayStr()});
+  save(); render(); toast('Facture marquée « refusée » par le destinataire');
+}
+function efactFlux(id){
+  const d=db.docs.find(x=>x.id===id); if(!d||!d.efact) return;
+  const items=d.efact.flux.map((f,i)=>`<div class="ef-step ${i===d.efact.flux.length-1?'ef-last':''}">
+    <span class="ef-dot"></span><div><b>${f.etape}</b><div class="mini">${frDate?frDate(f.date):f.date}</div></div></div>`).join('');
+  document.getElementById('modal-c').innerHTML=`<div class="modal-h"><h3>Flux e-invoice — ${d.numero}</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-b"><div class="sub">Opérateur : ${d.efact.operateur||''} (${d.efact.mode||''})</div>
+      <div class="ef-timeline">${items}</div></div>`;
+  document.getElementById('modal').classList.add('show');
+}
+
+/* Génération Factur-X (XML Cross Industry Invoice, profil simplifié) */
+function efactXML(id){
+  const d=db.docs.find(x=>x.id===id); if(!d) return;
+  const s=db.societe||{}; const cl=db.tiers.find(x=>x.id===d.clientId)||{};
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const d2=(d.date||todayStr()).replace(/-/g,'');
+  const lignes=(d.lignes||[]).map((l,i)=>{
+    const q=+l.qte||1, pu=+l.pu||0, taux=+l.taux||0, ht=r2(q*pu);
+    return `    <ram:IncludedSupplyChainTradeLineItem>
+      <ram:AssociatedDocumentLineDocument><ram:LineID>${i+1}</ram:LineID></ram:AssociatedDocumentLineDocument>
+      <ram:SpecifiedTradeProduct><ram:Name>${esc(l.desc||'Prestation')}</ram:Name></ram:SpecifiedTradeProduct>
+      <ram:SpecifiedLineTradeAgreement><ram:NetPriceProductTradePrice><ram:ChargeAmount>${pu.toFixed(2)}</ram:ChargeAmount></ram:NetPriceProductTradePrice></ram:SpecifiedLineTradeAgreement>
+      <ram:SpecifiedLineTradeDelivery><ram:BilledQuantity unitCode="C62">${q}</ram:BilledQuantity></ram:SpecifiedLineTradeDelivery>
+      <ram:SpecifiedLineTradeSettlement>
+        <ram:ApplicableTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>${taux.toFixed(2)}</ram:RateApplicablePercent></ram:ApplicableTradeTax>
+        <ram:SpecifiedTradeSettlementLineMonetarySummation><ram:LineTotalAmount>${ht.toFixed(2)}</ram:LineTotalAmount></ram:SpecifiedTradeSettlementLineMonetarySummation>
+      </ram:SpecifiedLineTradeSettlement>
+    </ram:IncludedSupplyChainTradeLineItem>`;
+  }).join('\n');
+  const xml=`<?xml version="1.0" encoding="UTF-8"?>
+<rsm:CrossIndustryInvoice xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100" xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100" xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">
+  <rsm:ExchangedDocumentContext>
+    <ram:GuidelineSpecifiedDocumentContextParameter><ram:ID>urn:factur-x.eu:1p0:basicwl</ram:ID></ram:GuidelineSpecifiedDocumentContextParameter>
+  </rsm:ExchangedDocumentContext>
+  <rsm:ExchangedDocument>
+    <ram:ID>${esc(d.numero)}</ram:ID>
+    <ram:TypeCode>380</ram:TypeCode>
+    <ram:IssueDateTime><udt:DateTimeString format="102">${d2}</udt:DateTimeString></ram:IssueDateTime>
+  </rsm:ExchangedDocument>
+  <rsm:SupplyChainTradeTransaction>
+${lignes}
+    <ram:ApplicableHeaderTradeAgreement>
+      <ram:SellerTradeParty>
+        <ram:Name>${esc(s.raison)}</ram:Name>
+        <ram:SpecifiedLegalOrganization><ram:ID schemeID="0002">${esc(s.siret||s.siren)}</ram:ID></ram:SpecifiedLegalOrganization>
+        <ram:PostalTradeAddress><ram:PostcodeCode>${esc(s.cp)}</ram:PostcodeCode><ram:LineOne>${esc(s.adresse)}</ram:LineOne><ram:CityName>${esc(s.ville)}</ram:CityName><ram:CountryID>FR</ram:CountryID></ram:PostalTradeAddress>
+        <ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">${esc(s.tvaIntra)}</ram:ID></ram:SpecifiedTaxRegistration>
+      </ram:SellerTradeParty>
+      <ram:BuyerTradeParty>
+        <ram:Name>${esc(cl.nom)}</ram:Name>
+        <ram:SpecifiedLegalOrganization><ram:ID schemeID="0002">${esc(cl.siret||cl.siren||'')}</ram:ID></ram:SpecifiedLegalOrganization>
+      </ram:BuyerTradeParty>
+    </ram:ApplicableHeaderTradeAgreement>
+    <ram:ApplicableHeaderTradeDelivery/>
+    <ram:ApplicableHeaderTradeSettlement>
+      <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
+      <ram:ApplicableTradeTax><ram:CalculatedAmount>${(+d.tva||0).toFixed(2)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode><ram:BasisAmount>${(+d.ht||0).toFixed(2)}</ram:BasisAmount></ram:ApplicableTradeTax>
+      <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+        <ram:LineTotalAmount>${(+d.ht||0).toFixed(2)}</ram:LineTotalAmount>
+        <ram:TaxBasisTotalAmount>${(+d.ht||0).toFixed(2)}</ram:TaxBasisTotalAmount>
+        <ram:TaxTotalAmount currencyID="EUR">${(+d.tva||0).toFixed(2)}</ram:TaxTotalAmount>
+        <ram:GrandTotalAmount>${(+d.ttc||0).toFixed(2)}</ram:GrandTotalAmount>
+        <ram:DuePayableAmount>${(+d.ttc||0).toFixed(2)}</ram:DuePayableAmount>
+      </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+    </ram:ApplicableHeaderTradeSettlement>
+  </rsm:SupplyChainTradeTransaction>
+</rsm:CrossIndustryInvoice>`;
+  const blob=new Blob([xml],{type:'application/xml'}); const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=esc(d.numero)+'-facturx.xml'; a.click();
+  toast('Factur-X généré : '+d.numero+'-facturx.xml');
+}
+
+/* Greffe : carte opérateur relié en bas de la page Facturation client */
+(function(){
+  if(typeof pageFacturation==='function'){
+    const _pf=pageFacturation;
+    pageFacturation=function(){ return _pf()+efacturationCard(); };
+  }
+})();
 
 </script>
 </body>

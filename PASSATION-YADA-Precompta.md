@@ -6,7 +6,7 @@
 
 ## 1. Le projet
 Application web de **pré‑comptabilité française** « **YADA / Précompta** » (style Sage/Regate) pour cabinet comptable.
-- **Un seul fichier HTML autonome** (`precompta.html`, ~640 Ko), tout le code (logique métier + UI) dans des balises `<script>`.
+- **Un seul fichier HTML autonome** (`precompta.html`, ~652 Ko), tout le code (logique métier + UI) dans des balises `<script>`.
 - **Hors‑ligne** : s'ouvre par double‑clic dans un navigateur, aucune installation.
 - **Tout en français** ; **3 thèmes** : `noir` (défaut, dark liquid glass bleu), `liquid-clair`, `liquid-teinte`.
 - **Écran de connexion** + **portefeuille de dossiers** (cabinet multi‑sociétés).
@@ -15,7 +15,7 @@ Application web de **pré‑comptabilité française** « **YADA / Précompta** 
 ## 2. Fichier de travail & méthode
 - Source réelle = le fichier `precompta.html` que vous joignez.
 - **Consigne permanente : ajouter par‑dessus l'existant sans rien casser**, par édition chirurgicale (ne jamais retout retaper).
-- Le code de base est complété par **des scripts d'extension injectés avant `</body>`** : ids `yada-addon`, `yada-addon2` … `yada-addon19`. Chaque nouveauté = un nouvel addon (greffe sur fonctions globales) + parfois un `<style id="...">` ajouté avant `</head>`.
+- Le code de base est complété par **des scripts d'extension injectés avant `</body>`** : ids `yada-addon`, `yada-addon2` … `yada-addon20`. Chaque nouveauté = un nouvel addon (greffe sur fonctions globales) + parfois un `<style id="...">` ajouté avant `</head>`.
 - **Numéros de ligne instables** : toujours re‑chercher les ancres (grep) avant d'éditer.
 - **Écrire les accents/emoji en clair (UTF‑8)**, jamais en `\uXXXX`. Attention aux apostrophes dans les chaînes JS entre quotes simples (utiliser backticks pour le HTML).
 
@@ -64,7 +64,7 @@ Application web de **pré‑comptabilité française** « **YADA / Précompta** 
 | Pilotage | `societe` | Sociétés (portefeuille) | Liste des dossiers du cabinet |
 | **Espace Client** | `client` | **Espace Client** | Chiffres clés, dépôt de pièces (→OCR/IA), devis & factures, relances/encours, suivi par client |
 | Référentiel | `tiers` | Tiers (clients/fournisseurs) | Fiches + règles d'affectation ; lookup SIRET ; saisie société obligatoire pour client société |
-| Ventes | `facturation` | Facturation client | Nouvelle facture (overlay déplaçable), **cycle de vie** (attente→validé→envoyé🔒, suppression, lot), liste **Factures** (transfert ⚙ Générer), suivi ventes, envoyées, saisie rapide, catalogue |
+| Ventes | `facturation` | Facturation client | Nouvelle facture, **cycle de vie** (attente→validé→envoyé🔒, suppression, lot), liste **Factures** (transfert ⚙ Générer), suivi ventes, envoyées, saisie rapide, catalogue, **Facturation électronique — opérateur relié (PPF/PDP) + Factur-X** |
 | Achats | `achats` | Factures fournisseurs (OCR) | Capture manuelle/scan/OCR ; scan/OCR → **Assistant IA** ; liste allégée ; **panneau IA fournisseurs** embarqué |
 | Comptabilité | `compta` | Consultation des comptes | Style Sage ; **double‑clic compte → éditeur d'écritures façon Sage** (cf. §7) |
 | Comptabilité | `chargespaie` | Charges et Paie | |
@@ -84,7 +84,7 @@ Application web de **pré‑comptabilité française** « **YADA / Précompta** 
 | Dossier | `coffre` | Coffre‑fort identifiants | |
 | Dossier | `parametrage` | Paramétrage & plan comptable | |
 
-## 7. Fonctionnalités clés ajoutées (addons 10→19)
+## 7. Fonctionnalités clés ajoutées (addons 10→20)
 - **Éditeur d'écritures par compte façon Sage** (addon11) — double‑clic sur un compte en **Consultation** ouvre un overlay `#ec-overlay` « Compte auxiliaire » (barre titre, menus, colonnes Date·Jnl·Pièce·Compte·Libellé·Débit·Crédit·**Solde courant**·L). Édition des lignes, ajout/retrait, **équilibrage obligatoire** (notification : compte d'attente 471 **ou** sélection du bon compte), **ligne rouge sous chaque écriture soldée**. **Ciblage par tiers** quand on clique un auxiliaire (sinon collectif). Fonctions : `ouvrirEcrituresCompte(code)`, `ecRender`, `ecSetLine/ecAddLine/ecDelLine/ecSolder/ecNotifSolde/ecCompteAttente/ecSolderSur`.
 - **Saisie journal Banque — édition inline simplifiée** (addon12) — double‑clic sur une écriture → cases modifiables **sur place** (sans bordure, rien ne se déplace, pas de ligne/bouton ajouté), enregistrement auto à la sortie de case, re‑double‑clic pour terminer. `sjRenderEcr/sjRowsEdit/sjEdit/sjSaveFields`.
 - **Facturation — cycle de vie & lot** (addon13) — `documentsClientsCard()` : en attente de validation → validé → envoyé🔒 (verrouillé), **suppression seul moyen de retirer** (retire doc+écriture+facture+règlement), **valider/envoyer en lot**. `validerDoc/validerLot/envoyerLot/supprimerDoc/docEtatTag`.
@@ -94,6 +94,7 @@ Application web de **pré‑comptabilité française** « **YADA / Précompta** 
 - **Suppression de dossier** (addon17) — `dossiersGestionCard()` dans la page Dossier + `supprimerDossier(id)` (gère le dossier actif → retour accueil).
 - **Panneau IA fournisseurs embarqué** (addon18) — `iaFournisseursCard()` greffé en bas d'`pageAchats`.
 - **Espace Client** (addon19, page `client`) — `pageEspaceClient()` : chiffres clés + trésorerie, dépôt de pièces (`dashRoute`), mes devis & factures, `relancesCard()`, suivi par client (`ecTresorerie/ecEncoursParClient`).
+- **Facturation électronique — opérateur relié** (addon20, dans `pageFacturation`) — `efacturationCard()` : connexion d'un opérateur agréé **PPF/PDP** (`efactCfg/efactConnecter/efactDeconnecter`), **transmission** au format **Factur-X** (`efactTransmettre`), **cycle de vie** (Déposée→Émise→Mise à disposition→Approuvée→Encaissée, branche Refusée — `efactAvancer/efactRefuser`), **flux horodaté** (`efactFlux`), **Factur-X (XML CII) téléchargeable** (`efactXML`). Config dans `db.parametres.efact`, statut par facture dans `doc.efact`. Simulation hors‑ligne ; Factur-X représentatif.
 - **Import FEC multi‑exercice** — un FEC année N crée le dossier avec **exercices N et N+1** (`exercices:[N, N+1]`), bascule N+1 sans re‑création.
 - **Sauvegarde automatique** — `save()` → `localStorage`, rechargé à l'INIT.
 
