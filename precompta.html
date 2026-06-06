@@ -8633,5 +8633,30 @@ ${lignes}
 })();
 </script>
 
+<script id="yada-addon36">
+/* ============================================================
+   Cohérence des KPI de synthèse : Tableau de bord & Espace Client
+   alignent CA / Charges / Résultat sur les ÉCRITURES (classe 7/6, hors
+   « OD RÉSULTAT ») — comme le Compte de résultat. Avant, ces KPI lisaient
+   les factures (`analytique()`) et ignoraient paie/dotations/frais bancaires.
+   L'Analytique reste basé sur les factures (analyse par pièce). 100% additif.
+   ============================================================ */
+(function(){
+  if(typeof c9!=='function') return;
+  function resEcr(){ let prod=0,ch=0; (db.ecritures||[]).forEach(e=>{ if((e.libelle||'').indexOf('OD RÉSULTAT')>=0) return;
+    e.lignes.forEach(l=>{ const cl=c9(l.compte)[0]; if(cl==='7') prod+=(+l.credit||0)-(+l.debit||0); if(cl==='6') ch+=(+l.debit||0)-(+l.credit||0); }); });
+    prod=r2(prod); ch=r2(ch); return {ca:prod, ch:ch, res:r2(prod-ch)}; }
+  window.resEcritures=resEcr;
+  function setKpi(h, marker, val){ const i=h.indexOf(marker); if(i<0) return h; const s=i+marker.length; const e=h.indexOf('</div>', s); if(e<0) return h; return h.slice(0,s)+val+h.slice(e); }
+  function alignKpi(h){ const x=resEcr();
+    h=setKpi(h, "affaires HT</div><div class=\"val cre\">", eur(x.ca));     // CA (dashboard / espace client)
+    h=setKpi(h, "Charges HT</div><div class=\"val deb\">", eur(x.ch));      // Charges
+    h=setKpi(h, "Résultat</div><div class=\"val\">", eur(x.res));          // Résultat
+    return h; }
+  if(typeof dashCompta==='function'){ const _d=dashCompta; dashCompta=function(){ return alignKpi(_d()); }; }
+  if(typeof pageEspaceClient==='function'){ const _p=pageEspaceClient; pageEspaceClient=function(){ return alignKpi(_p()); }; }
+})();
+</script>
+
 </body>
 </html>
