@@ -8763,7 +8763,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v42 · espace client simplifié ✨';
+    b.textContent='YADA · v43 · dépôt factures client ✨';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:600 11px system-ui,sans-serif;background:rgba(47,109,176,.92);color:#fff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.78;pointer-events:none';
     document.body.appendChild(b); }
@@ -8916,6 +8916,33 @@ ${lignes}
    remplacées par des versions épurées (création simplifiée + suivis), sans
    les blocs cabinet (catalogue, capture OCR, IA, e-facturation opérateur…). */
 (function(){
+  /* ----- Dépôt de factures (réutilise le stockage GED db.parametres.pieces) ----- */
+  function gstore(){ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.pieces))db.parametres.pieces=[]; return db.parametres.pieces; }
+  function gsz(n){ return !n?'':(n<1024?n+' o':(n<1048576?Math.round(n/1024)+' Ko':(n/1048576).toFixed(1)+' Mo')); }
+  function gico(p){ var n=(p.nom||'').toLowerCase(); if((p.mime||'').includes('pdf')||n.endsWith('.pdf'))return '📕'; if((p.mime||'').includes('image')||/\.(jpe?g|png|gif|webp)$/.test(n))return '🖼'; return '📄'; }
+  window.factDepotAdd=function(file,cat){ return new Promise(function(res){ var r=new FileReader();
+    r.onload=function(){ try{ gstore().push({id:uid(),nom:file.name,mime:file.type||'',taille:file.size||0,data:r.result,date:todayStr(),cat:cat}); save(); res(true);}catch(e){ toast('Fichier trop volumineux'); res(false);} };
+    r.onerror=function(){res(false);}; r.readAsDataURL(file); }); };
+  async function factAddList(fs,cat){ var ok=0; for(var i=0;i<fs.length;i++){ if(await factDepotAdd(fs[i],cat))ok++; } toast(ok+' facture(s) déposée(s)'); render(); }
+  window.factDrop=function(ev,cat){ ev.preventDefault(); try{ev.currentTarget.classList.remove('drag');}catch(e){} var fs=ev.dataTransfer&&ev.dataTransfer.files; if(fs&&fs.length)factAddList(fs,cat); };
+  window.factPick=function(cat){ var el=document.getElementById('fdep-'+cat); if(el)el.click(); };
+  window.factFile=function(ev,cat){ var fs=ev.target.files; if(fs&&fs.length)factAddList(fs,cat); };
+  window.depotFacturesCard=function(cat,titre,sub){
+    var s=gstore().filter(function(p){return p.cat===cat;});
+    var liste=s.length? s.slice().reverse().map(function(p){
+      return '<div class="ged-it"><span>'+gico(p)+'</span><span class="ged-nm" title="'+String(p.nom||'').replace(/"/g,'&quot;')+'">'+(p.nom||'pièce')+'</span>'
+        +'<span class="ged-mt">'+frDate(p.date)+(p.taille?' · '+gsz(p.taille):'')+'</span>'
+        +'<span><button class="btn btn-ghost btn-xs" onclick="gedVoir(\''+p.id+'\')">Ouvrir</button> '
+        +'<button class="btn btn-ghost btn-xs" onclick="gedDl(\''+p.id+'\')">⤓</button> '
+        +'<button class="btn btn-ghost btn-xs" onclick="gedDel(\''+p.id+'\')">✕</button></span></div>';
+    }).join('') : '<div class="hint">Aucune facture déposée pour l\'instant.</div>';
+    return '<div class="card"><h2>'+titre+'</h2><div class="sub">'+sub+'</div>'
+      +'<div class="ged-drop" onclick="factPick(\''+cat+'\')" ondragover="event.preventDefault();this.classList.add(\'drag\')" ondragleave="this.classList.remove(\'drag\')" ondrop="factDrop(event,\''+cat+'\')">'
+      +'<div style="font-size:24px">⬆</div><div style="font-weight:700">Déposez vos factures ici</div><div class="hint">ou cliquez — PDF, JPG, PNG</div>'
+      +'<input type="file" id="fdep-'+cat+'" hidden multiple accept=".pdf,.jpg,.jpeg,.png,image/*" onchange="factFile(event,\''+cat+'\')"></div>'
+      +liste+'</div>';
+  };
+
   /* ----- Facturation client simplifiée ----- */
   function faClientCreer(){
     var clients=(db.tiers||[]).filter(function(t){return t.type==='client';});
@@ -8968,8 +8995,9 @@ ${lignes}
       +'<tbody>'+(rows||'<tr><td colspan=6 class=empty>Aucune facture créée — créez-en une ci-dessus.</td></tr>')+'</tbody></table></div>';
   }
   window.pageFacturationClient=function(){ if(typeof catInit==='function')catInit();
-    var out=head('Mes factures clients','Créez une facture en quelques secondes, suivez vos ventes et retrouvez les factures envoyées.');
+    var out=head('Mes factures clients','Créez une facture en quelques secondes, déposez vos factures existantes, suivez vos ventes et retrouvez les factures envoyées.');
     out+=faClientCreer();
+    out+=depotFacturesCard('vente','📤 Déposer une facture client','Glissez-déposez vos factures de vente déjà établies (PDF/photo) : elles sont conservées dans le dossier et consultables par votre cabinet.');
     out+=faClientRecentes();
     try{ out+=suiviFacturesVente(); }catch(e){}
     try{ out+=listeFacturesEnvoyees(); }catch(e){}
@@ -9013,7 +9041,8 @@ ${lignes}
       +'<tbody>'+(rows||'<tr><td colspan=9 class=empty>Aucune facture fournisseur</td></tr>')+'</tbody></table></div>';
   }
   window.pageAchatsClient=function(){
-    var out=head('Mes factures fournisseurs','Retrouvez les dernières factures déposées et leur détail : HT, TVA, TTC et statut.');
+    var out=head('Mes factures fournisseurs','Déposez vos factures fournisseurs, retrouvez les dernières reçues et leur détail : HT, TVA, TTC et statut.');
+    out+=depotFacturesCard('achat','📤 Déposer une facture fournisseur','Glissez-déposez les factures reçues de vos fournisseurs (PDF/photo) : votre cabinet les récupère pour comptabilisation.');
     out+=achatsClientRecentes();
     out+=achatsClientDetail();
     return out;
