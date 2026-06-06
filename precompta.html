@@ -8763,7 +8763,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v41 · hero cabinet ✨';
+    b.textContent='YADA · v42 · espace client simplifié ✨';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:600 11px system-ui,sans-serif;background:rgba(47,109,176,.92);color:#fff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.78;pointer-events:none';
     document.body.appendChild(b); }
@@ -8908,6 +8908,122 @@ ${lignes}
       +'</div>'; };
   var _d=pageDash; pageDash=function(){ var html=_d();
     return html.replace('<div class="dash-wrap">','<div class="dash-wrap">'+dashHero()); };
+})();
+</script>
+<script id="yada-addon42">
+/* Espace Client — vues simplifiées Facturation & Factures fournisseurs.
+   Quand sessionRole==='client', la page Facturation et la page Achats sont
+   remplacées par des versions épurées (création simplifiée + suivis), sans
+   les blocs cabinet (catalogue, capture OCR, IA, e-facturation opérateur…). */
+(function(){
+  /* ----- Facturation client simplifiée ----- */
+  function faClientCreer(){
+    var clients=(db.tiers||[]).filter(function(t){return t.type==='client';});
+    var liHead='<div class="li-row li-head"><div>Désignation</div><div>Qté</div><div>PU HT</div><div>TVA %</div><div>Total HT</div><div></div></div>';
+    var liRows=faLignes.map(function(l,i){ var lht=r2((+l.qte||0)*(+l.pu||0));
+      return '<div class="li-row">'
+        +'<input id="li-desc-'+i+'" value="'+(l.desc||'').replace(/"/g,'&quot;')+'" placeholder="Prestation / produit" oninput="faMaj()">'
+        +'<input id="li-qte-'+i+'" type="number" value="'+l.qte+'" oninput="faMaj()">'
+        +'<input id="li-pu-'+i+'" type="number" value="'+l.pu+'" oninput="faMaj()">'
+        +'<select id="li-taux-'+i+'" onchange="faMaj()">'+[20,10,5.5,0].map(function(x){return '<option '+(x==l.taux?'selected':'')+'>'+x+'</option>';}).join('')+'</select>'
+        +'<input value="'+eur(lht)+'" disabled style="background:#f3efe6">'
+        +'<button class="btn btn-ghost btn-sm" onclick="faDelLigne('+i+')">✕</button></div>'; }).join('');
+    var t=faTotaux();
+    return '<div class="card fa-cli-creer"><h2>🧾 Créer une facture</h2>'
+      +'<div class="sub">Choisissez le client, ajoutez vos lignes, validez. C\'est tout.</div>'
+      +'<input type="hidden" id="fa-type" value="facture">'
+      +'<div class="row g3">'
+      +'<div class="field"><label>Type</label><select id="fa-type2" onchange="document.getElementById(&quot;fa-type&quot;).value=this.value"><option value="facture">Facture</option><option value="devis">Devis</option></select></div>'
+      +'<div class="field"><label>Client</label><select id="fa-client" onchange="faMaj()">'+(clients.map(function(c){return '<option value="'+c.id+'">'+c.nom+'</option>';}).join('')||'<option value="">— aucun client —</option>')+'</select></div>'
+      +'<div class="field"><label>Date d\'émission</label><input type="date" id="fa-date" value="'+todayStr()+'"></div>'
+      +'</div>'
+      +'<div class="row g3"><div class="field"><label>Date d\'échéance</label><input type="date" id="fa-ech" value="'+todayStr()+'"></div><div></div><div></div></div>'
+      +'<div class="field"><label>Lignes</label>'+liHead+liRows
+      +'<button class="btn btn-ghost btn-sm" onclick="faSync();faAddLigne()">+ Ajouter une ligne</button></div>'
+      +'<div class="ecr" style="margin-top:6px"><div class="ecr-h"><span>Totaux</span><span></span></div>'
+      +'<table><tbody>'
+      +'<tr><td>Total HT</td><td class="r num">'+eur(t.ht)+'</td></tr>'
+      +'<tr><td>Total TVA</td><td class="r num">'+eur(t.tva)+'</td></tr>'
+      +'<tr class="totrow"><td>Total TTC</td><td class="r num">'+eur(t.ttc)+'</td></tr>'
+      +'</tbody></table></div>'
+      +'<div id="fa-apercu"></div>'
+      +'<div class="right">'
+      +'<button class="btn btn-ghost" onclick="emettre(false)">Enregistrer en brouillon</button>'
+      +'<button class="btn btn-pri" onclick="emettre(true)">Valider la facture</button>'
+      +'</div></div>';
+  }
+  function faClientRecentes(){
+    var docs=(db.docs||[]).slice().sort(function(a,b){return a.date<b.date?1:(a.date>b.date?-1:((a.numero||'')<(b.numero||'')?1:-1));}).slice(0,5);
+    var rows=docs.map(function(d){ var c=(db.tiers||[]).find(function(x){return x.id===d.clientId;}); var st=docStatutFac(d);
+      return '<tr><td><b>'+d.numero+'</b></td><td>'+(c?c.nom:'—')+'</td><td class="num">'+frDate(d.date)+'</td>'
+        +'<td><span class="tag '+st.c+'">'+st.l+'</span></td><td class="r num"><b>'+eur(d.ttc)+'</b></td>'
+        +'<td class="r" style="white-space:nowrap">'
+        +'<button class="btn btn-ghost btn-sm" onclick="voirDoc(\''+d.id+'\')" title="Voir">👁</button> '
+        +(d.type==='facture'&&!d.ecritureId?'<button class="btn btn-gold btn-sm" onclick="genererEcritureDoc(\''+d.id+'\')" title="Comptabiliser">⚙ Comptabiliser</button>':'')
+        +(d.type==='devis'&&d.statut==='valide'&&!d.transformeEn?'<button class="btn btn-ghost btn-sm" onclick="transformerDevis(\''+d.id+'\')">→ Facture</button>':'')
+        +'</td></tr>'; }).join('');
+    return '<div class="card"><h2>🆕 Factures récemment créées</h2>'
+      +'<div class="sub">Vos 5 derniers documents créés.</div>'
+      +'<table><thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Statut</th><th class="r">TTC</th><th class="r">Actions</th></tr></thead>'
+      +'<tbody>'+(rows||'<tr><td colspan=6 class=empty>Aucune facture créée — créez-en une ci-dessus.</td></tr>')+'</tbody></table></div>';
+  }
+  window.pageFacturationClient=function(){ if(typeof catInit==='function')catInit();
+    var out=head('Mes factures clients','Créez une facture en quelques secondes, suivez vos ventes et retrouvez les factures envoyées.');
+    out+=faClientCreer();
+    out+=faClientRecentes();
+    try{ out+=suiviFacturesVente(); }catch(e){}
+    try{ out+=listeFacturesEnvoyees(); }catch(e){}
+    return out;
+  };
+
+  /* ----- Factures fournisseurs (réception) simplifiée ----- */
+  function achatsClientRecentes(){
+    var facs=(db.factures||[]).filter(function(f){return f.type==='achat';}).slice().sort(function(a,b){return a.date<b.date?1:-1;}).slice(0,5);
+    var rows=facs.map(function(f){ var t=(db.tiers||[]).find(function(x){return x.id===f.tiersId;});
+      return '<tr><td class="num">'+f.numero+'</td><td>'+(t?t.nom:'')+'</td><td class="num">'+frDate(f.date)+'</td>'
+        +'<td>'+(typeof sourceTag==='function'?sourceTag(f.source):'')+'</td><td class="r num"><b>'+eur(f.ttc)+'</b></td>'
+        +'<td class="r"><button class="btn btn-ghost btn-sm" onclick="voirFactureAchat(\''+f.id+'\')">👁 Voir</button></td></tr>'; }).join('');
+    return '<div class="card"><h2>📥 Dernières factures déposées</h2>'
+      +'<div class="sub">Les '+facs.length+' dernières factures fournisseurs reçues.</div>'
+      +'<table><thead><tr><th>N°</th><th>Fournisseur</th><th>Date</th><th>Entrée</th><th class="r">TTC</th><th class="r"></th></tr></thead>'
+      +'<tbody>'+(rows||'<tr><td colspan=6 class=empty>Aucune facture fournisseur déposée</td></tr>')+'</tbody></table></div>';
+  }
+  function achatsClientDetail(){
+    var facs=(db.factures||[]).filter(function(f){return f.type==='achat';}).slice().sort(function(a,b){return a.date<b.date?1:-1;});
+    var tHT=0,tTVA=0,tTTC=0;
+    var rows=facs.map(function(f){ var t=(db.tiers||[]).find(function(x){return x.id===f.tiersId;});
+      var reg=(typeof reglementDe==='function')?reglementDe(f.id):null;
+      tHT+=f.ht; tTVA+=f.tva; tTTC+=f.ttc;
+      var pay = reg&&reg.statut==='regle' ? '<span class="tag t-pay">payée ✓</span>'
+        : reg&&reg.statut==='partiel' ? '<span class="tag t-part">partielle</span>'
+        : '<span class="tag t-att">à payer</span>';
+      return '<tr><td class="num">'+f.numero+'</td><td>'+(t?t.nom:'')+'</td><td class="num">'+frDate(f.date)+'</td>'
+        +'<td>'+(f.modeReglement||'—')+'</td>'
+        +'<td class="r num">'+eur(f.ht)+'</td><td class="r num">'+eur(f.tva)+'</td><td class="r num"><b>'+eur(f.ttc)+'</b></td>'
+        +'<td>'+pay+'</td>'
+        +'<td class="r"><button class="btn btn-ghost btn-sm" onclick="voirFactureAchat(\''+f.id+'\')">👁 Voir</button></td></tr>'; }).join('');
+    return '<div class="card"><h2>📄 Détail des factures fournisseur</h2>'
+      +'<div class="sub">'+facs.length+' facture(s) reçue(s) — montants hors taxe, TVA et TTC.</div>'
+      +'<div class="grid g3" style="margin-bottom:14px">'
+      +'<div class="kpi"><div class="lbl">Total HT</div><div class="val">'+eur(r2(tHT))+'</div></div>'
+      +'<div class="kpi"><div class="lbl">Total TVA</div><div class="val">'+eur(r2(tTVA))+'</div></div>'
+      +'<div class="kpi red"><div class="lbl">Total TTC</div><div class="val deb">'+eur(r2(tTTC))+'</div></div>'
+      +'</div>'
+      +'<table><thead><tr><th>N°</th><th>Fournisseur</th><th>Date</th><th>Règlement</th><th class="r">HT</th><th class="r">TVA</th><th class="r">TTC</th><th>Paiement</th><th></th></tr></thead>'
+      +'<tbody>'+(rows||'<tr><td colspan=9 class=empty>Aucune facture fournisseur</td></tr>')+'</tbody></table></div>';
+  }
+  window.pageAchatsClient=function(){
+    var out=head('Mes factures fournisseurs','Retrouvez les dernières factures déposées et leur détail : HT, TVA, TTC et statut.');
+    out+=achatsClientRecentes();
+    out+=achatsClientDetail();
+    return out;
+  };
+
+  /* ----- Greffes : bascule client / cabinet ----- */
+  if(typeof pageFacturation==='function'){ var _fc=pageFacturation;
+    pageFacturation=function(){ return (window.sessionRole==='client')? pageFacturationClient() : _fc(); }; }
+  if(typeof pageAchats==='function'){ var _ac=pageAchats;
+    pageAchats=function(){ return (window.sessionRole==='client')? pageAchatsClient() : _ac(); }; }
 })();
 </script>
 </body>
