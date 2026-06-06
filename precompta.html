@@ -1710,6 +1710,12 @@ body[data-page="dash"] .ec-shortcuts{margin-bottom:26px}
 body[data-page="dash"] .ec-tile{padding:20px 14px}
 #ec-hero.cab-hero{background:linear-gradient(120deg,#2f9e6e,#15694a);box-shadow:0 14px 38px rgba(21,105,74,.32)}
 body[data-theme="noir"] #ec-hero.cab-hero{background:linear-gradient(120deg,#1c5a3a,#0a1422);border:1px solid #2f8f5e}
+/* Dépôts de factures : vert = unique, rouge = doublon */
+.ged-it.dep-ok{border-left:4px solid #2f9e6e;background:rgba(47,158,110,.12)}
+.ged-it.dep-dup{border-left:4px solid #d9534f;background:rgba(217,83,79,.14)}
+.dep-notif{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 13px;border-radius:10px;background:rgba(212,175,55,.16);border:1px solid var(--gold,#d4af37);margin-bottom:10px;font-weight:600}
+.nav-badge-dep{display:inline-block;min-width:18px;height:18px;line-height:18px;text-align:center;background:#d9534f;color:#fff;border-radius:9px;font-size:11px;font-weight:700;padding:0 5px;margin-left:6px}
+.dep-cmp{margin:-4px 0 12px;padding:10px 12px;border:1px dashed var(--line);border-radius:10px;background:var(--paper-2,rgba(127,127,127,.06))}
 </style>
 </head>
 <body data-theme="noir">
@@ -8763,7 +8769,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v43 · dépôt factures client ✨';
+    b.textContent='YADA · v44 · dépôts validés par le cabinet ✨';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:600 11px system-ui,sans-serif;background:rgba(47,109,176,.92);color:#fff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.78;pointer-events:none';
     document.body.appendChild(b); }
@@ -9053,6 +9059,141 @@ ${lignes}
     pageFacturation=function(){ return (window.sessionRole==='client')? pageFacturationClient() : _fc(); }; }
   if(typeof pageAchats==='function'){ var _ac=pageAchats;
     pageAchats=function(){ return (window.sessionRole==='client')? pageAchatsClient() : _ac(); }; }
+})();
+</script>
+<script id="yada-addon44">
+/* Dépôts de factures — workflow d'approbation cabinet.
+   Client dépose (Facturation=vente / Achats=achat) → notification cabinet →
+   le cabinet valide la RÉCEPTION puis la COMPTABILISATION (saisie auto via
+   posterFacture). Doublon repéré dès la réception (même fichier dans le
+   dossier) : vert = unique, rouge = doublon. Visible côté client et cabinet. */
+(function(){
+  if(typeof render!=='function') return;
+  function gstore(){ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.pieces))db.parametres.pieces=[]; return db.parametres.pieces; }
+  function dstore(){ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.depots))db.parametres.depots=[]; return db.parametres.depots; }
+  function nstore(){ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.notifsDepot))db.parametres.notifsDepot=[]; return db.parametres.notifsDepot; }
+  function normName(n){ return String(n||'').trim().toLowerCase(); }
+  function gico(p){ var n=(p&&p.nom||'').toLowerCase(); var m=(p&&p.mime||''); if(m.indexOf('pdf')>=0||n.endsWith('.pdf'))return '📕'; if(m.indexOf('image')>=0||/\.(jpe?g|png|gif|webp)$/.test(n))return '🖼'; return '📄'; }
+  function markNotifLu(depotId){ nstore().forEach(function(n){ if(n.depotId===depotId)n.lu=true; }); }
+  function notifNonLus(cat){ return nstore().filter(function(n){ return !n.lu && (!cat||n.cat===cat); }).length; }
+  window.depotNotifNonLus=notifNonLus;
+  window.notifMarquerLu=function(cat){ nstore().forEach(function(n){ if(!cat||n.cat===cat)n.lu=true; }); save(); render(); };
+
+  /* Dépôt par le client : fichier → pièce + dépôt + notification cabinet (+ contrôle doublon) */
+  window.factDepotAdd=function(file,cat){ return new Promise(function(res){ var r=new FileReader();
+    r.onload=function(){ try{
+      var nom=file.name;
+      var dup=gstore().some(function(p){ return p.cat===cat && normName(p.nom)===normName(nom); });
+      var piece={ id:uid(), nom:nom, mime:file.type||'', taille:file.size||0, data:r.result, date:todayStr(), cat:cat };
+      gstore().push(piece);
+      var dep={ id:uid(), cat:cat, fichierId:piece.id, nom:nom, date:todayStr(), statut:'deposee',
+        doublon:dup, doublonRaison:dup?('Fichier « '+nom+' » déjà déposé dans le dossier'):'',
+        tiersId:'', numero:'', dateFacture:'', ht:0, tva:0, ttc:0, taux:20, ecritureId:null, factureId:null };
+      dstore().push(dep);
+      nstore().push({ id:uid(), date:todayStr(), cat:cat, depotId:dep.id, nom:nom, doublon:dup, lu:false });
+      save(); res(true);
+    }catch(e){ toast('Fichier trop volumineux'); res(false); } };
+    r.onerror=function(){res(false);}; r.readAsDataURL(file); }); };
+
+  function statutTagDep(s){
+    if(s==='recue')return '<span class="tag t-part">réception validée</span>';
+    if(s==='comptabilisee')return '<span class="tag t-pay">comptabilisée ✓</span>';
+    if(s==='refusee')return '<span class="tag t-late">refusée</span>';
+    return '<span class="tag t-att">déposée · à valider</span>';
+  }
+
+  /* Liste de réception (client ou cabinet), colorée vert/rouge */
+  window.depotsListe=function(cat,role){
+    var deps=dstore().filter(function(d){return d.cat===cat;}).slice().reverse();
+    if(!deps.length) return '<div class="hint">Aucune facture déposée pour l\'instant.</div>';
+    var tiersList=(db.tiers||[]).filter(function(t){return t.type===(cat==='achat'?'fournisseur':'client');});
+    return deps.map(function(d){
+      var cls=d.doublon?'dep-dup':'dep-ok';
+      var dbl=d.doublon?' <span class="tag t-late" title="'+String(d.doublonRaison||'').replace(/"/g,'&quot;')+'">⚠ doublon</span>':' <span class="tag t-pay">✓ unique</span>';
+      var file=d.fichierId?'<button class="btn btn-ghost btn-xs" onclick="gedVoir(\''+d.fichierId+'\')">📎 Ouvrir</button> <button class="btn btn-ghost btn-xs" onclick="gedDl(\''+d.fichierId+'\')">⤓</button>':'';
+      var info=(d.statut==='comptabilisee')?(' <span class="ged-mt">'+(d.numero||'')+' · '+eur(d.ttc)+'</span>'):'';
+      var actions='';
+      if(role==='cabinet'){
+        if(d.statut==='deposee') actions='<button class="btn btn-gold btn-xs" onclick="depotRecevoir(\''+d.id+'\')">✔ Valider la réception</button> <button class="btn btn-ghost btn-xs" onclick="depotRefuser(\''+d.id+'\')">Refuser</button>';
+        else if(d.statut==='recue') actions='<button class="btn btn-ghost btn-xs" onclick="depotRefuser(\''+d.id+'\')">Refuser</button>';
+      } else {
+        if(d.statut==='deposee') actions='<button class="btn btn-ghost btn-xs" onclick="depotSupprimer(\''+d.id+'\')">✕ Retirer</button>';
+      }
+      var row='<div class="ged-it '+cls+'"><span>'+gico({nom:d.nom})+'</span>'
+        +'<span class="ged-nm" title="'+String(d.nom||'').replace(/"/g,'&quot;')+'">'+(d.nom||'pièce')+'</span>'
+        +'<span class="ged-mt">'+frDate(d.date)+'</span>'+statutTagDep(d.statut)+dbl+info
+        +'<span style="white-space:nowrap">'+file+(actions?(' '+actions):'')+'</span></div>';
+      if(role==='cabinet' && d.statut==='recue'){
+        var opts=tiersList.map(function(t){return '<option value="'+t.id+'">'+t.nom+'</option>';}).join('')||'<option value="">— aucun tiers —</option>';
+        row+='<div class="dep-cmp"><div class="row g4">'
+          +'<div class="field"><label>'+(cat==='achat'?'Fournisseur':'Client')+'</label><select id="cmp-tiers-'+d.id+'">'+opts+'</select></div>'
+          +'<div class="field"><label>N° facture</label><input id="cmp-num-'+d.id+'" placeholder="(auto si vide)"></div>'
+          +'<div class="field"><label>Date</label><input type="date" id="cmp-date-'+d.id+'" value="'+(d.date||todayStr())+'"></div>'
+          +'<div class="field"><label>Montant TTC</label><input type="number" id="cmp-ttc-'+d.id+'" placeholder="0.00"></div>'
+          +'</div><div class="row g4">'
+          +'<div class="field"><label>TVA %</label><select id="cmp-taux-'+d.id+'"><option>20</option><option>10</option><option>5.5</option><option>0</option></select></div>'
+          +'<div></div><div></div>'
+          +'<div class="field" style="align-self:end"><button class="btn btn-pri" style="width:100%" onclick="depotComptabiliser(\''+d.id+'\')">📒 Valider la comptabilisation</button></div>'
+          +'</div></div>';
+      }
+      return row;
+    }).join('');
+  };
+
+  /* Actions cabinet */
+  window.depotRecevoir=function(id){ var d=dstore().find(function(x){return x.id===id;}); if(!d)return; if(d.statut!=='deposee')return; d.statut='recue'; markNotifLu(id); save(); toast('Réception validée — comptabilisez la facture.'); render(); };
+  window.depotRefuser=function(id){ var d=dstore().find(function(x){return x.id===id;}); if(!d)return; if(d.statut==='comptabilisee')return toast('Déjà comptabilisée.'); if(!confirm('Refuser ce dépôt ?'))return; d.statut='refusee'; markNotifLu(id); save(); toast('Dépôt refusé.'); render(); };
+  window.depotComptabiliser=function(id){ var d=dstore().find(function(x){return x.id===id;}); if(!d)return;
+    if(d.statut==='comptabilisee')return toast('Déjà comptabilisée.');
+    if(d.statut!=='recue')return toast('Validez d\'abord la réception.');
+    var g=function(x){return document.getElementById(x);};
+    var tiersId=(g('cmp-tiers-'+id)||{}).value||'';
+    var numero=(g('cmp-num-'+id)||{}).value||'';
+    var date=(g('cmp-date-'+id)||{}).value||d.date;
+    var ttc=+((g('cmp-ttc-'+id)||{}).value)||0;
+    var taux=+((g('cmp-taux-'+id)||{}).value)||20;
+    if(!tiersId)return toast(d.cat==='achat'?'Sélectionnez le fournisseur':'Sélectionnez le client');
+    if(ttc<=0)return toast('Indiquez le montant TTC');
+    var t=(db.tiers||[]).find(function(x){return x.id===tiersId;}); if(!t)return toast('Tiers introuvable.');
+    var contre=t.compteContre||(d.cat==='achat'?'606000':'706000');
+    var tva=(d.cat==='achat'?'44566':'44571');
+    var f=posterFacture({ type:d.cat, tiersId:tiersId, date:date, base:ttc, baseEst:'TTC', taux:taux, compteContre:contre, compteTVA:tva, numero:(numero||undefined), source:'depot' });
+    d.statut='comptabilisee'; d.tiersId=tiersId; d.numero=f.numero; d.dateFacture=date; d.ttc=f.ttc; d.ht=f.ht; d.tva=f.tva; d.taux=taux; d.ecritureId=f.ecritureId; d.factureId=f.id; markNotifLu(id);
+    save(); toast('✅ Facture '+f.numero+' comptabilisée ('+(d.cat==='achat'?'journal ACH':'journal VTE')+').'); render(); };
+
+  /* Action client */
+  window.depotSupprimer=function(id){ var s=dstore(); var i=s.findIndex(function(x){return x.id===id;}); if(i<0)return;
+    if(s[i].statut!=='deposee')return toast('Déjà traitée par le cabinet — non supprimable.');
+    if(!confirm('Retirer ce dépôt ?'))return;
+    var fid=s[i].fichierId; if(fid){ var gp=gstore(); var j=gp.findIndex(function(p){return p.id===fid;}); if(j>=0)gp.splice(j,1); }
+    markNotifLu(id); s.splice(i,1); save(); render(); };
+
+  /* Carte de dépôt côté CLIENT (zone glisser-déposer + liste colorée) */
+  window.depotFacturesCard=function(cat,titre,sub){
+    return '<div class="card"><h2>'+titre+'</h2><div class="sub">'+sub+' Chaque dépôt notifie votre cabinet ; un doublon s\'affiche en rouge. La réception et la comptabilisation sont validées par le cabinet.</div>'
+      +'<div class="ged-drop" onclick="factPick(\''+cat+'\')" ondragover="event.preventDefault();this.classList.add(\'drag\')" ondragleave="this.classList.remove(\'drag\')" ondrop="factDrop(event,\''+cat+'\')">'
+      +'<div style="font-size:24px">⬆</div><div style="font-weight:700">Déposez vos factures ici</div><div class="hint">ou cliquez — PDF, JPG, PNG</div>'
+      +'<input type="file" id="fdep-'+cat+'" hidden multiple accept=".pdf,.jpg,.jpeg,.png,image/*" onchange="factFile(event,\''+cat+'\')"></div>'
+      +depotsListe(cat,'client')+'</div>';
+  };
+
+  /* Carte de réception côté CABINET (liste + notification + validation) */
+  window.depotsCabinetCard=function(cat){
+    var titre=cat==='achat'?'📥 Factures fournisseurs déposées par le client':'📤 Factures client déposées par le client';
+    var n=notifNonLus(cat);
+    var ban=n?'<div class="dep-notif">🔔 '+n+' nouveau(x) dépôt(s) du client à traiter <button class="btn btn-ghost btn-xs" onclick="notifMarquerLu(\''+cat+'\')">Marquer comme lu</button></div>':'';
+    return '<div class="card"><h2>'+titre+'</h2><div class="sub">Validez la <b>réception</b> puis la <b>comptabilisation</b> (saisie). Vert = unique · Rouge = doublon repéré dans le dossier.</div>'+ban+depotsListe(cat,'cabinet')+'</div>';
+  };
+
+  /* Greffes : afficher la réception côté cabinet sous Facturation (vente) et Achats (achat) */
+  if(typeof pageFacturation==='function'){ var _f=pageFacturation; pageFacturation=function(){ var h=_f(); if((window.sessionRole||'cabinet')!=='client') h+=depotsCabinetCard('vente'); return h; }; }
+  if(typeof pageAchats==='function'){ var _a=pageAchats; pageAchats=function(){ var h=_a(); if((window.sessionRole||'cabinet')!=='client') h+=depotsCabinetCard('achat'); return h; }; }
+
+  /* Pastille de notification sur le menu cabinet (Facturation / Achats) */
+  function addBadge(nav,lblPart,n){ if(!n)return; var btns=nav.querySelectorAll('.nav-btn'); for(var i=0;i<btns.length;i++){ if((btns[i].textContent||'').indexOf(lblPart)>=0){ var s=document.createElement('span'); s.className='nav-badge-dep'; s.textContent=n; btns[i].appendChild(s); break; } } }
+  if(typeof buildNav==='function'){ var _bn=buildNav; buildNav=function(){ var r=_bn.apply(this,arguments);
+    try{ if((window.sessionRole||'cabinet')!=='client'){ var nav=document.getElementById('nav'); if(nav){ addBadge(nav,'Facturation client',notifNonLus('vente')); addBadge(nav,'Factures fournisseurs',notifNonLus('achat')); } } }catch(e){}
+    return r; }; }
 })();
 </script>
 </body>
