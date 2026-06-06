@@ -1385,6 +1385,9 @@ body[data-page="tva"] .cp-monthbar{ background:transparent !important; border:no
 <style id="dossier-coffre-doublons">
 .dup-badge{display:inline-block;background:#7a1f1f;color:#ffd9d9;font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;margin-left:6px;letter-spacing:.04em;vertical-align:middle}
 .dup-tag{display:inline-block;background:#e8c428;color:#3a2e00;font-size:10px;font-weight:800;padding:1px 7px;border-radius:6px;margin-left:6px}
+.new-tag{display:inline-block;background:#2f9e6e;color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:6px;margin-left:6px}
+tr.new-tiers td{background:rgba(47,158,110,.14) !important}
+.nav-badge-new{display:inline-block;min-width:18px;height:18px;line-height:18px;text-align:center;background:#2f9e6e;color:#fff;border-radius:9px;font-size:11px;font-weight:700;padding:0 5px;margin-left:6px}
 tr.dup-tiers td{background:rgba(232,196,40,.18) !important}
 body[data-theme="noir"] tr.dup-tiers td{background:rgba(232,196,40,.14) !important;color:#ffe6a3}
 .dup-grp{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:8px 0}
@@ -2580,8 +2583,8 @@ function pageTiers(){
 function sectionTiers(title,list,kind){
   const isC=kind==='client';
   const rows=list.map(t=>{const s=statsTiers(t.id); const _dup=window.dupTiersIds&&window.dupTiersIds.has(t.id);
-    return `<tr class="${_dup?'dup-tiers':''}">
-      <td><button class="linkname" onclick="openTiers('${t.id}')">${t.nom}</button>${_dup?' <span class="dup-tag">DOUBLON</span>':''}</td>
+    return `<tr class="${_dup?'dup-tiers':''}${t.nouveau?' new-tiers':''}">
+      <td><button class="linkname" onclick="openTiers('${t.id}')">${t.nom}</button>${_dup?' <span class="dup-tag">DOUBLON</span>':''}${t.nouveau?' <span class="new-tag" title="Créé par le client — à vérifier/compléter">NOUVEAU</span>':''}</td>
       <td class="num">${t.compteAux||(isC?'411':'401')}</td>
       <td class="num">${t.compteContre} <span class="mini">${COMPTES[t.compteContre]||''}</span></td>
       <td class="r num">${t.taux} %</td>
@@ -8529,8 +8532,8 @@ ${lignes}
     const mv=tiersMouvemente(t);
     const opt=(arr,sel)=>arr.map(c=>'<option value="'+c+'" '+(c===sel?'selected':'')+'>'+c+' — '+(COMPTES[c]||'')+'</option>').join('');
     const contre=t.type==='client'?COMPTES_PRODUIT:COMPTES_CHARGE; const tva=t.type==='client'?['44571']:['44566','44562'];
-    document.getElementById('modal-c').innerHTML='<div class="modal-h"><h3>Modifier — '+t.nom+'</h3><button class="x" onclick="closeModal()">×</button></div>'
-      +'<div class="modal-b">'+(mv?'<div class="hint" style="color:#c0584f">⚠ Tiers mouvementé : le type et les comptes des écritures passées ne sont pas modifiés rétroactivement.</div>':'')
+    document.getElementById('modal-c').innerHTML='<div class="modal-h"><h3>Modifier — '+t.nom+(t.nouveau?' <span class="new-tag">NOUVEAU</span>':'')+'</h3><button class="x" onclick="closeModal()">×</button></div>'
+      +'<div class="modal-b">'+(t.nouveau?'<div class="hint" style="color:#1c7a52">🆕 Fournisseur créé par le client'+(t.origine==='client'?'':'')+' — complétez l\'IBAN, l\'e-mail et le téléphone puis enregistrez (le marquage « nouveau » sera retiré).</div>':'')+(mv?'<div class="hint" style="color:#c0584f">⚠ Tiers mouvementé : le type et les comptes des écritures passées ne sont pas modifiés rétroactivement.</div>':'')
       +'<div class="row g2"><div class="field"><label>Dénomination</label><input id="te-nom" value="'+(t.nom||'').replace(/"/g,'&quot;')+'"></div>'
       +'<div class="field"><label>Taux TVA</label><select id="te-taux">'+[20,10,5.5,2.1,0].map(x=>'<option '+(x==t.taux?'selected':'')+'>'+x+'</option>').join('')+'</select></div></div>'
       +'<div class="row g2"><div class="field"><label>Compte de contrepartie</label><select id="te-contre">'+opt(contre,t.compteContre)+'</select></div>'
@@ -8538,6 +8541,7 @@ ${lignes}
       +'<div class="row g3"><div class="field"><label>E-mail</label><input id="te-email" value="'+(t.email||'').replace(/"/g,'&quot;')+'"></div>'
       +'<div class="field"><label>Téléphone</label><input id="te-tel" value="'+(t.tel||'').replace(/"/g,'&quot;')+'"></div>'
       +'<div class="field"><label>Adresse</label><input id="te-adr" value="'+(t.adresse||'').replace(/"/g,'&quot;')+'"></div></div>'
+      +'<div class="field"><label>IBAN</label><input id="te-iban" value="'+(t.iban||'').replace(/"/g,'&quot;')+'" placeholder="FR76 …"></div>'
       +'<div class="row g3"><div class="field"><label>SIRET</label><input id="te-siret" value="'+(t.siret||'').replace(/"/g,'&quot;')+'" placeholder="14 chiffres"></div>'
       +'<div class="field"><label>N° TVA intracom.</label><input id="te-tvaintra" value="'+(t.tvaIntra||'').replace(/"/g,'&quot;')+'"></div>'
       +'<div class="field" style="align-self:end"><button class="btn btn-gold" style="width:100%" onclick="tiersEditSiret(\''+id+'\')">🔎 Compléter via le SIRET</button></div></div>'
@@ -8546,9 +8550,9 @@ ${lignes}
     document.getElementById('modal').classList.add('show'); };
   window.tiersEnregistrer=function(id){ const t=(db.tiers||[]).find(x=>x.id===id); if(!t)return; const g=i=>{const e=document.getElementById(i);return e?e.value:'';};
     t.nom=g('te-nom').trim()||t.nom; t.taux=+g('te-taux'); t.compteContre=g('te-contre'); t.compteTVA=g('te-tva');
-    t.email=g('te-email'); t.tel=g('te-tel'); t.adresse=g('te-adr');
+    t.email=g('te-email'); t.tel=g('te-tel'); t.adresse=g('te-adr'); t.iban=g('te-iban').trim();
     var sr=g('te-siret').replace(/\s/g,''); if(sr)t.siret=sr; var tv=g('te-tvaintra').trim(); if(tv)t.tvaIntra=tv;
-    save(); closeModal(); render(); toast('Fiche tiers mise à jour'); };
+    if(t.nouveau){ t.nouveau=false; } save(); closeModal(); render(); toast('Fiche tiers mise à jour'); };
   window.tiersEditSiret=function(id){ const g=x=>document.getElementById(x);
     const siret=((g('te-siret')||{}).value||'').replace(/\D/g,'');
     if(siret.length!==14 && siret.length!==9) return toast('Saisissez un SIRET (14 chiffres) ou un SIREN (9).');
@@ -8798,7 +8802,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v54 · SIRET dans l\'édition Tiers ✨';
+    b.textContent='YADA · v55 · nouveaux fournisseurs marqués ✨';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:600 11px system-ui,sans-serif;background:rgba(47,109,176,.92);color:#fff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.78;pointer-events:none';
     document.body.appendChild(b); }
@@ -9338,7 +9342,8 @@ ${lignes}
     if(f.statut!=='remplie')return toast('La fiche n\'est pas encore remplie par le client.');
     var adr=((f.adresse||'')+((f.cp||f.ville)?(', '+(f.cp||'')+' '+(f.ville||'')):'')).trim();
     var t={ id:uid(), type:'fournisseur', categorie:'societe', nom:f.raison, compteContre:'606000', compteTVA:'44566',
-      taux:20, compteAux:null, email:f.email||'', tel:f.tel||'', siret:f.siret||'', tvaIntra:f.tvaIntra||'', iban:f.iban||'', adresse:adr };
+      taux:20, compteAux:null, email:f.email||'', tel:f.tel||'', siret:f.siret||'', tvaIntra:f.tvaIntra||'', iban:f.iban||'', adresse:adr,
+      nouveau:true, origine:'client', dateAjout:todayStr() };
     db.tiers.push(t); try{ t.compteAux=genAux('fournisseur',t.nom); }catch(e){}
     f.statut='validee'; f.tiersId=t.id;
     var d=dstore().find(function(x){return x.id===f.depotId;}); if(d){ d.tiersId=t.id; d.tiersInconnu=false; }
@@ -9860,6 +9865,19 @@ ${lignes}
     }).then(function(r){ resolve((r&&r.data&&r.data.text)||null); })
       .catch(function(e){ toast('OCR image indisponible ('+(e&&e.message||'erreur')+') → repli nom de fichier'); resolve(null); });
   }); };
+})();
+</script>
+<script id="yada-addon55">
+/* Marquage « nouveau fournisseur » créé par le client : pastille sur le menu
+   Tiers (cabinet) indiquant le nombre de fournisseurs à vérifier/compléter. */
+(function(){
+  if(typeof buildNav!=='function') return;
+  function nbNouveaux(){ return (db.tiers||[]).filter(function(t){return t.nouveau;}).length; }
+  window.tiersNbNouveaux=nbNouveaux;
+  function addBadge(nav,lblPart,n){ if(!n)return; var b=nav.querySelectorAll('.nav-btn'); for(var i=0;i<b.length;i++){ if((b[i].textContent||'').indexOf(lblPart)>=0){ var s=document.createElement('span'); s.className='nav-badge-new'; s.textContent=n; s.title=n+' nouveau(x) fournisseur(s) ajouté(s) par le client'; b[i].appendChild(s); break; } } }
+  var _bn=buildNav; buildNav=function(){ var r=_bn.apply(this,arguments);
+    try{ if((window.sessionRole||'cabinet')!=='client'){ var nav=document.getElementById('nav'); if(nav) addBadge(nav,'Tiers (clients',nbNouveaux()); } }catch(e){}
+    return r; };
 })();
 </script>
 </body>
