@@ -2552,6 +2552,275 @@ body[data-theme="noir"] .sg-app .lx-soldee,body[data-theme="noir"] .lx-app .lx-s
 body[data-theme="noir"] .sg-app .balance-ko,body[data-theme="noir"] .lx-app .balance-ko,body[data-theme="noir"] .rb-app .balance-ko,
 body[data-theme="noir"] .sg-app .lx-ouvert,body[data-theme="noir"] .lx-app .lx-ouvert,body[data-theme="noir"] .rb-app .lx-ouvert{ color:#ff9a9a !important; }
 </style>
+<style id="sage-dark-lime-liquid">
+/* ===== Même ré-habillage Sage sombre + lime pour les thèmes liquid ===== */
+/* ===== Écrans "logiciel Sage" (consultation / journal / lettrage / rapprochement)
+   ré-habillés en NOIR + VERT LIME (thème noir). Inverse le bloc nlg-redesign
+   "écritures noires sur fond blanc". Placé en dernier → gagne la cascade. ===== */
+
+/* Conteneurs : graphite, liseré lime, texte clair */
+body[data-theme="liquid-clair"] .sg-app,
+body[data-theme="liquid-clair"] .lx-app,
+body[data-theme="liquid-clair"] .rb-app{
+  background:#0c0c0e !important; color:#e7ecde !important;
+  border:1.5px solid rgba(155,239,0,.30) !important;
+  box-shadow:0 0 0 1px rgba(155,239,0,.16), 0 22px 55px rgba(0,0,0,.6) !important;
+}
+/* Texte clair par défaut (on re-colore montants / soldes ensuite) */
+body[data-theme="liquid-clair"] .sg-app,  body[data-theme="liquid-clair"] .sg-app *,
+body[data-theme="liquid-clair"] .lx-app,  body[data-theme="liquid-clair"] .lx-app *,
+body[data-theme="liquid-clair"] .rb-app,  body[data-theme="liquid-clair"] .rb-app *{ color:#e7ecde !important; }
+
+/* Tableaux : fond sombre, lignes lime discrètes */
+body[data-theme="liquid-clair"] .sg-tbl,
+body[data-theme="liquid-clair"] table.lx,
+body[data-theme="liquid-clair"] table.sgj,
+body[data-theme="liquid-clair"] table.rb,
+body[data-theme="liquid-clair"] table.bj{ background:#0b0b0c !important; }
+body[data-theme="liquid-clair"] .sg-tbl td,
+body[data-theme="liquid-clair"] table.lx td,
+body[data-theme="liquid-clair"] table.sgj td,
+body[data-theme="liquid-clair"] table.rb td,
+body[data-theme="liquid-clair"] table.bj td{ color:#e7ecde !important; border-bottom-color:rgba(155,239,0,.16) !important; }
+body[data-theme="liquid-clair"] .sg-tbl tbody tr:nth-child(even) td,
+body[data-theme="liquid-clair"] table.sgj tbody tr:nth-child(even) td,
+body[data-theme="liquid-clair"] table.rb tr:nth-child(even) td{ background:rgba(255,255,255,.03) !important; }
+body[data-theme="liquid-clair"] .sg-tbl tbody tr:hover td,
+body[data-theme="liquid-clair"] table.lx tbody tr:hover td,
+body[data-theme="liquid-clair"] table.sgj tbody tr:hover td,
+body[data-theme="liquid-clair"] table.rb tr:hover td{ background:rgba(155,239,0,.10) !important; }
+body[data-theme="liquid-clair"] .sg-tbl thead th,
+body[data-theme="liquid-clair"] table.sgj thead th,
+body[data-theme="liquid-clair"] table.bj th{ background:#141414 !important; color:#cdd6c2 !important; border-bottom-color:rgba(155,239,0,.4) !important; }
+
+/* Sélections / lettrage */
+body[data-theme="liquid-clair"] .sg-tbl tbody tr.on td,
+body[data-theme="liquid-clair"] .sg-tbl tbody tr.on:hover td{ background:#6fb800 !important; color:#16210a !important; }
+body[data-theme="liquid-clair"] table.lx tbody tr.sel td,
+body[data-theme="liquid-clair"] table.lx tbody tr.sel:hover td{ background:rgba(155,239,0,.20) !important; color:#fff !important; }
+body[data-theme="liquid-clair"] table.lx tbody tr.lettre-on td{ background:rgba(155,239,0,.10) !important; }
+body[data-theme="liquid-clair"] table.rb tr.rapp td{ background:rgba(70,211,154,.14) !important; }
+
+/* Structure interne : contours lime discrets */
+body[data-theme="liquid-clair"] .sg-left,
+body[data-theme="liquid-clair"] .sg-col,
+body[data-theme="liquid-clair"] .sg-body,
+body[data-theme="liquid-clair"] .sg-right{ border-color:rgba(155,239,0,.22) !important; }
+body[data-theme="liquid-clair"] .sg-colh{ background:#141414 !important; border-color:rgba(155,239,0,.25) !important; }
+body[data-theme="liquid-clair"] .sg-peritem,
+body[data-theme="liquid-clair"] .sg-jrnitem{ border-bottom-color:rgba(255,255,255,.06) !important; }
+body[data-theme="liquid-clair"] .sg-peritem.on{ background:#6fb800 !important; }
+body[data-theme="liquid-clair"] .sg-peritem.on,
+body[data-theme="liquid-clair"] .sg-peritem.on *{ color:#16210a !important; }
+body[data-theme="liquid-clair"] .sg-jrnitem.on{ background:rgba(155,239,0,.22) !important; }
+body[data-theme="liquid-clair"] .sg-tab{ background:#101012 !important; border-color:rgba(155,239,0,.22) !important; }
+body[data-theme="liquid-clair"] .sg-tab.on{ background:#1c1c1e !important; border-top:2px solid #9bef00 !important; }
+
+/* Barres menu / outils / statut : graphite */
+body[data-theme="liquid-clair"] .sg-menu,
+body[data-theme="liquid-clair"] .lx-menu,
+body[data-theme="liquid-clair"] .rb-menu{ background:#141414 !important; border-color:rgba(155,239,0,.22) !important; }
+body[data-theme="liquid-clair"] .sg-tools{ background:#0e0e10 !important; border-color:rgba(155,239,0,.22) !important; }
+body[data-theme="liquid-clair"] .sg-status,
+body[data-theme="liquid-clair"] .lx-status,
+body[data-theme="liquid-clair"] .lx-foot,
+body[data-theme="liquid-clair"] .lx-bar,
+body[data-theme="liquid-clair"] .rb-bar{ background:#141414 !important; border-color:rgba(155,239,0,.22) !important; }
+body[data-theme="liquid-clair"] .lx-foot .fld .v{ background:#0d0d0d !important; border-color:rgba(155,239,0,.3) !important; }
+body[data-theme="liquid-clair"] .lx-comment{ background:#101010 !important; border-top-color:rgba(155,239,0,.22) !important; }
+body[data-theme="liquid-clair"] .rb-kv .v{ background:rgba(255,255,255,.05) !important; }
+body[data-theme="liquid-clair"] .rb-kv .v.hl{ background:rgba(155,239,0,.14) !important; }
+body[data-theme="liquid-clair"] .rb-per .it.on{ background:#6fb800 !important; }
+body[data-theme="liquid-clair"] .rb-per .it.on,
+body[data-theme="liquid-clair"] .rb-per .it.on *{ color:#16210a !important; }
+
+/* Grilles : fond sombre, lignes lime discrètes */
+body[data-theme="liquid-clair"] .sgj-grid,
+body[data-theme="liquid-clair"] .sg-grid,
+body[data-theme="liquid-clair"] .lx-wrap,
+body[data-theme="liquid-clair"] .sg-perlist,
+body[data-theme="liquid-clair"] .sg-jrnlist,
+body[data-theme="liquid-clair"] .bj-wrap{
+  background-color:#0b0b0c !important;
+  background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 26px, rgba(155,239,0,.12) 26px, rgba(155,239,0,.12) 27px) !important;
+}
+
+/* Champs / menus déroulants internes : sombres + focus lime */
+body[data-theme="liquid-clair"] .sg-app input,  body[data-theme="liquid-clair"] .sg-app select,
+body[data-theme="liquid-clair"] .lx-app input,  body[data-theme="liquid-clair"] .lx-app select,  body[data-theme="liquid-clair"] .lx-app textarea,
+body[data-theme="liquid-clair"] .rb-app input,  body[data-theme="liquid-clair"] .rb-app select,  body[data-theme="liquid-clair"] .rb-app textarea{
+  background:rgba(255,255,255,.06) !important; color:#e7ecde !important; border:1px solid rgba(155,239,0,.25) !important; }
+body[data-theme="liquid-clair"] .sg-dd{ background:#161616 !important; border-color:rgba(155,239,0,.25) !important; }
+body[data-theme="liquid-clair"] .sg-dd button:hover,
+body[data-theme="liquid-clair"] .sg-dd button:hover *{ background:#6fb800 !important; color:#16210a !important; }
+body[data-theme="liquid-clair"] .rb-ctx{ background:#161616 !important; }
+body[data-theme="liquid-clair"] .rb-ctx button:hover,
+body[data-theme="liquid-clair"] .rb-ctx button:hover *{ background:#6fb800 !important; color:#16210a !important; }
+
+/* Bandeaux de titre (navy "par design") → graphite ; texte reste blanc */
+body[data-theme="liquid-clair"] .sg-app .sg-title{ background:#141414 !important; border-bottom:1px solid rgba(155,239,0,.35) !important; }
+body[data-theme="liquid-clair"] .sg-app .sg-jrnh{ background:#141414 !important; }
+body[data-theme="liquid-clair"] .sg-app .sgj-head,
+body[data-theme="liquid-clair"] .sg-app .sgj-tot,
+body[data-theme="liquid-clair"] .sg-app .bj-hd,
+body[data-theme="liquid-clair"] .sg-app table.bj tr.tot td{ background:#141414 !important; }
+body[data-theme="liquid-clair"] .lx-app .lx-title{ background:#141414 !important; }
+body[data-theme="liquid-clair"] .lx-app table.lx thead th,
+body[data-theme="liquid-clair"] .lx-app table.lx tr.tot td{ background:#141414 !important; }
+body[data-theme="liquid-clair"] .rb-app .rb-title{ background:#141414 !important; }
+body[data-theme="liquid-clair"] .rb-app table.rb thead th,
+body[data-theme="liquid-clair"] .rb-app .rb-foot-tot{ background:#141414 !important; }
+body[data-theme="liquid-clair"] .rb-app .rb-jr .h{ background:#141414 !important; }
+
+/* Lignes d'en-tête de classe / totaux à style inline clair → sombre */
+body[data-theme="liquid-clair"] .sg-app tr[style*="background:#eef1f4"]{ background:rgba(155,239,0,.10) !important; }
+body[data-theme="liquid-clair"] .sg-app tr[style*="background:#f4f4f4"],
+body[data-theme="liquid-clair"] .sg-app tr[style*="background:#f7f7f7"]{ background:rgba(255,255,255,.05) !important; }
+
+/* Montants / soldes / sens : couleurs comptables lisibles sur sombre */
+body[data-theme="liquid-clair"] .sg-app .sg-amt,
+body[data-theme="liquid-clair"] .lx-app .sg-amt,
+body[data-theme="liquid-clair"] .rb-app .sg-amt{ color:#ff9a9a !important; }
+body[data-theme="liquid-clair"] .sg-app .deb,body[data-theme="liquid-clair"] .lx-app .deb,body[data-theme="liquid-clair"] .rb-app .deb{ color:#ff9a9a !important; }
+body[data-theme="liquid-clair"] .sg-app .cre,body[data-theme="liquid-clair"] .lx-app .cre,body[data-theme="liquid-clair"] .rb-app .cre{ color:#7fe3b4 !important; }
+body[data-theme="liquid-clair"] .sg-app .balance-ok,body[data-theme="liquid-clair"] .lx-app .balance-ok,body[data-theme="liquid-clair"] .rb-app .balance-ok,
+body[data-theme="liquid-clair"] .sg-app .lx-soldee,body[data-theme="liquid-clair"] .lx-app .lx-soldee,body[data-theme="liquid-clair"] .rb-app .lx-soldee{ color:#7fe3b4 !important; }
+body[data-theme="liquid-clair"] .sg-app .balance-ko,body[data-theme="liquid-clair"] .lx-app .balance-ko,body[data-theme="liquid-clair"] .rb-app .balance-ko,
+body[data-theme="liquid-clair"] .sg-app .lx-ouvert,body[data-theme="liquid-clair"] .lx-app .lx-ouvert,body[data-theme="liquid-clair"] .rb-app .lx-ouvert{ color:#ff9a9a !important; }
+/* ===== Écrans "logiciel Sage" (consultation / journal / lettrage / rapprochement)
+   ré-habillés en NOIR + VERT LIME (thème noir). Inverse le bloc nlg-redesign
+   "écritures noires sur fond blanc". Placé en dernier → gagne la cascade. ===== */
+
+/* Conteneurs : graphite, liseré lime, texte clair */
+body[data-theme="liquid-teinte"] .sg-app,
+body[data-theme="liquid-teinte"] .lx-app,
+body[data-theme="liquid-teinte"] .rb-app{
+  background:#0c0c0e !important; color:#e7ecde !important;
+  border:1.5px solid rgba(155,239,0,.30) !important;
+  box-shadow:0 0 0 1px rgba(155,239,0,.16), 0 22px 55px rgba(0,0,0,.6) !important;
+}
+/* Texte clair par défaut (on re-colore montants / soldes ensuite) */
+body[data-theme="liquid-teinte"] .sg-app,  body[data-theme="liquid-teinte"] .sg-app *,
+body[data-theme="liquid-teinte"] .lx-app,  body[data-theme="liquid-teinte"] .lx-app *,
+body[data-theme="liquid-teinte"] .rb-app,  body[data-theme="liquid-teinte"] .rb-app *{ color:#e7ecde !important; }
+
+/* Tableaux : fond sombre, lignes lime discrètes */
+body[data-theme="liquid-teinte"] .sg-tbl,
+body[data-theme="liquid-teinte"] table.lx,
+body[data-theme="liquid-teinte"] table.sgj,
+body[data-theme="liquid-teinte"] table.rb,
+body[data-theme="liquid-teinte"] table.bj{ background:#0b0b0c !important; }
+body[data-theme="liquid-teinte"] .sg-tbl td,
+body[data-theme="liquid-teinte"] table.lx td,
+body[data-theme="liquid-teinte"] table.sgj td,
+body[data-theme="liquid-teinte"] table.rb td,
+body[data-theme="liquid-teinte"] table.bj td{ color:#e7ecde !important; border-bottom-color:rgba(155,239,0,.16) !important; }
+body[data-theme="liquid-teinte"] .sg-tbl tbody tr:nth-child(even) td,
+body[data-theme="liquid-teinte"] table.sgj tbody tr:nth-child(even) td,
+body[data-theme="liquid-teinte"] table.rb tr:nth-child(even) td{ background:rgba(255,255,255,.03) !important; }
+body[data-theme="liquid-teinte"] .sg-tbl tbody tr:hover td,
+body[data-theme="liquid-teinte"] table.lx tbody tr:hover td,
+body[data-theme="liquid-teinte"] table.sgj tbody tr:hover td,
+body[data-theme="liquid-teinte"] table.rb tr:hover td{ background:rgba(155,239,0,.10) !important; }
+body[data-theme="liquid-teinte"] .sg-tbl thead th,
+body[data-theme="liquid-teinte"] table.sgj thead th,
+body[data-theme="liquid-teinte"] table.bj th{ background:#141414 !important; color:#cdd6c2 !important; border-bottom-color:rgba(155,239,0,.4) !important; }
+
+/* Sélections / lettrage */
+body[data-theme="liquid-teinte"] .sg-tbl tbody tr.on td,
+body[data-theme="liquid-teinte"] .sg-tbl tbody tr.on:hover td{ background:#6fb800 !important; color:#16210a !important; }
+body[data-theme="liquid-teinte"] table.lx tbody tr.sel td,
+body[data-theme="liquid-teinte"] table.lx tbody tr.sel:hover td{ background:rgba(155,239,0,.20) !important; color:#fff !important; }
+body[data-theme="liquid-teinte"] table.lx tbody tr.lettre-on td{ background:rgba(155,239,0,.10) !important; }
+body[data-theme="liquid-teinte"] table.rb tr.rapp td{ background:rgba(70,211,154,.14) !important; }
+
+/* Structure interne : contours lime discrets */
+body[data-theme="liquid-teinte"] .sg-left,
+body[data-theme="liquid-teinte"] .sg-col,
+body[data-theme="liquid-teinte"] .sg-body,
+body[data-theme="liquid-teinte"] .sg-right{ border-color:rgba(155,239,0,.22) !important; }
+body[data-theme="liquid-teinte"] .sg-colh{ background:#141414 !important; border-color:rgba(155,239,0,.25) !important; }
+body[data-theme="liquid-teinte"] .sg-peritem,
+body[data-theme="liquid-teinte"] .sg-jrnitem{ border-bottom-color:rgba(255,255,255,.06) !important; }
+body[data-theme="liquid-teinte"] .sg-peritem.on{ background:#6fb800 !important; }
+body[data-theme="liquid-teinte"] .sg-peritem.on,
+body[data-theme="liquid-teinte"] .sg-peritem.on *{ color:#16210a !important; }
+body[data-theme="liquid-teinte"] .sg-jrnitem.on{ background:rgba(155,239,0,.22) !important; }
+body[data-theme="liquid-teinte"] .sg-tab{ background:#101012 !important; border-color:rgba(155,239,0,.22) !important; }
+body[data-theme="liquid-teinte"] .sg-tab.on{ background:#1c1c1e !important; border-top:2px solid #9bef00 !important; }
+
+/* Barres menu / outils / statut : graphite */
+body[data-theme="liquid-teinte"] .sg-menu,
+body[data-theme="liquid-teinte"] .lx-menu,
+body[data-theme="liquid-teinte"] .rb-menu{ background:#141414 !important; border-color:rgba(155,239,0,.22) !important; }
+body[data-theme="liquid-teinte"] .sg-tools{ background:#0e0e10 !important; border-color:rgba(155,239,0,.22) !important; }
+body[data-theme="liquid-teinte"] .sg-status,
+body[data-theme="liquid-teinte"] .lx-status,
+body[data-theme="liquid-teinte"] .lx-foot,
+body[data-theme="liquid-teinte"] .lx-bar,
+body[data-theme="liquid-teinte"] .rb-bar{ background:#141414 !important; border-color:rgba(155,239,0,.22) !important; }
+body[data-theme="liquid-teinte"] .lx-foot .fld .v{ background:#0d0d0d !important; border-color:rgba(155,239,0,.3) !important; }
+body[data-theme="liquid-teinte"] .lx-comment{ background:#101010 !important; border-top-color:rgba(155,239,0,.22) !important; }
+body[data-theme="liquid-teinte"] .rb-kv .v{ background:rgba(255,255,255,.05) !important; }
+body[data-theme="liquid-teinte"] .rb-kv .v.hl{ background:rgba(155,239,0,.14) !important; }
+body[data-theme="liquid-teinte"] .rb-per .it.on{ background:#6fb800 !important; }
+body[data-theme="liquid-teinte"] .rb-per .it.on,
+body[data-theme="liquid-teinte"] .rb-per .it.on *{ color:#16210a !important; }
+
+/* Grilles : fond sombre, lignes lime discrètes */
+body[data-theme="liquid-teinte"] .sgj-grid,
+body[data-theme="liquid-teinte"] .sg-grid,
+body[data-theme="liquid-teinte"] .lx-wrap,
+body[data-theme="liquid-teinte"] .sg-perlist,
+body[data-theme="liquid-teinte"] .sg-jrnlist,
+body[data-theme="liquid-teinte"] .bj-wrap{
+  background-color:#0b0b0c !important;
+  background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 26px, rgba(155,239,0,.12) 26px, rgba(155,239,0,.12) 27px) !important;
+}
+
+/* Champs / menus déroulants internes : sombres + focus lime */
+body[data-theme="liquid-teinte"] .sg-app input,  body[data-theme="liquid-teinte"] .sg-app select,
+body[data-theme="liquid-teinte"] .lx-app input,  body[data-theme="liquid-teinte"] .lx-app select,  body[data-theme="liquid-teinte"] .lx-app textarea,
+body[data-theme="liquid-teinte"] .rb-app input,  body[data-theme="liquid-teinte"] .rb-app select,  body[data-theme="liquid-teinte"] .rb-app textarea{
+  background:rgba(255,255,255,.06) !important; color:#e7ecde !important; border:1px solid rgba(155,239,0,.25) !important; }
+body[data-theme="liquid-teinte"] .sg-dd{ background:#161616 !important; border-color:rgba(155,239,0,.25) !important; }
+body[data-theme="liquid-teinte"] .sg-dd button:hover,
+body[data-theme="liquid-teinte"] .sg-dd button:hover *{ background:#6fb800 !important; color:#16210a !important; }
+body[data-theme="liquid-teinte"] .rb-ctx{ background:#161616 !important; }
+body[data-theme="liquid-teinte"] .rb-ctx button:hover,
+body[data-theme="liquid-teinte"] .rb-ctx button:hover *{ background:#6fb800 !important; color:#16210a !important; }
+
+/* Bandeaux de titre (navy "par design") → graphite ; texte reste blanc */
+body[data-theme="liquid-teinte"] .sg-app .sg-title{ background:#141414 !important; border-bottom:1px solid rgba(155,239,0,.35) !important; }
+body[data-theme="liquid-teinte"] .sg-app .sg-jrnh{ background:#141414 !important; }
+body[data-theme="liquid-teinte"] .sg-app .sgj-head,
+body[data-theme="liquid-teinte"] .sg-app .sgj-tot,
+body[data-theme="liquid-teinte"] .sg-app .bj-hd,
+body[data-theme="liquid-teinte"] .sg-app table.bj tr.tot td{ background:#141414 !important; }
+body[data-theme="liquid-teinte"] .lx-app .lx-title{ background:#141414 !important; }
+body[data-theme="liquid-teinte"] .lx-app table.lx thead th,
+body[data-theme="liquid-teinte"] .lx-app table.lx tr.tot td{ background:#141414 !important; }
+body[data-theme="liquid-teinte"] .rb-app .rb-title{ background:#141414 !important; }
+body[data-theme="liquid-teinte"] .rb-app table.rb thead th,
+body[data-theme="liquid-teinte"] .rb-app .rb-foot-tot{ background:#141414 !important; }
+body[data-theme="liquid-teinte"] .rb-app .rb-jr .h{ background:#141414 !important; }
+
+/* Lignes d'en-tête de classe / totaux à style inline clair → sombre */
+body[data-theme="liquid-teinte"] .sg-app tr[style*="background:#eef1f4"]{ background:rgba(155,239,0,.10) !important; }
+body[data-theme="liquid-teinte"] .sg-app tr[style*="background:#f4f4f4"],
+body[data-theme="liquid-teinte"] .sg-app tr[style*="background:#f7f7f7"]{ background:rgba(255,255,255,.05) !important; }
+
+/* Montants / soldes / sens : couleurs comptables lisibles sur sombre */
+body[data-theme="liquid-teinte"] .sg-app .sg-amt,
+body[data-theme="liquid-teinte"] .lx-app .sg-amt,
+body[data-theme="liquid-teinte"] .rb-app .sg-amt{ color:#ff9a9a !important; }
+body[data-theme="liquid-teinte"] .sg-app .deb,body[data-theme="liquid-teinte"] .lx-app .deb,body[data-theme="liquid-teinte"] .rb-app .deb{ color:#ff9a9a !important; }
+body[data-theme="liquid-teinte"] .sg-app .cre,body[data-theme="liquid-teinte"] .lx-app .cre,body[data-theme="liquid-teinte"] .rb-app .cre{ color:#7fe3b4 !important; }
+body[data-theme="liquid-teinte"] .sg-app .balance-ok,body[data-theme="liquid-teinte"] .lx-app .balance-ok,body[data-theme="liquid-teinte"] .rb-app .balance-ok,
+body[data-theme="liquid-teinte"] .sg-app .lx-soldee,body[data-theme="liquid-teinte"] .lx-app .lx-soldee,body[data-theme="liquid-teinte"] .rb-app .lx-soldee{ color:#7fe3b4 !important; }
+body[data-theme="liquid-teinte"] .sg-app .balance-ko,body[data-theme="liquid-teinte"] .lx-app .balance-ko,body[data-theme="liquid-teinte"] .rb-app .balance-ko,
+body[data-theme="liquid-teinte"] .sg-app .lx-ouvert,body[data-theme="liquid-teinte"] .lx-app .lx-ouvert,body[data-theme="liquid-teinte"] .rb-app .lx-ouvert{ color:#ff9a9a !important; }
+</style>
 </head>
 <body data-theme="noir">
 <div class="layout">
