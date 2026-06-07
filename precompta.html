@@ -2127,8 +2127,8 @@ body, body *{ font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto,
         <button data-th="liquid-teinte" onclick="setTheme('liquid-teinte')">◑ Teinté</button>
       </div>
       <button onclick="retourSelectionDossier()">⇆ Changer de dossier</button>
-      <button onclick="exportJSON()">⬇ Exporter les données</button>
-      <button onclick="document.getElementById('imp').click()">⬆ Importer</button>
+      <button onclick="exportJSON()">Exporter les données</button>
+      <button onclick="document.getElementById('imp').click()">Importer</button>
       <input type="file" id="imp" accept="application/json" hidden onchange="importJSON(event)">
       <button onclick="if(confirm('Réinitialiser avec les données de démonstration ?')){seed();save();connecte=false;render();}">↺ Réinitialiser (démo)</button>
     </div>
@@ -2541,7 +2541,7 @@ function rapprochementTVA(m){
    ============================================================ */
 let _saveWarned=false;
 function save(){ try{ persistActif(); localStorage.setItem("yada-db", JSON.stringify(db)); }
-  catch(e){ if(!_saveWarned){ _saveWarned=true; try{ toast("⚠ Stockage local saturé — exportez vos données pour les conserver"); }catch(_){}}} }
+  catch(e){ if(!_saveWarned){ _saveWarned=true; try{ toast("Stockage local saturé — exportez vos données pour les conserver"); }catch(_){}}} }
 function exportJSON(){
   persistActif();
   const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
@@ -2715,28 +2715,28 @@ function construireSCI42(){
    ============================================================ */
 const PAGES=[
   {id:'dash',ico:'◧',sec:'Pilotage',lbl:'Tableau de bord'},
-  {id:'societe',ico:'🏢',sec:'Pilotage',lbl:'Sociétés (portefeuille)'},
-  {id:'client',ico:'🧑',sec:'Espace Client',lbl:'Espace Client'},
+  {id:'societe',ico:'',sec:'Pilotage',lbl:'Sociétés (portefeuille)'},
+  {id:'client',ico:'',sec:'Espace Client',lbl:'Espace Client'},
   {id:'tiers',ico:'⊞',sec:'Référentiel',lbl:'Tiers (clients / fournisseurs)'},
   {id:'facturation',ico:'⤳',sec:'Ventes',lbl:'Facturation client'},
   {id:'achats',ico:'⎙',sec:'Achats',lbl:'Factures fournisseurs (OCR)'},
   {id:'compta',ico:'▦',sec:'Comptabilité',lbl:'Consultation des comptes'},
-  {id:'chargespaie',ico:'👥',sec:'Comptabilité',lbl:'Charges et Paie'},
+  {id:'chargespaie',ico:'',sec:'Comptabilité',lbl:'Charges et Paie'},
   {id:'journal',ico:'≣',sec:'Comptabilité',lbl:'Journal comptable'},
-  {id:'ia',ico:'✨',sec:'Comptabilité',lbl:'Assistant IA (écritures)'},
+  {id:'ia',ico:'',sec:'Comptabilité',lbl:'Assistant IA (écritures)'},
   {id:'tva',ico:'%',sec:'Comptabilité',lbl:'Module TVA (CA3)'},
-  {id:'editions',ico:'🖶',sec:'Comptabilité',lbl:'Éditions (Balance, Grand livre…)'},
+  {id:'editions',ico:'',sec:'Comptabilité',lbl:'Éditions (Balance, Grand livre…)'},
   {id:'fec',ico:'⇅',sec:'Comptabilité',lbl:'Import / Export FEC'},
   {id:'analytique',ico:'◭',sec:'Pilotage',lbl:'Analytique & rentabilité'},
-  {id:'banque',ico:'⛁',sec:'Trésorerie',lbl:'Banque (512)'},
+  {id:'banque',ico:'',sec:'Trésorerie',lbl:'Banque (512)'},
   {id:'saisiebq',ico:'✎',sec:'Trésorerie',lbl:'Saisie journal Banque'},
   {id:'rappro',ico:'⊜',sec:'Trésorerie',lbl:'Rapprochement (lettrage)'},
   {id:'reglements',ico:'⇄',sec:'Trésorerie',lbl:'Suivi des règlements'},
-  {id:'immos',ico:'🏛',sec:'Immobilisations',lbl:'Immobilisations & Financements'},
-  {id:'dossier',ico:'🗀',sec:'Dossier',lbl:'Société & création du dossier'},
-  {id:'infosociete',ico:'🏢',sec:'Dossier',lbl:'Informations société'},
-  {id:'coffre',ico:'🔐',sec:'Dossier',lbl:'Coffre-fort identifiants'},
-  {id:'parametrage',ico:'⚙',sec:'Dossier',lbl:'Paramétrage & plan comptable'},
+  {id:'immos',ico:'',sec:'Immobilisations',lbl:'Immobilisations & Financements'},
+  {id:'dossier',ico:'',sec:'Dossier',lbl:'Société & création du dossier'},
+  {id:'infosociete',ico:'',sec:'Dossier',lbl:'Informations société'},
+  {id:'coffre',ico:'',sec:'Dossier',lbl:'Coffre-fort identifiants'},
+  {id:'parametrage',ico:'',sec:'Dossier',lbl:'Paramétrage & plan comptable'},
 ];
 let current='dash';
 function buildNav(){
@@ -2806,8 +2806,8 @@ function ecranSelectionDossier(){
     <input class="login-search" placeholder="Rechercher un dossier (nom, ville, activité, SIREN)…" value="${(selRecherche||'').replace(/"/g,'&quot;')}" oninput="selRecherche=this.value;render()" autofocus>
     <div class="dossier-grid">${cartes||'<div class="login-empty">Aucun dossier — importez un FEC ou créez un dossier.</div>'}</div>
     <div class="login-actions">
-      <button class="btn btn-gold" onclick="ouvrirCreationDossier()">➕ Créer un dossier</button>
-      <button class="btn btn-ghost" onclick="document.getElementById('imp').click()">⬆ Importer des données (JSON)</button>
+      <button class="btn btn-gold" onclick="ouvrirCreationDossier()">Créer un dossier</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('imp').click()">Importer des données (JSON)</button>
       <button class="btn btn-ghost" onclick="if(confirm('Réinitialiser avec les données de démonstration ?')){seed();save();connecte=false;render();}">↺ Réinitialiser (démo)</button>
     </div>
   </div>`;
@@ -2853,9 +2853,9 @@ function cabinetApercu(){
 function cabinetTable(liste){
   const rows=liste.map(d=>`<tr>
     <td><b>${d.nom}</b> <span class="mini">${d.forme||''}${d.siren?(' · SIREN '+d.siren):''}${d.ville?(' · '+d.ville):''}${d.activite?(' · '+d.activite):''}</span></td>
-    <td class="r num">⬇ ${d.factFourn||0}</td>
-    <td class="r num">⬆ ${d.factClient||0}</td>
-    <td class="r num">📎 ${d.docsManquants||0}</td>
+    <td class="r num">${d.factFourn||0}</td>
+    <td class="r num">${d.factClient||0}</td>
+    <td class="r num">${d.docsManquants||0}</td>
     <td><span class="rg-link" onclick="ouvrirDossierCabinet('${d.id}')">Accéder à ${d.portail||'Qonto'}</span></td>
     <td class="r" style="white-space:nowrap">
       <button class="btn btn-gold btn-sm" onclick="ouvrirDossierCabinet('${d.id}')">Ouvrir</button>
@@ -2934,7 +2934,7 @@ function pageTiers(){
       <div class="field"><label>Adresse</label><input id="ti-adresse"></div>
     </div>
     <div class="right" style="justify-content:flex-start;margin:6px 0 10px;gap:10px;align-items:center">
-      <button class="btn btn-pri btn-sm" onclick="remplirTiersDepuisSiret()">🔍 Récupérer les informations (SIREN/SIRET)</button>
+      <button class="btn btn-pri btn-sm" onclick="remplirTiersDepuisSiret()">Récupérer les informations (SIREN/SIRET)</button>
       <span class="mini" id="ti-lookup-status"></span>
     </div>
     <div class="sub">Informations société (récupérées automatiquement via le SIRET, modifiables) :</div>
@@ -3108,7 +3108,7 @@ function pageFacturation(){
       <button class="btn btn-ghost" onclick="emettre(false)">Enregistrer (brouillon)</button>
       <button class="btn btn-pri" onclick="emettre(true)">Valider</button>
     </div>
-    <div class="hint">L'envoi par e-mail n'est possible qu'<b>après validation</b>. ⚠ Conformité 2026 B2B : l'outil retenu devra être <b>Plateforme Agréée DGFiP</b> et émettre du <b>Factur-X</b>.</div>
+    <div class="hint">L'envoi par e-mail n'est possible qu'<b>après validation</b>. Conformité 2026 B2B : l'outil retenu devra être <b>Plateforme Agréée DGFiP</b> et émettre du <b>Factur-X</b>.</div>
   </div>
   ${documentsClientsCard()}`+
   suiviFacturesVente()+
@@ -3250,8 +3250,8 @@ function docHTML(d){
 function voirDoc(id){ const d=db.docs.find(x=>x.id===id); if(!d)return;
   document.getElementById('modal-c').innerHTML=`<div class="modal-h"><h3>${d.numero}</h3><button class="x" onclick="closeModal()">×</button></div>
     <div class="modal-b"><div class="inv">${docHTML(d)}</div>
-    <div class="right"><button class="btn btn-ghost" onclick="telechargerDoc('${d.id}')">⬇ Télécharger PDF</button>
-      ${peutEnvoyer(d)?`<button class="btn btn-gold" onclick="closeModal();envoyerDoc('${d.id}')">✉ Envoyer au client</button>`:''}</div></div>`;
+    <div class="right"><button class="btn btn-ghost" onclick="telechargerDoc('${d.id}')">Télécharger PDF</button>
+      ${peutEnvoyer(d)?`<button class="btn btn-gold" onclick="closeModal();envoyerDoc('${d.id}')">Envoyer au client</button>`:''}</div></div>`;
   document.getElementById('modal').classList.add('show');
 }
 function telechargerDoc(id){ const d=db.docs.find(x=>x.id===id); if(!d)return;
@@ -3264,7 +3264,7 @@ function envoyerDoc(id){
   const dev=d.devisId?db.docs.find(x=>x.id===d.devisId):null;
   const pj=[d.numero+'.pdf'].concat(dev?[dev.numero+'.pdf (devis)']:[]);
   d.envoye=true; d.dateEnvoi=todayStr(); if(dev)dev.envoye=true; save(); render();
-  toast('✉ Envoyé à '+c.email+' — pièce(s) jointe(s) : '+pj.join(' + '));
+  toast('Envoyé à '+c.email+' — pièce(s) jointe(s) : '+pj.join(' + '));
 }
 
 /* ---------- ACHATS / OCR ---------- */
@@ -3276,7 +3276,7 @@ function pageAchats(){
   `<div class="card"><h2>Capture d'une facture</h2><div class="sub">Choisissez le mode d'entrée, puis validez l'écriture</div>
     <div class="docbar" style="margin-bottom:14px">
       <span class="li-head">Mode d'entrée :</span>
-      <button class="btn ${acSource==='manuelle'?'btn-gold':'btn-ghost'} btn-sm" onclick="acSource='manuelle';render()">⌨ Saisie manuelle</button>
+      <button class="btn ${acSource==='manuelle'?'btn-gold':'btn-ghost'} btn-sm" onclick="acSource='manuelle';render()">Saisie manuelle</button>
       <button class="btn ${acSource==='scan'?'btn-gold':'btn-ghost'} btn-sm" onclick="acSource='scan';render()">▤ Scan</button>
       <button class="btn ${acSource==='ocr'?'btn-gold':'btn-ghost'} btn-sm" onclick="acSource='ocr';render()">⎙ Photo / OCR</button>
       ${acSource!=='manuelle'?`<button class="btn btn-ghost btn-sm" onclick="ocrDemo()">↻ Simuler l'extraction ${acSource==='ocr'?'OCR':'du scan'}</button>`:''}
@@ -3299,7 +3299,7 @@ function pageAchats(){
 function sourceTag(s){
   if(s==='ocr') return '<span class="tag t-part">⎙ OCR / photo</span>';
   if(s==='scan') return '<span class="tag t-devis">▤ Scan</span>';
-  return '<span class="tag t-att">⌨ Manuelle</span>';
+  return '<span class="tag t-att">Manuelle</span>';
 }
 function suiviFacturesAchat(){
   const facs=db.factures.filter(f=>f.type==='achat').slice().sort((a,b)=>a.date<b.date?1:-1);
@@ -3320,7 +3320,7 @@ function suiviFacturesAchat(){
     <div class="sub">Toutes les factures d'achat (${facs.length}) avec leur mode d'entrée et leur statut de paiement. Chaque écriture d'achat est accompagnée de sa facture (« Voir »).</div>
     <div class="grid g4" style="margin-bottom:14px">
       <div class="kpi red"><div class="lbl">Total TTC reçu</div><div class="val deb">${eur(r2(tTTC))}</div><div class="meta">HT ${eur(r2(tHT))} · TVA ${eur(r2(tTVA))}</div></div>
-      <div class="kpi"><div class="lbl">⌨ Saisie manuelle</div><div class="val">${nMan}</div></div>
+      <div class="kpi"><div class="lbl">Saisie manuelle</div><div class="val">${nMan}</div></div>
       <div class="kpi"><div class="lbl">▤ Scan</div><div class="val">${nScan}</div></div>
       <div class="kpi blue"><div class="lbl">⎙ OCR / photo</div><div class="val">${nOCR}</div></div>
     </div>
@@ -3334,7 +3334,7 @@ function listeExportBar(type){ const id=type==='achat'?'fa-ex':'fv-ex';
   return `<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;padding:10px 12px;background:var(--paper-2);border:1px solid var(--line);border-radius:9px">
     <div><label class="mini">Du</label><input type="date" id="${id}-d" style="padding:6px"></div>
     <div><label class="mini">Au</label><input type="date" id="${id}-f" style="padding:6px"></div>
-    <button class="btn btn-gold btn-sm" onclick="telechargerListeFactures('${type}')">⬇ Télécharger la liste (${type==='achat'?'fournisseurs':'clients'})</button>
+    <button class="btn btn-gold btn-sm" onclick="telechargerListeFactures('${type}')">Télécharger la liste (${type==='achat'?'fournisseurs':'clients'})</button>
     <span class="mini">Liste ${type==='achat'?'fournisseurs':'clients'} uniquement — aucun mélange entre tiers.</span>
   </div>`;
 }
@@ -3378,7 +3378,7 @@ function voirFactureAchat(id){ const f=db.factures.find(x=>x.id===id); if(!f)ret
     <div class="inv-foot-line">${t?t.nom:''} → ${s.raison||''}</div></div>`;
   document.getElementById('modal-c').innerHTML=`<div class="modal-h"><h3>${f.numero} — ${t?t.nom:''}</h3><button class="x" onclick="closeModal()">×</button></div>
     <div class="modal-b"><div class="inv">${html}</div>
-    <div class="right"><button class="btn btn-ghost" onclick="telechargerFactureAchat('${f.id}')">⬇ Télécharger PDF</button></div></div>`;
+    <div class="right"><button class="btn btn-ghost" onclick="telechargerFactureAchat('${f.id}')">Télécharger PDF</button></div></div>`;
   document.getElementById('modal').classList.add('show');
 }
 function telechargerFactureAchat(id){ voirFactureAchat(id); const f=db.factures.find(x=>x.id===id);
@@ -3416,7 +3416,7 @@ function pageJournal(){
   const rows=db.ecritures.slice().sort((a,b)=>a.date<b.date?1:-1).map(e=>{
     const d=r2(e.lignes.reduce((a,l)=>a+l.debit,0)), c=r2(e.lignes.reduce((a,l)=>a+l.credit,0)); const ok=Math.abs(d-c)<0.005;
     return `<div class="ecr"><div class="ecr-h">
-      <span>${jrnTag(e.journal)} &nbsp;<b>${e.libelle}</b> &nbsp;<span class="mini">${e.date}</span>${e.doublon?' <span class="dup-badge" title="Doublon FEC détecté">⚠ DOUBLON</span>':''}</span>
+      <span>${jrnTag(e.journal)} &nbsp;<b>${e.libelle}</b> &nbsp;<span class="mini">${e.date}</span>${e.doublon?' <span class="dup-badge" title="Doublon FEC détecté">DOUBLON</span>':''}</span>
       <span class="${ok?'balance-ok':'balance-ko'}">${ok?'Équilibrée ✓':'Déséquilibre !'} ${eur(d)}</span></div>
       <table><thead><tr><th>Compte</th><th>Intitulé</th><th class="r">Débit</th><th class="r">Crédit</th></tr></thead><tbody>
       ${e.lignes.map(l=>`<tr><td class="num">${l.compte}</td><td>${l.lib}</td>
@@ -3439,7 +3439,7 @@ let tvaMoisSel=null, tvaDetailOuvert=null;
 function tvaEstNeant(m){ const d=tvaDetailMois(m); return d.col<=0.005 && d.ded<=0.005; }
 function tvaBoxDepot(label, note){
   return `<div class="card tva-depot" style="border:2px solid var(--gold) !important">
-    <h2>📤 Dépôt de la déclaration de TVA</h2>
+    <h2>Dépôt de la déclaration de TVA</h2>
     <p class="mini" style="margin:4px 0 14px">${note||'La déclaration se télédéclare depuis votre espace professionnel impots.gouv.fr.'}</p>
     <a class="btn btn-gold" style="display:inline-block" href="https://cfspro-idp.impots.gouv.fr/oauth2/authorize?redirect_uri=https%3A%2F%2Fcfspro.impots.gouv.fr%2F%3Fopenidconnectcallback%3D1&scope=openid+profile+email+info&client_id=id_cfspro_prod&response_type=code" target="_blank" rel="noopener">${label} ↗</a>
   </div>`;
@@ -3502,7 +3502,7 @@ function pageTVA(){
   (neant?`<div class="card" style="border-color:var(--line-strong)"><h2>${moisLabel(m)} — déclaration à Néant</h2>
      <p class="mini">Aucune TVA collectée ni déductible sur ce mois. Une déclaration CA3 reste obligatoire : elle est déposée à <b>Néant</b> (zéro). ${neantValide?'Ce mois a été validé en Néant.':'Cliquez « Valider ce mois en Néant » ci-dessus pour confirmer.'}</p>
      </div>`:'')+
-  (!neant && d.credit>=SEUIL_REMB?`<div class="card" style="border-color:var(--blue);background:#eef3f8"><h2 class="blue">💶 Crédit de TVA remboursable</h2>
+  (!neant && d.credit>=SEUIL_REMB?`<div class="card" style="border-color:var(--blue);background:#eef3f8"><h2 class="blue">Crédit de TVA remboursable</h2>
      <p>Le crédit de TVA (${eur(d.credit)}) dépasse le seuil de remboursement (${eur(SEUIL_REMB)}). Vous pouvez en demander le remboursement (formulaire 3519) en joignant les factures justificatives.</p>
      <div class="right"><button class="btn btn-gold" onclick="tvaDemandeRemb('${m}')">Préparer la demande de remboursement</button></div></div>`:'')+
   (!neant?`<div class="card"><h2>Tableau CA3 — ${moisLabel(m)}</h2>
@@ -3695,7 +3695,7 @@ function pageRappro(){
   // colonne journaux/comptes 512 + relevés existants
   const jrCol=comptes.map(c=>{ const rel=releveDe(c.code, rapMois); const sel=c.code===rapCompte;
     return `<div class="cpt ${sel?'on':''}" onclick="rapSetCompte('${c.code}')">▸ ${c9(c.code)} - ${c.lib}</div>`+
-      (rel?`<div class="rel ${sel?'on':''}" oncontextmenu="rapCtx(event,'${c.code}')" onclick="rapSetCompte('${c.code}')">Relevé BQ au ${frDate(rel.dateFin)}${rel.verrouille?' 🔒':''}</div>`:'');
+      (rel?`<div class="rel ${sel?'on':''}" oncontextmenu="rapCtx(event,'${c.code}')" onclick="rapSetCompte('${c.code}')">Relevé BQ au ${frDate(rel.dateFin)}${rel.verrouille?' ':''}</div>`:'');
   }).join('');
   const rel=releveDe(rapCompte, rapMois);
   // panneau droit selon onglet / existence du relevé
@@ -3709,7 +3709,7 @@ function pageRappro(){
         <label>Jour de fin du relevé</label><input type="date" id="rb-datefin" value="${rapMois}-${String(djour).padStart(2,'0')}">
         <label>Solde du relevé bancaire (− si débiteur)</label><input class="amt" id="rb-solde" value="${soldeProp.toFixed(2)}">
       </div>
-      <div class="hint" style="margin:12px auto;max-width:520px">⚠ Le jour affiché est le dernier jour réel du mois (${djour}/${rapMois.slice(5)}). Modifiable en cas de décalage de relevé. Solde créditeur = positif ; débiteur = précédé d'un « − ».</div>
+      <div class="hint" style="margin:12px auto;max-width:520px">Le jour affiché est le dernier jour réel du mois (${djour}/${rapMois.slice(5)}). Modifiable en cas de décalage de relevé. Solde créditeur = positif ; débiteur = précédé d'un « − ».</div>
       <button class="btn btn-gold" onclick="rapCreerReleve()">Créer le relevé de rapprochement</button>
     </div>`;
   } else {
@@ -3758,9 +3758,9 @@ function pageRappro(){
         <td class="chk"><input type="checkbox" ${on?'checked':''} ${rel.verrouille?'disabled':''} onchange="rapToggle('${l.ecritureId}')"></td>
         <td class="l"></td></tr>`; }).join('');
     grille=`<div class="rb-bar">
-        <button class="btn btn-ghost btn-sm" onclick="rapToutRapprocher()" ${rel.verrouille?'disabled':''}>☑ Tout rapprocher</button>
-        <button class="btn btn-ghost btn-sm" onclick="rapToutDerapprocher()" ${rel.verrouille?'disabled':''}>☐ Tout dérapprocher</button>
-        <button class="btn btn-ghost btn-sm" onclick="rapImprimer()">🖶 Justificatif</button>
+        <button class="btn btn-ghost btn-sm" onclick="rapToutRapprocher()" ${rel.verrouille?'disabled':''}>Tout rapprocher</button>
+        <button class="btn btn-ghost btn-sm" onclick="rapToutDerapprocher()" ${rel.verrouille?'disabled':''}>Tout dérapprocher</button>
+        <button class="btn btn-ghost btn-sm" onclick="rapImprimer()">Justificatif</button>
         <span class="rb-ecart ${Math.abs(st.ecartAJustifier)<0.005?'lx-soldee':'lx-ouvert'}">
           ${Math.abs(st.ecartAJustifier)<0.005?'✓ Rapproché — soldé':('● Reste à rapprocher : '+eur(st.ecartAJustifier))} 
           &nbsp;·&nbsp; Solde comptable ${eur(st.soldeCompta)} / bancaire ${eur(st.soldeBancaire)}</span>
@@ -3923,7 +3923,7 @@ function pageSaisieBq(){
   return `<div class="sg-app">
     <div class="sg-title">${(db.societe&&db.societe.dossierNom)||'BANQUE'} 01/${year.slice(2)}-12/${year.slice(2)} (E) : Journal Banque -512000000- (${sjMois.split('-')[1]}/${year}) — Comptabilité<span class="sg-win">─ ▢ ✕</span></div>
     <div class="sg-menu"><span>Fichier</span><span>Édition</span><span>Déplacement</span><span>Consultation</span><span>Lots</span><span>Traitements</span><span>Aide</span></div>
-    <div class="sg-tools"><span>⇕</span><span>🔍</span><span>↻</span><span>▤</span><span>◄</span><span>►</span><span>❔</span>
+    <div class="sg-tools"><span>⇕</span><span></span><span>↻</span><span>▤</span><span>◄</span><span>►</span><span></span>
       <span style="margin-left:auto;font-size:12px;opacity:1">Période :</span>
       <select onchange="sjMois=this.value;render()" style="width:auto;font-size:12px;padding:3px 6px">${moisOpts}</select></div>
     <div class="bj-hd">Journal Banque -512000000-  (${sjMois.split('-')[1]}/${year})</div>
@@ -4095,11 +4095,11 @@ function exPrecedent(){ closeFichier(); const s=db.societe;
 function exVerrouillerMois(){ closeFichier(); const s=db.societe;
   if(!sgPer) return toast('Sélectionnez d\'abord un mois dans la colonne Périodes');
   if(!s.moisVerrouilles.includes(sgPer)) s.moisVerrouilles.push(sgPer);
-  save(); render(); toast('Mois '+sgPer.split('-')[1]+'/'+sgPer.slice(0,4)+' verrouillé 🔒'); }
-function exVerrouillerExo(){ closeFichier(); db.societe.exoVerrouille=true; save(); render(); toast('Exercice verrouillé 🔒 — saisie bloquée'); }
+  save(); render(); toast('Mois '+sgPer.split('-')[1]+'/'+sgPer.slice(0,4)+' verrouillé '); }
+function exVerrouillerExo(){ closeFichier(); db.societe.exoVerrouille=true; save(); render(); toast('Exercice verrouillé — saisie bloquée'); }
 function exDeverrouiller(){ closeFichier(); const s=db.societe;
   if(s.cloture) return toast('Exercice clôturé définitivement — déverrouillage impossible');
-  s.exoVerrouille=false; s.moisVerrouilles=[]; save(); render(); toast('Exercice déverrouillé 🔓'); }
+  s.exoVerrouille=false; s.moisVerrouilles=[]; save(); render(); toast('Exercice déverrouillé '); }
 function exClotureMois(){ closeFichier(); if(!sgPer) return toast('Sélectionnez un mois');
   if(!confirm('Clôture DÉFINITIVE du mois '+sgPer+' ? Cette opération est irréversible.')) return;
   if(!db.societe.moisVerrouilles.includes(sgPer)) db.societe.moisVerrouilles.push(sgPer);
@@ -4134,7 +4134,7 @@ function journalSelectionne(code){ closeFichier();
   document.getElementById('modal-c').innerHTML=
     '<div class="modal-h"><h3>'+titre+'</h3><button class="x" onclick="closeModal()">×</button></div>'+
     '<div class="modal-b">'+lastDocHTML+
-    '<div class="right"><button class="btn btn-pri" onclick="imprimerDoc()">🖶 Imprimer / PDF</button></div></div>';
+    '<div class="right"><button class="btn btn-pri" onclick="imprimerDoc()">Imprimer / PDF</button></div></div>';
   document.getElementById('modal').classList.add('show');
   toast(code?('Journal '+code+' généré'):'Tous les journaux générés');
 }
@@ -4182,7 +4182,7 @@ function cmpSuiviDouteux(){ closeMenus();
 function balOuvrir(type){ closeMenus();
   lastDocHTML='<div class="doc">'+balanceDoc(type)+'</div>';
   document.getElementById('modal-c').innerHTML=`<div class="modal-h"><h3>Balance ${type}</h3><button class="x" onclick="closeModal()">×</button></div>
-    <div class="modal-b">${lastDocHTML}<div class="right"><button class="btn btn-pri" onclick="imprimerDoc()">🖶 Imprimer / PDF</button></div></div>`;
+    <div class="modal-b">${lastDocHTML}<div class="right"><button class="btn btn-pri" onclick="imprimerDoc()">Imprimer / PDF</button></div></div>`;
   document.getElementById('modal').classList.add('show'); }
 
 /* ===== Menu PARAMÈTRES — éditeur du Plan de journaux ===== */
@@ -4510,9 +4510,9 @@ function pageCompteAux(){
     <div class="lx-bar">
       <button class="btn btn-ghost btn-sm" onclick="fermerCompteAux()">← Retour</button>
       <span style="width:10px"></span>
-      <button class="btn btn-gold btn-sm" onclick="auxLettrer()">🔗 Lettrer la sélection</button>
+      <button class="btn btn-gold btn-sm" onclick="auxLettrer()">Lettrer la sélection</button>
       <button class="btn btn-ghost btn-sm" onclick="auxDelettrer()">Délettrer</button>
-      <button class="btn btn-ghost btn-sm" onclick="auxLettrageAuto()">⚡ Lettrage automatique</button>
+      <button class="btn btn-ghost btn-sm" onclick="auxLettrageAuto()">Lettrage automatique</button>
       <span style="margin-left:auto" class="${soldee?'lx-soldee':'lx-ouvert'}">
         ${soldee?'✓ Compte soldé':('● '+nbOuvert+' écriture(s) non lettrée(s) — '+(Math.abs(ouvert)<0.005?'équilibré':'reste '+eur(Math.abs(ouvert))+' '+(ouvert>0?'au débit':'au crédit'))) }</span>
     </div>
@@ -4531,7 +4531,7 @@ function pageCompteAux(){
       <div class="fld"><label>Échéance</label><div class="v">${lignes.length?frDate(lignes[lignes.length-1].date):'—'}</div></div>
       <div class="fld"><label>mode Règlement</label><div class="v">Virement</div></div>
       ${t.revise?'<div class="fld"><label>Révision</label><div class="v lx-soldee">✓ révisé</div></div>':''}
-      ${t.verrou?'<div class="fld"><label>Verrou</label><div class="v lx-ouvert">🔒 verrouillé</div></div>':''}
+      ${t.verrou?'<div class="fld"><label>Verrou</label><div class="v lx-ouvert">verrouillé</div></div>':''}
       <div class="fld" style="margin-left:auto"><label>État du compte</label><div class="v ${soldee?'lx-soldee':'lx-ouvert'}">${soldee?'SOLDÉ':'OUVERT'}</div></div>
     </div>
     <div class="lx-comment">
@@ -4624,7 +4624,7 @@ function pageChargesPaie(){
                   ? `<span class="lx-soldee" style="margin-right:auto">✓ Écritures déployées pour ce mois.</span><button class="btn btn-ghost" onclick="cpSupprimerMois()">Supprimer la saisie</button>`
                   : `<button class="btn btn-pri" onclick="cpValider()">Vérifier & déployer (OD PAIE + OD CHARGES)</button>`}
               </div>
-              <div class="hint" style="margin-top:10px">⚠ Une alerte récapitule les montants par organisme avant déploiement. Écritures datées au dernier jour du mois, libellées « OD PAIE/CHARGES ${pieceMois(cpMois)} ».</div>
+              <div class="hint" style="margin-top:10px">Une alerte récapitule les montants par organisme avant déploiement. Écritures datées au dernier jour du mois, libellées « OD PAIE/CHARGES ${pieceMois(cpMois)} ».</div>
             </div>
           </div>
         </div>
@@ -4692,7 +4692,7 @@ function pageCompta(){
   if(sgPer===null){ const der=months.filter(m=>dispo.has(m)).pop(); sgPer=der||months[11]; }
   const perLabel=p=>{const [y,m]=p.split('-');return m+'/'+y.slice(2);};
   const verr=db.societe.moisVerrouilles||[]; const exoV=db.societe.exoVerrouille;
-  const perRows=months.map(p=>`<div class="sg-peritem ${p===sgPer?'on':''} ${dispo.has(p)?'':'zero'}" onclick="sgSetPer('${p}')">${perLabel(p)}${(exoV||verr.includes(p))?' 🔒':''}</div>`).join('');
+  const perRows=months.map(p=>`<div class="sg-peritem ${p===sgPer?'on':''} ${dispo.has(p)?'':'zero'}" onclick="sgSetPer('${p}')">${perLabel(p)}${(exoV||verr.includes(p))?' ':''}</div>`).join('');
   const jrnRows=sgJournaux(sgPer).map(j=>`<div class="sg-jrnitem ${j.n===0?'zero':''} ${j.code===sgJrn?'on':''}" onclick="sgSetJrn('${j.code}')">${j.L} - ${j.name} (${j.n})</div>`).join('');
   const tabs=SG_TABS.map(t=>`<div class="sg-tab ${t.id===sgTab?'on':''}" onclick="sgSetTab('${t.id}')">${t.lbl}</div>`).join('');
   let rows='';
@@ -5036,7 +5036,7 @@ function blocSansFacture(type){
     <td class="l">${frDate(x.date)}</td><td class="l">${x.tiers}</td><td class="l">${x.libelle}</td>
     <td class="l">${x.sens==='C'?'Encaissement':'Décaissement'}</td><td>${sageNum(x.montant)}</td>
     <td class="l">${x.email||'—'}</td></tr>`).join('');
-  return `<div class="doc-gl-h" style="margin-top:14px;background:#9c3024">⚠ MONTANTS SANS FACTURE À LETTRER — ${list.length} ligne(s) · ${sageNum(total)} € à justifier</div>
+  return `<div class="doc-gl-h" style="margin-top:14px;background:#9c3024">MONTANTS SANS FACTURE À LETTRER — ${list.length} ligne(s) · ${sageNum(total)} € à justifier</div>
     <table class="doc-t"><thead><tr><th class="l">Date</th><th class="l">Tiers</th><th class="l">Libellé</th><th class="l">Sens</th><th>Montant</th><th class="l">E-mail tiers</th></tr></thead>
     <tbody>${rows}</tbody></table>
     <div class="hint" style="margin:6px 0 0">Ces montants n'ont aucune facture rattachée : à vérifier par l'utilisateur, puis demande des pièces manquantes au tiers (mail ou dépôt sur son accès au logiciel).</div>`;
@@ -5156,7 +5156,7 @@ function pageEditions(){
       <button class="btn btn-ghost" onclick="genererDoc('journaux')">Journaux</button>
       <button class="btn btn-ghost" onclick="genererDoc('central')">Journal centralisateur</button>
       <span style="margin-left:auto"></span>
-      <button class="btn btn-pri" onclick="imprimerDoc()">🖶 Imprimer / PDF (pièce jointe)</button>
+      <button class="btn btn-pri" onclick="imprimerDoc()">Imprimer / PDF (pièce jointe)</button>
     </div>
     <div class="hint">L'export PDF se fait via la boîte d'impression du navigateur (« Enregistrer en PDF ») — le document conserve exactement la mise en forme à l'écran.</div>
   </div>
@@ -5423,7 +5423,7 @@ function pageFEC(){
   <div class="card"><h2>Exporter un FEC</h2>
     <div class="row g2">
       <div class="field"><label>Format d'export</label><select id="fec-exfmt"><option value="txt">TXT (tabulé)</option><option value="xml">XML</option><option value="fec">FEC</option></select></div>
-      <div class="field" style="display:flex;align-items:flex-end"><button class="btn btn-pri" onclick="exportFEC()">⬇ Exporter le FEC</button></div>
+      <div class="field" style="display:flex;align-items:flex-end"><button class="btn btn-pri" onclick="exportFEC()">Exporter le FEC</button></div>
     </div>
     <div class="hint">Nom de fichier normalisé : SIREN + « FEC » + date de clôture (AAAAMMJJ).</div></div>
   <div class="card"><h2>Importer un FEC</h2>
@@ -5433,7 +5433,7 @@ function pageFEC(){
         <option>Format FEC</option><option>Sage XML</option><option>Sage ONE</option><option>Ciel Compta</option>
         <option>Ciel Compta Evolution</option><option>Sage 100</option><option>Sage Expert</option></select></div>
       <div class="field" style="display:flex;align-items:flex-end">
-        <button class="btn btn-gold" onclick="document.getElementById('fec-file').click()">⬆ Choisir un fichier</button>
+        <button class="btn btn-gold" onclick="document.getElementById('fec-file').click()">Choisir un fichier</button>
         <input type="file" id="fec-file" hidden accept=".txt,.csv,.xml,.fec" onchange="importFEC(event)"></div>
     </div>
     <div id="fec-result"></div></div>`+
@@ -5442,7 +5442,7 @@ function pageFEC(){
 function historiqueFEC(){
   const log=db.fecLog||[];
   const rows=log.map(e=>`<tr>
-    <td><span class="tag ${e.sens==='import'?'t-ven':'t-ach'}">${e.sens==='import'?'⬆ Import':'⬇ Export'}</span></td>
+    <td><span class="tag ${e.sens==='import'?'t-ven':'t-ach'}">${e.sens==='import'?'Import':'Export'}</span></td>
     <td class="num">${e.date}</td><td class="num">${e.heure}</td>
     <td>${e.fichier||''}</td><td>${e.format||''}</td>
     <td class="r num">${e.nbEcr!=null?e.nbEcr:'—'}</td><td class="r num">${e.nbLignes!=null?e.nbLignes:'—'}</td>
@@ -5464,10 +5464,10 @@ function pageDossier(){
   `<div class="card"><h2>1 · Pièces légales de la société</h2><div class="sub">Statuts et K-bis — base des paramètres et des règles applicables (forme juridique, activité réglementée…)</div>
     <div class="row g2">
       <div class="field"><label>Statuts de la société (PDF)</label>
-        <button class="btn btn-ghost" onclick="document.getElementById('f-statuts').click()">📎 ${s.statutsRecu?'Statuts reçus ✓':'Joindre les statuts'}</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('f-statuts').click()">${s.statutsRecu?'Statuts reçus ✓':'Joindre les statuts'}</button>
         <input type="file" id="f-statuts" hidden accept=".pdf" onchange="docRecu('statutsRecu')"></div>
       <div class="field"><label>Extrait K-bis (PDF)</label>
-        <button class="btn btn-ghost" onclick="document.getElementById('f-kbis').click()">📎 ${s.kbisRecu?'K-bis reçu ✓':'Joindre le K-bis'}</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('f-kbis').click()">${s.kbisRecu?'K-bis reçu ✓':'Joindre le K-bis'}</button>
         <input type="file" id="f-kbis" hidden accept=".pdf" onchange="docRecu('kbisRecu')"></div>
     </div></div>
   <div class="card"><h2>2 · Informations société</h2>
@@ -5500,7 +5500,7 @@ function pageDossier(){
     </div>
     <div class="field"><label>Plan de journaux</label>
       <div class="docbar">${['HA — Achats','VT — Ventes','BQ — Banque','OD — Opérations diverses'].map(j=>`<span class="pill">✓ ${j}</span>`).join('')}</div></div>
-    <div class="right"><button class="btn btn-gold" onclick="enregistrerDossier()">💾 Enregistrer & créer le dossier</button></div>
+    <div class="right"><button class="btn btn-gold" onclick="enregistrerDossier()">Enregistrer & créer le dossier</button></div>
   </div>`;
 }
 function docRecu(champ){ db.societe[champ]=true; save(); render(); toast('Pièce enregistrée'); }
@@ -5615,7 +5615,7 @@ function planComptableCard(){
     +'<div class="sub">'+desc+'</div>'
     +'<div class="docbar" style="gap:8px;flex-wrap:wrap">'
       +'<button class="btn btn-ghost btn-sm" onclick="chargerPlanBTP();save();render();toast(\'Plan comptable rechargé\')">↻ Recharger le plan</button>'
-      +'<button class="btn btn-gold btn-sm" onclick="appliquerTVAauto(true)">⚙ Accorder la TVA (charges 20% déd. / ventes 20% coll.)</button></div>'
+      +'<button class="btn btn-gold btn-sm" onclick="appliquerTVAauto(true)">Accorder la TVA (charges 20% déd. / ventes 20% coll.)</button></div>'
     +addRow
     +'<div class="field" style="max-width:460px;margin-top:8px"><label>Rechercher — n° de compte ou intitulé</label>'
       +'<input id="pc-search" placeholder="tapez 6 → 60 → 606… ou un intitulé" value="'+(pcQuery||'').replace(/"/g,'&quot;')+'" oninput="pcSearch(this.value)"></div>'
@@ -5642,7 +5642,7 @@ function pageParametrage(){
       <div class="field"><label>Numéros de comptes alphanumériques</label><select id="p-alpha"><option value="oui" ${p.numAlphaNum?'selected':''}>Autorisés</option><option value="non" ${!p.numAlphaNum?'selected':''}>Interdits</option></select></div>
       <div class="field"><label>Compte de résultat / d'arrondi</label><input id="p-resarr" value="${p.compteResultat} / ${p.compteArrondi}"></div>
     </div>
-    <div class="right"><button class="btn btn-gold" onclick="enregistrerParam()">💾 Enregistrer le paramétrage</button></div>
+    <div class="right"><button class="btn btn-gold" onclick="enregistrerParam()">Enregistrer le paramétrage</button></div>
   </div>
   ${planComptableCard()}`;
 }
@@ -5840,7 +5840,7 @@ function imViewImmo(){
   Object.keys(g).sort().forEach(cpt=>{
     listHtml+=`<div class="im-grp">▾ ${c9(cpt)} ${COMPTES[cpt]||''}</div>`;
     g[cpt].forEach(im=>{ const nat=(im.nature&&im.nature!==im.numero)?(' '+im.nature):'';
-      listHtml+=`<div class="im-item ${im.id===imSelId?'on':''}" onclick="imSel('${im.id}')"><span>${im.numero}${nat}</span><span class="im-ck">🔒✓</span></div>`; });
+      listHtml+=`<div class="im-item ${im.id===imSelId?'on':''}" onclick="imSel('${im.id}')"><span>${im.numero}${nat}</span><span class="im-ck">✓</span></div>`; });
   });
   if(!listHtml) listHtml='<div class="im-empty">Aucune immobilisation — cliquez « ＋ Immobilisation ».</div>';
   const sel=(db.immos||[]).find(x=>x.id===imSelId)||((db.immos||[])[0]);
@@ -5856,7 +5856,7 @@ function imViewImmo(){
       <button class="btn btn-ghost btn-sm" onclick="imPrint('acqces')">▤ Acquisitions / Cessions</button>
       <button class="btn btn-ghost btn-sm" onclick="imPrint('fiscal')">▤ Réintégration / Déduction fiscale</button>
       <span class="im-sep"></span>
-      <button class="btn btn-pri btn-sm" onclick="imComptabiliserDotations()">⚙ Comptabiliser dotations ${imAnnee}</button>
+      <button class="btn btn-pri btn-sm" onclick="imComptabiliserDotations()">Comptabiliser dotations ${imAnnee}</button>
       ${sel?`<button class="btn btn-ghost btn-sm" onclick="imCeder('${sel.id}')">Céder / sortir</button><button class="btn btn-ghost btn-sm" onclick="imDel('${sel.id}')">Supprimer</button>`:''}
     </div>
     <div class="im-body">
@@ -5868,7 +5868,7 @@ function imViewImmo(){
 function imDetail(im){
   const p=immoPlan(im); const row=immoRowAnnee(im, imAnnee);
   const dtabs=[['attributs','Attributs'],['comptable','Comptable'],['fiscal','Fiscal']];
-  const tabBar=`<div class="im-dtabs">${dtabs.map(([k,l])=>`<div class="im-dtab ${imDtab===k?'on':''}" onclick="imSetDtab('${k}')">${l}${k!=='attributs'?' <span class="im-lk">🔒✓</span>':''}</div>`).join('')}</div>`;
+  const tabBar=`<div class="im-dtabs">${dtabs.map(([k,l])=>`<div class="im-dtab ${imDtab===k?'on':''}" onclick="imSetDtab('${k}')">${l}${k!=='attributs'?' <span class="im-lk">✓</span>':''}</div>`).join('')}</div>`;
   let pane;
   if(imDtab==='attributs'){
     pane=`<div class="im-sec">Informations Permanentes …</div>
@@ -5978,7 +5978,7 @@ function imShowDoc(title, inner){
   const html='<div class="doc">'+imDocHead(title)+inner+`<div class="doc-foot">${db.societe.raison}</div></div></div>`;
   window._imDoc=html;
   document.getElementById('modal-c').innerHTML=`<div class="modal-h"><h3>${title}</h3><button class="x" onclick="closeModal()">×</button></div>
-    <div class="modal-b">${html}<div class="right"><button class="btn btn-pri" onclick="imDoPrint()">🖶 Imprimer / PDF</button></div></div>`;
+    <div class="modal-b">${html}<div class="right"><button class="btn btn-pri" onclick="imDoPrint()">Imprimer / PDF</button></div></div>`;
   document.getElementById('modal').classList.add('show');
 }
 function imDoPrint(){ document.getElementById('print-area').innerHTML=window._imDoc||''; setTimeout(()=>window.print(),120); }
@@ -6153,8 +6153,8 @@ function imViewEmprunt(){
           <div class="kpi red"><div class="lbl">ICNE ${an} (661/1688)</div><div class="val deb">${eur(icne)}</div></div>
           <div class="kpi green"><div class="lbl">Compte</div><div class="val">164</div></div>
         </div>
-        <div class="right" style="margin-bottom:10px"><button class="btn btn-pri btn-sm" onclick="empComptabiliser('${sel.id}',${an})">⚙ Comptabiliser les échéances ${an}</button>
-          <button class="btn btn-ghost btn-sm" onclick="empComptabiliserICNE('${sel.id}',${an})">⚙ Comptabiliser l'ICNE ${an}</button></div>
+        <div class="right" style="margin-bottom:10px"><button class="btn btn-pri btn-sm" onclick="empComptabiliser('${sel.id}',${an})">Comptabiliser les échéances ${an}</button>
+          <button class="btn btn-ghost btn-sm" onclick="empComptabiliserICNE('${sel.id}',${an})">Comptabiliser l'ICNE ${an}</button></div>
         <h2>Amortissement de l'emprunt (par exercice)</h2>
         <table><thead><tr><th>Année</th><th class="r">Intérêts (661)</th><th class="r">Capital (164)</th><th class="r">Assurance (616)</th><th class="r">Annuité</th><th class="r">Capital restant dû</th></tr></thead><tbody>${annRows}</tbody></table>
       </div>
@@ -6228,7 +6228,7 @@ function imViewBail(kind){
         <div class="kpi"><div class="lbl">Compte de charge</div><div class="val">${isCB?cbCompte(sel).slice(0,4):'6135'}</div></div>
         <div class="kpi green"><div class="lbl">Fin de contrat</div><div class="val" style="font-size:18px">${frDate(imMinusJour(fin))}</div></div>
       </div>
-      <div class="right" style="margin-bottom:10px"><button class="btn btn-pri btn-sm" onclick="${isCB?'cbComptabiliser':'locComptabiliser'}('${sel.id}',${an})">⚙ Comptabiliser les loyers ${an}</button>
+      <div class="right" style="margin-bottom:10px"><button class="btn btn-pri btn-sm" onclick="${isCB?'cbComptabiliser':'locComptabiliser'}('${sel.id}',${an})">Comptabiliser les loyers ${an}</button>
         ${isCB?`<button class="btn btn-ghost btn-sm" onclick="cbLeveeOption('${sel.id}')">Levée d'option → immobilisation</button>`:''}</div>
       <h2>Engagement hors bilan — loyers restant à courir (annexe)</h2>
       <table><thead><tr><th>À moins d'1 an</th><th>De 1 à 5 ans</th><th>À plus de 5 ans</th><th class="r">Total engagement</th></tr></thead>
@@ -6359,8 +6359,8 @@ function ouvrirModalites(){
    <div class="modal-b">
      <div class="sub">Dépôt des deux pièces et règles qui en découlent. Ces informations alimentent les Paramètres du dossier (module « Informations société »).</div>
      <div class="row g2" style="margin:12px 0">
-       <div class="kv2 ${s.statutsRecu?'ok':''}">📄 Statuts ${s.statutsRecu?'· reçus ✓':'· en attente'}</div>
-       <div class="kv2 ${s.kbisRecu?'ok':''}">📄 Extrait K-bis ${s.kbisRecu?'· reçu ✓':'· en attente'}</div>
+       <div class="kv2 ${s.statutsRecu?'ok':''}">Statuts ${s.statutsRecu?'· reçus ✓':'· en attente'}</div>
+       <div class="kv2 ${s.kbisRecu?'ok':''}">Extrait K-bis ${s.kbisRecu?'· reçu ✓':'· en attente'}</div>
      </div>
      <div class="field"><label>Activité inscrite (extraite des statuts / K-bis)</label>
        <input id="md-activite" value="${(s.activite||'').replace(/"/g,'&quot;')}" placeholder="Activité déclarée"></div>
@@ -6395,8 +6395,8 @@ function pageInfoSociete(){
   const gerant=s.gerantEstSalarie;
   return head('Informations société','Fiche d\'identité complète du dossier. Renseignée automatiquement depuis les statuts/K-bis, puis complétée et conservée dans les Paramètres.')+
   `<div class="card"><div class="right" style="gap:8px;margin-bottom:4px">
-     <button class="btn btn-ghost" onclick="ouvrirModalites()">📄 Pièces & modalités</button>
-     <button class="btn btn-gold" onclick="current='coffre';render()">🔐 Coffre-fort des identifiants</button>
+     <button class="btn btn-ghost" onclick="ouvrirModalites()">Pièces & modalités</button>
+     <button class="btn btn-gold" onclick="current='coffre';render()">Coffre-fort des identifiants</button>
    </div>
    <div class="kv"><span>Saisie OD Paie & Charges</span><div><b style="color:${gerant?'#5bbf8a':'#e09a8c'}">${gerant?'Nécessaire (salarié gérant)':'Non requise'}</b></div></div>
   </div>
@@ -6448,13 +6448,13 @@ function pageInfoSociete(){
   <div class="card"><h2>Documents & mentions</h2>
     <div class="row g2">
       <div class="field"><label>Logo de la société</label>
-        <button class="btn btn-ghost" onclick="document.getElementById('is-logo-file').click()">🖼 ${s.logo?'Remplacer le logo':'Fournir un logo'}</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('is-logo-file').click()">${s.logo?'Remplacer le logo':'Fournir un logo'}</button>
         <input type="file" id="is-logo-file" hidden accept="image/*" onchange="infoLogo(event)">
         ${s.logo?`<div style="margin-top:8px"><img class="is-logo" src="${s.logo}"></div>`:''}</div>
       <div class="field"><label>Extrait RNE (Registre National des Entreprises) — PDF</label>
-        <button class="btn btn-ghost" onclick="document.getElementById('is-rne-file').click()">📎 ${s.rnePdf?'Remplacer le PDF':'Joindre le PDF'}</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('is-rne-file').click()">${s.rnePdf?'Remplacer le PDF':'Joindre le PDF'}</button>
         <input type="file" id="is-rne-file" hidden accept=".pdf" onchange="infoRNE(event)">
-        ${s.rnePdf?`<button class="btn btn-gold" style="margin-top:8px;display:inline-block" onclick="infoOuvrirRNE()">📖 Ouvrir l'extrait RNE</button>`:'<div class="hint">Aucun extrait joint.</div>'}</div>
+        ${s.rnePdf?`<button class="btn btn-gold" style="margin-top:8px;display:inline-block" onclick="infoOuvrirRNE()">Ouvrir l'extrait RNE</button>`:'<div class="hint">Aucun extrait joint.</div>'}</div>
     </div>
     <div class="field"><label>Mentions légales de la société</label><textarea id="is-mentions" rows="3" style="width:100%">${(s.mentionsLegales||'')}</textarea></div>
   </div>
@@ -6465,7 +6465,7 @@ function pageInfoSociete(){
       <div class="field"><label>IBAN</label><input id="is-iban" value="${v('iban')}" placeholder="FR..."></div>
       <div class="field"><label>BIC</label><input id="is-bic" value="${v('bic')}" placeholder="XXXXFRPPXXX"></div>
     </div></div>
-  <div class="card"><div class="right"><button class="btn btn-pri" onclick="enregistrerInfoSociete()">💾 Enregistrer les informations</button></div></div>`;
+  <div class="card"><div class="right"><button class="btn btn-pri" onclick="enregistrerInfoSociete()">Enregistrer les informations</button></div></div>`;
 }
 function enregistrerInfoSociete(){
   const g=id=>{const e=document.getElementById(id);return e?e.value:'';};
@@ -6512,7 +6512,7 @@ function cfField(label,id,val,type){
   const t=type||'text';
   return `<div class="field"><label>${label}</label><div class="cf-row">
     <input id="${id}" type="${t}" value="${(val||'').replace(/"/g,'&quot;')}" autocomplete="off" oninput="${id.startsWith('cf-')?'':''}">
-    ${t==='password'?`<button class="cf-eye" type="button" onclick="coffrePwToggle('${id}',this)" title="Afficher/Masquer">👁</button>`:''}
+    ${t==='password'?`<button class="cf-eye" type="button" onclick="coffrePwToggle('${id}',this)" title="Afficher/Masquer"></button>`:''}
     <button class="cf-copy" type="button" onclick="coffreCopy('${id}')" title="Copier">⧉ Copier</button>
   </div></div>`;
 }
@@ -6521,7 +6521,7 @@ function pageCoffre(){
   const orgsHtml=COFFRE_ORGS.map(o=>{ const c=cr.orgs[o.k];
     return `<div class="cf-org">
       <div class="cf-org-h"><span>${o.nom}</span>
-        <a class="cf-link" href="${c.url||o.url}" target="_blank" rel="noopener">🔗 Se connecter ↗</a></div>
+        <a class="cf-link" href="${c.url||o.url}" target="_blank" rel="noopener">Se connecter ↗</a></div>
       <div class="row g2">
         ${cfField('Identifiant','cfid-'+o.k,c.id)}
         ${cfField('Mot de passe','cfpw-'+o.k,c.pwd,'password')}
@@ -6532,10 +6532,10 @@ function pageCoffre(){
       <div class="field"><label>Lien du portail</label><div class="cf-row">
         <input id="cfurl-${o.k}" value="${(c.url||o.url).replace(/"/g,'&quot;')}" onchange="coffreSet('org','${o.k}','url',this.value)">
         <a class="cf-link" href="${c.url||o.url}" target="_blank" rel="noopener">Ouvrir ↗</a></div></div>
-      <div class="right"><button class="btn btn-ghost btn-sm" onclick="coffreSaveOrg('${o.k}',${o.secret?'true':'false'})">💾 Enregistrer</button></div>
+      <div class="right"><button class="btn btn-ghost btn-sm" onclick="coffreSaveOrg('${o.k}',${o.secret?'true':'false'})">Enregistrer</button></div>
     </div>`;}).join('');
   const banksHtml=cr.banques.map((b,i)=>`<div class="cf-org">
-      <div class="cf-org-h"><span>🏦 Banque ${i+1}</span>
+      <div class="cf-org-h"><span>Banque ${i+1}</span>
         <button class="btn btn-ghost btn-sm" onclick="coffreDelBanque(${i})">Supprimer</button></div>
       <div class="field"><label>Nom de la banque</label><input id="cfbnom-${i}" value="${(b.nom||'').replace(/"/g,'&quot;')}"></div>
       <div class="row g2">
@@ -6545,16 +6545,16 @@ function pageCoffre(){
       <div class="field"><label>Lien de la banque</label><div class="cf-row">
         <input id="cfburl-${i}" value="${(b.url||'').replace(/"/g,'&quot;')}" placeholder="https://...">
         ${b.url?`<a class="cf-link" href="${b.url}" target="_blank" rel="noopener">Se connecter ↗</a>`:''}</div></div>
-      <div class="right"><button class="btn btn-ghost btn-sm" onclick="coffreSaveBanque(${i})">💾 Enregistrer</button></div>
+      <div class="right"><button class="btn btn-ghost btn-sm" onclick="coffreSaveBanque(${i})">Enregistrer</button></div>
     </div>`).join('');
   return head('Coffre-fort des identifiants','Identifiants et mots de passe des organismes et banques du dossier, avec lien d\'accès direct. Données conservées localement dans le dossier.')+
-  `<div class="card" style="border:1.5px solid var(--gold) !important"><h2>🔐 Sécurité</h2>
-     <div class="hint">Ces informations sont sensibles. Elles restent stockées <b>localement</b> dans le dossier (export JSON) et ne sont jamais transmises. Évitez de partager l'export. Cliquez « 👁 » pour afficher un mot de passe, « ⧉ Copier » pour le copier en un clic.</div></div>
+  `<div class="card" style="border:1.5px solid var(--gold) !important"><h2>Sécurité</h2>
+     <div class="hint">Ces informations sont sensibles. Elles restent stockées <b>localement</b> dans le dossier (export JSON) et ne sont jamais transmises. Évitez de partager l'export. Cliquez « » pour afficher un mot de passe, « ⧉ Copier » pour le copier en un clic.</div></div>
    <div class="card"><h2>Organismes & administrations</h2>${orgsHtml}</div>
    <div class="card"><h2>Banques du client</h2>${banksHtml||'<div class="empty">Aucune banque enregistrée.</div>'}
      <div class="right" style="margin-top:10px"><button class="btn btn-gold" onclick="coffreAddBanque()">+ Ajouter une banque</button></div></div>`;
 }
-function coffrePwToggle(id,btn){ const el=document.getElementById(id); if(!el)return; if(el.type==='password'){el.type='text';btn.textContent='🙈';}else{el.type='password';btn.textContent='👁';} }
+function coffrePwToggle(id,btn){ const el=document.getElementById(id); if(!el)return; if(el.type==='password'){el.type='text';btn.textContent='';}else{el.type='password';btn.textContent='';} }
 function coffreCopy(id){ const el=document.getElementById(id); if(!el)return; const val=el.value||'';
   const ok=()=>toast('Copié ✓');
   if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(val).then(ok).catch(()=>{try{el.type='text';el.select();document.execCommand('copy');ok();}catch(e){toast('Copie impossible');}}); }
@@ -6587,12 +6587,12 @@ function blocDoublonsFEC(){
   const g=window.dupEcrGroups||{}; const keys=Object.keys(g);
   if(!keys.length) return `<div class="card"><h2>Traitement des doublons (FEC)</h2><div class="empty">Aucun doublon d'écriture détecté.</div></div>`;
   const n=keys.reduce((a,k)=>a+g[k].length,0);
-  return `<div class="card" style="border:2px solid #c98b1f !important"><h2>⚠ Traitement des doublons (FEC)</h2>
+  return `<div class="card" style="border:2px solid #c98b1f !important"><h2>Traitement des doublons (FEC)</h2>
     <div class="sub">${keys.length} groupe(s), ${n} écriture(s) en double potentiel (même date, tiers, HT, TVA, TTC). Confirmez chaque groupe : <b>supprimer</b> l'écriture en trop, ou <b>conserver les deux</b>.</div>
     ${keys.map(k=>{const grp=g[k];const m=ecrMontants(grp[0]);
       return `<div class="dup-grp"><div class="dup-grp-h">${frDate(grp[0].date)} · ${m.tid} · TTC ${eur(m.ttc)} · HT ${eur(m.ht)} · TVA ${eur(m.tva)}</div>
         <table><tbody>${grp.map(e=>`<tr><td>${jrnTag(e.journal)} <b>${e.libelle}</b></td>
-          <td class="r" style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="dupEcrSupprimer('${e.id}')">🗑 Supprimer</button>
+          <td class="r" style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="dupEcrSupprimer('${e.id}')">Supprimer</button>
           <button class="btn btn-ghost btn-sm" onclick="dupEcrIgnorer('${k}')">✓ Conserver les deux</button></td></tr>`).join('')}</tbody></table>
       </div>`;}).join('')}</div>`;
 }
@@ -6614,14 +6614,14 @@ function scanDoublonsTiers(){
 function blocDoublonsTiers(){
   const g=window.dupTiersGroups||{}; const keys=Object.keys(g);
   if(!keys.length) return `<div class="card"><h2>Doublons fournisseurs / clients</h2><div class="empty">Aucun doublon de tiers détecté.</div></div>`;
-  return `<div class="card" style="border:2px solid #c98b1f !important"><h2>⚠ Doublons fournisseurs / clients</h2>
+  return `<div class="card" style="border:2px solid #c98b1f !important"><h2>Doublons fournisseurs / clients</h2>
     <div class="sub">Mêmes fournisseurs ou clients détectés (surlignés en <b style="color:#c79200">jaune</b> dans les listes). Choisissez : fusionner, supprimer ou laisser.</div>
     ${keys.map(k=>{const grp=g[k]; const type=grp[0].type;
       return `<div class="dup-grp"><div class="dup-grp-h">${type==='client'?'Client':'Fournisseur'} : ${grp[0].nom} <span class="mini">(${grp.length} fiches)</span></div>
         <table><tbody>${grp.map(t=>`<tr class="dup-tiers"><td><b>${t.nom}</b> <span class="mini">${t.compteAux||''}${t.email?' · '+t.email:''}${t.siret?' · '+t.siret:''}</span></td>
-          <td class="r" style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="tiersSupprimerDup('${t.id}')">🗑 Supprimer</button></td></tr>`).join('')}</tbody></table>
+          <td class="r" style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="tiersSupprimerDup('${t.id}')">Supprimer</button></td></tr>`).join('')}</tbody></table>
         <div class="right" style="margin-top:6px;gap:8px">
-          <button class="btn btn-pri btn-sm" onclick="tiersFusionner('${k}')">⛙ Fusionner</button>
+          <button class="btn btn-pri btn-sm" onclick="tiersFusionner('${k}')">Fusionner</button>
           <button class="btn btn-ghost btn-sm" onclick="tiersLaisser('${k}')">Laisser</button></div>
       </div>`;}).join('')}</div>`;
 }
@@ -6761,7 +6761,7 @@ function nfLignesHTML(){ const cat=db.catalogue||[];
 function nfFormHTML(){ const clients=db.tiers.filter(t=>t.type==='client'); const s=nfState;
   return `<div class="nf-bar"><h3>Nouvelle facture</h3>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-ghost btn-sm" onclick="nfTelecharger()">⬇ PDF</button>
+      <button class="btn btn-ghost btn-sm" onclick="nfTelecharger()">PDF</button>
       <button class="btn btn-pri btn-sm" onclick="nfCreer()">Créer la facture</button>
       <button class="btn btn-ghost btn-sm" onclick="nfFermer()">Fermer ✕</button>
     </div></div>
@@ -6828,7 +6828,7 @@ function nfCreer(){ nfSync(); const s=nfState;
     notesCompta:s.notes, moyen:s.moyen, conditions:s.conditions, escompte:s.escompte, escompteDelai:s.escompteDelai, showPay:s.showPay!==false,
     statut:'brouillon', envoye:false, ecritureId:null, devisId:null, transformeEn:null };
   db.docs.push(doc); save(); nfFermer(); render();
-  toast('🧾 '+(s.type==='devis'?'Devis ':s.type==='avoir'?'Avoir ':'Facture ')+numero+' créé(e) en brouillon — générez l\'écriture pour le comptabiliser.');
+  toast(''+(s.type==='devis'?'Devis ':s.type==='avoir'?'Avoir ':'Facture ')+numero+' créé(e) en brouillon — générez l\'écriture pour le comptabiliser.');
 }
 
 /* ----- Génération de l'écriture (autorisation + numéro unique + TVA) ----- */
@@ -6840,7 +6840,7 @@ function genererEcritureDoc(id){ const d=db.docs.find(x=>x.id===id); if(!d)retur
   const taux=Math.abs(d.ht)>0?r2(Math.abs(d.tva)/Math.abs(d.ht)*100):20;
   const f=posterFacture({type:'vente',tiersId:t.id,date:d.date,base:Math.abs(d.ht)*(d.ttc<0?-1:1),baseEst:'HT',taux,compteContre:t.compteContre,compteTVA:'44571',numero:d.numero,echeance:d.echeance});
   d.ecritureId=f.ecritureId; d.statut='valide'; save(); render();
-  toast('✅ Écriture générée pour '+d.numero+' — TVA collectée transmise au module TVA');
+  toast('Écriture générée pour '+d.numero+' — TVA collectée transmise au module TVA');
 }
 
 /* ----- Greffes ----- */
@@ -6890,7 +6890,7 @@ function nfPickCatNew(catId){ if(!catId)return; const it=(db.catalogue||[]).find
 function nfFormHTML(){ const clients=db.tiers.filter(t=>t.type==='client'); const s=nfState; const tot=nfTotaux();
   return `<div class="nf-bar"><h3>Nouvelle facture</h3>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-ghost btn-sm" onclick="nfTelecharger()">⬇ PDF</button>
+      <button class="btn btn-ghost btn-sm" onclick="nfTelecharger()">PDF</button>
       <button class="btn btn-ghost btn-sm" onclick="nfFermer()" title="Fermer">✕</button>
     </div></div>
   <div class="nf-form-body">
@@ -6970,8 +6970,8 @@ function factureListe(){
       <td class="r num">${eur(d.ht)}</td><td class="r num">${eur(d.tva)}</td><td class="r num"><b>${eur(d.ttc)}</b></td>
       <td class="num">${d.dateEnvoi?frDate(d.dateEnvoi):'—'}</td>
       <td class="r" style="white-space:nowrap">
-        <button class="btn btn-ghost btn-sm" onclick="voirDoc('${d.id}')" title="Voir la facture">👁</button>
-        ${d.type==='facture'&&!d.ecritureId?`<button class="btn btn-gold btn-sm" onclick="genererEcritureDoc('${d.id}')" title="Générer l'écriture (autorisation requise)">⚙ Générer</button>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="voirDoc('${d.id}')" title="Voir la facture"></button>
+        ${d.type==='facture'&&!d.ecritureId?`<button class="btn btn-gold btn-sm" onclick="genererEcritureDoc('${d.id}')" title="Générer l'écriture (autorisation requise)">Générer</button>`:''}
         ${d.type==='devis'&&d.statut==='valide'&&!d.transformeEn?`<button class="btn btn-ghost btn-sm" onclick="transformerDevis('${d.id}')">→ Facture</button>`:''}
       </td></tr>`;}).join('');
   const pag=`<div class="fa-pag"><span>Page ${page} sur ${pages}</span>
@@ -6979,7 +6979,7 @@ function factureListe(){
        <button class="btn btn-ghost btn-sm" ${page<=1?'disabled':''} onclick="faListeGo(${page-1})">‹ Précédent</button>
        <button class="btn btn-ghost btn-sm" ${page>=pages?'disabled':''} onclick="faListeGo(${page+1})">Suivant ›</button></div></div>`;
   return `<div class="card"><h2>Factures</h2>
-    <div class="sub">${docs.length} pièce(s). Brouillon = créée mais non comptabilisée (PDF téléchargeable). « ⚙ Générer » comptabilise après autorisation — numéro définitif, TVA transmise au module TVA.</div>
+    <div class="sub">${docs.length} pièce(s). Brouillon = créée mais non comptabilisée (PDF téléchargeable). « Générer » comptabilise après autorisation — numéro définitif, TVA transmise au module TVA.</div>
     <div style="overflow-x:auto"><table class="fa-table"><thead><tr>
       <th>NUMÉRO</th><th>CLIENT</th><th>DATE</th><th>ÉCHÉANCE</th><th>STATUT</th>
       <th class="r">MONTANT HT</th><th class="r">TVA</th><th class="r">MONTANT TTC</th><th>DATE D'ENVOI</th><th class="r">ACTIONS</th>
@@ -7036,7 +7036,7 @@ function formulaireRapide(){
       <button class="btn btn-ghost" onclick="emettre(false)">Enregistrer (brouillon)</button>
       <button class="btn btn-pri" onclick="emettre(true)">Valider</button>
     </div>
-    <div class="hint">L'envoi par e-mail n'est possible qu'<b>après validation</b>. ⚠ Conformité 2026 B2B : l'outil retenu devra être <b>Plateforme Agréée DGFiP</b> et émettre du <b>Factur-X</b>.</div>
+    <div class="hint">L'envoi par e-mail n'est possible qu'<b>après validation</b>. Conformité 2026 B2B : l'outil retenu devra être <b>Plateforme Agréée DGFiP</b> et émettre du <b>Factur-X</b>.</div>
   </div>`;
 }
 
@@ -7176,7 +7176,7 @@ async function remplirTiersDepuisSiret(){
     // Convention collective (best-effort, peut échouer selon CORS)
     if(info.siret){ lookupConvention(info.siret).then(cc=>{ if(cc){ set('ti-conv', cc); if(st) st.textContent='✓ Informations + convention collective récupérées'; } }).catch(()=>{}); }
   }catch(e){
-    if(st) st.textContent='⚠ '+e.message;
+    if(st) st.textContent=''+e.message;
     toast('Récupération impossible : '+e.message);
   }
 }
@@ -7301,7 +7301,7 @@ pageJournal=function(){
   const rows=list.map(e=>{
     const d=r2(e.lignes.reduce((a,l)=>a+l.debit,0)), c=r2(e.lignes.reduce((a,l)=>a+l.credit,0)); const ok=Math.abs(d-c)<0.005;
     return `<div class="ecr"><div class="ecr-h">
-      <span>${jrnTag(e.journal)} &nbsp;<b>${e.libelle}</b> &nbsp;<span class="mini">${e.date}</span>${e.doublon?' <span class="dup-badge" title="Doublon FEC détecté">⚠ DOUBLON</span>':''}</span>
+      <span>${jrnTag(e.journal)} &nbsp;<b>${e.libelle}</b> &nbsp;<span class="mini">${e.date}</span>${e.doublon?' <span class="dup-badge" title="Doublon FEC détecté">DOUBLON</span>':''}</span>
       <span class="${ok?'balance-ok':'balance-ko'}">${ok?'Équilibrée ✓':'Déséquilibre !'} ${eur(d)}</span></div>
       <table><thead><tr><th>Compte</th><th>Intitulé</th><th class="r">Débit</th><th class="r">Crédit</th></tr></thead><tbody>
       ${e.lignes.map(l=>`<tr><td class="num">${l.compte}</td><td>${l.lib}</td>
@@ -7382,7 +7382,7 @@ function relancerClient(tid){
   db.relances=db.relances||{}; const t=db.tiers.find(x=>x.id===tid);
   const cur=db.relances[tid]||{le:null,n:0}; cur.le=todayStr(); cur.n=(cur.n||0)+1; db.relances[tid]=cur;
   save(); render();
-  toast('📧 Relance de paiement envoyée à '+((t&&t.email)?t.email:(t?t.nom:'')));
+  toast('Relance de paiement envoyée à '+((t&&t.email)?t.email:(t?t.nom:'')));
 }
 function relancesCard(){
   const d=relancesData();
@@ -7391,7 +7391,7 @@ function relancesCard(){
   const ligneAtt=d.attente.map(c=>`<tr><td><b>${c.nom}</b><div class="mini">${c.email||'— e-mail non renseigné'}</div></td>
     <td class="r num">${c.nb}</td><td class="r num">${eur(c.restant)}</td>
     <td><span class="tag t-att">en attente</span></td>
-    <td class="r"><button class="btn btn-gold btn-sm" onclick="relancerClient('${c.tid}')">📧 Relancer</button></td></tr>`).join('');
+    <td class="r"><button class="btn btn-gold btn-sm" onclick="relancerClient('${c.tid}')">Relancer</button></td></tr>`).join('');
   const ligneRel=d.relances.map(c=>`<tr><td><b>${c.nom}</b><div class="mini">${c.email||'—'}</div></td>
     <td class="r num">${c.nb}</td><td class="r num">${eur(c.restant)}</td>
     <td><span class="tag t-pay">relancé ✓</span> <span class="mini">le ${frDate(c.relanceLe)}${c.count>1?(' · '+c.count+' relances'):''}</span></td>
@@ -7495,7 +7495,7 @@ function ecRender(){
     });
     body+=`<tr class="ec-act"><td colspan="11">
         <button class="ec-bt" onclick="ecAddLine('${e.id}')">+ Ajouter une ligne</button>
-        ${ok?'<span class="ec-okk">Soldée ✓</span>':`<button class="ec-bt ec-bt-solde" onclick="ecSolder('${e.id}')">⚠ Solder l'écriture</button>`}
+        ${ok?'<span class="ec-okk">Soldée ✓</span>':`<button class="ec-bt ec-bt-solde" onclick="ecSolder('${e.id}')">Solder l'écriture</button>`}
       </td></tr>`;
     if(ok) body+=`<tr class="ec-redrow"><td colspan="11"><div class="ec-soldee"></div></td></tr>`;
   });
@@ -7504,7 +7504,7 @@ function ecRender(){
     <div class="ec-titlebar"><span>${dossier} 01/${year.slice(2)}-12/${year.slice(2)} (E) : Compte auxiliaire ${acc.code}${acc.tiers?(' ('+acc.tiers.nom+')'):''} — Comptabilité</span>
       <span class="ec-winbtn"><i>─</i><i>▢</i><i class="x" onclick="ecFermer()">✕</i></span></div>
     <div class="ec-menubar"><span>Fichier</span><span>Édition</span><span>Déplacement</span><span>Consultation</span><span>Affichage</span><span>Lettrage</span><span>Traitements</span><span>Aide</span></div>
-    <div class="ec-toolbar"><span>⟵</span><span>⟶</span><span>⤒</span><span>⤓</span><span>⇕</span><span>🔍</span><span>↧</span><span>▤</span><span>❔</span></div>
+    <div class="ec-toolbar"><span>⟵</span><span>⟶</span><span>⤒</span><span>⤓</span><span>⇕</span><span></span><span>↧</span><span>▤</span><span></span></div>
     <div class="ec-tablewrap"><table class="ec-table"><thead><tr>
       <th></th><th>Date</th><th>Jnl</th><th>Pièce</th><th>Compte</th><th>Libellé</th><th class="r">Débit</th><th class="r">Crédit</th><th class="r">Solde</th><th>L</th><th></th>
     </tr></thead><tbody>${body}</tbody></table></div>
@@ -7545,7 +7545,7 @@ function ecPlanOptions(){
 function ecNotifSolde(id, diff){
   const cote = diff>0 ? 'crédit' : 'débit';
   document.getElementById('modal-c').innerHTML=`
-    <div class="modal-h"><h3>⚠ Écriture non soldée</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-h"><h3>Écriture non soldée</h3><button class="x" onclick="closeModal()">×</button></div>
     <div class="modal-b">
       <p>Cette écriture n'est pas équilibrée : il manque <b>${eur(Math.abs(diff))}</b> au <b>${cote}</b>.</p>
       <p class="mini" style="margin:6px 0 14px">Vous devez la solder. Deux possibilités :</p>
@@ -7651,7 +7651,7 @@ var docSel = {};
 
 /* États plus explicites */
 function docEtatTag(d){
-  if(d.envoye) return '<span class="tag t-pay">envoyé 🔒</span>';
+  if(d.envoye) return '<span class="tag t-pay">envoyé </span>';
   if(d.statut==='valide') return '<span class="tag t-part">validé</span>';
   return '<span class="tag t-att">en attente de validation</span>';
 }
@@ -7685,7 +7685,7 @@ function envoyerLot(){
     const c=db.tiers.find(x=>x.id===d.clientId); if(!c||!c.email){ sansMail++; return; }
     d.envoye=true; d.dateEnvoi=todayStr(); const dev=d.devisId?db.docs.find(x=>x.id===d.devisId):null; if(dev)dev.envoye=true; n++; });
   docSel={}; save(); render();
-  toast((n?(n+' facture(s) envoyée(s) en lot ✉'):'Aucune facture validée sélectionnée')+(sansMail?(' · '+sansMail+' sans e-mail ignorée(s)'):''));
+  toast((n?(n+' facture(s) envoyée(s) en lot '):'Aucune facture validée sélectionnée')+(sansMail?(' · '+sansMail+' sans e-mail ignorée(s)'):''));
 }
 
 /* Suppression : seul moyen de retirer une pièce (retire aussi écriture + facture + règlement) */
@@ -7728,19 +7728,19 @@ function documentsClientsCard(){
       <td class="r" style="white-space:nowrap">
         ${(d.statut!=='valide')?`<button class="btn btn-gold btn-sm" onclick="validerDoc('${d.id}')">✓ Valider</button>`:''}
         ${(d.type==='devis'&&d.statut==='valide'&&!d.transformeEn)?`<button class="btn btn-ghost btn-sm" onclick="transformerDevis('${d.id}')">→ Facture</button>`:''}
-        ${peutEnvoyer(d)?`<button class="btn btn-gold btn-sm" onclick="envoyerDoc('${d.id}')">✉ Envoyer</button>`:''}
+        ${peutEnvoyer(d)?`<button class="btn btn-gold btn-sm" onclick="envoyerDoc('${d.id}')">Envoyer</button>`:''}
         <button class="btn btn-ghost btn-sm" onclick="voirDoc('${d.id}')">Voir</button>
-        <button class="btn btn-ghost btn-sm" onclick="telechargerDoc('${d.id}')">⬇ PDF</button>
-        <button class="btn btn-ghost btn-sm" onclick="supprimerDoc('${d.id}')" title="Seul moyen de retirer la pièce">🗑</button>
-        ${d.envoye?'<span class="mini" title="Pièce envoyée — non modifiable">🔒</span>':''}
+        <button class="btn btn-ghost btn-sm" onclick="telechargerDoc('${d.id}')">PDF</button>
+        <button class="btn btn-ghost btn-sm" onclick="supprimerDoc('${d.id}')" title="Seul moyen de retirer la pièce"></button>
+        ${d.envoye?'<span class="mini" title="Pièce envoyée — non modifiable"></span>':''}
       </td></tr>`;
   }).join('') || '<tr><td colspan="10" class="empty">Aucun document — créez une facture, elle apparaîtra ici en attente de validation.</td></tr>';
   return `<div class="card"><h2>Émettre un document client — suivi & validation</h2>
     <div class="sub">Toute facture créée arrive ici <b>en attente de validation</b>. Une fois <b>validée</b> elle est enregistrée et comptabilisée (et reste dans la liste). Une fois <b>envoyée</b> elle est <b>verrouillée</b>. La <b>suppression</b> est le seul moyen de la retirer.</div>
     <div class="right" style="justify-content:flex-start;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm" onclick="docSelectAttente()">☑ Sélectionner les « en attente » (${nAtt})</button>
+      <button class="btn btn-ghost btn-sm" onclick="docSelectAttente()">Sélectionner les « en attente » (${nAtt})</button>
       <button class="btn btn-gold btn-sm" onclick="validerLot()">✓ Valider en lot</button>
-      <button class="btn btn-gold btn-sm" onclick="envoyerLot()">✉ Envoyer en lot</button>
+      <button class="btn btn-gold btn-sm" onclick="envoyerLot()">Envoyer en lot</button>
       <button class="btn btn-ghost btn-sm" onclick="docViderSel()">Vider la sélection</button>
       <span class="mini" style="margin-left:auto">${nAtt} en attente · ${nVal} validée(s) non envoyée(s)</span>
     </div>
@@ -7789,7 +7789,7 @@ function iaProposerAchat(){
     date:document.getElementById('ac-date').value, libelle:'Facture '+t.nom, ht:m.ht, taux,
     compteContre:document.getElementById('ac-contre').value, compteTVA:'44566', numero:null,
     confiance:'élevée', statut:'a_valider', createdAt:todayStr() });
-  save(); toast('✨ Proposition créée — à vérifier dans « Assistant IA »');
+  save(); toast('Proposition créée — à vérifier dans « Assistant IA »');
 }
 
 /* Aperçu de l'écriture équilibrée proposée */
@@ -7819,12 +7819,12 @@ function iaComptabiliser(id){
   const ec=db.ecritures.find(e=>e.id===f.ecritureId); if(ec && p.libelle) ec.libelle=numero+' · '+p.libelle;
   if(p.refType==='doc'){ const d=db.docs.find(x=>x.id===p.refId); if(d){ d.statut='valide'; d.ecritureId=f.ecritureId; } }
   p.statut='comptabilise'; p.ecritureId=f.ecritureId; p.numero=numero;
-  save(); render(); toast('✅ Écriture '+numero+' comptabilisée — TVA transmise au module TVA');
+  save(); render(); toast('Écriture '+numero+' comptabilisée — TVA transmise au module TVA');
 }
 function iaRejeter(id){ const p=iaGet(id); if(!p)return; p.statut='rejete'; save(); render(); toast('Proposition rejetée'); }
 function iaToutComptabiliser(){ const ids=iaQueue().filter(p=>p.statut==='a_valider').map(p=>p.id);
   let n=0; ids.forEach(id=>{ const p=iaGet(id); if(p&&p.statut==='a_valider'){ iaComptabiliser(id); n++; } });
-  toast(n? (n+' écriture(s) comptabilisée(s) en lot ✅') : 'Aucune proposition à comptabiliser'); }
+  toast(n? (n+' écriture(s) comptabilisée(s) en lot ') : 'Aucune proposition à comptabiliser'); }
 
 /* ---------- PAGE ---------- */
 function pageIA(){
@@ -7836,7 +7836,7 @@ function pageIA(){
     const listeContre = p.type==='achat'?COMPTES_CHARGE:COMPTES_PRODUIT;
     const clientsList=db.tiers.filter(x=>x.type===(p.type==='achat'?'fournisseur':'client'));
     return `<div class="card ia-card">
-      <div class="ia-head"><span class="ia-spark">✨</span>
+      <div class="ia-head"><span class="ia-spark"></span>
         <div><b>${role} repéré : ${t?t.nom:'—'}</b>
           <span class="ia-conf ${p.confiance==='élevée'?'hi':'mid'}">confiance ${p.confiance}</span></div>
         <span class="mini" style="margin-left:auto">${p.refType==='achat'?'Facture fournisseur (OCR)':'Facture client'} · ${p.numero||'(n° à l\'émission)'}</span>
@@ -7861,7 +7861,7 @@ function pageIA(){
         </tbody></table></div>
       <div class="right">
         <button class="btn btn-ghost" onclick="iaRejeter('${p.id}')">✖ Rejeter</button>
-        <button class="btn btn-gold" onclick="iaComptabiliser('${p.id}')">✅ Comptabiliser</button>
+        <button class="btn btn-gold" onclick="iaComptabiliser('${p.id}')">Comptabiliser</button>
       </div>
     </div>`;
   }).join('');
@@ -7875,11 +7875,11 @@ function pageIA(){
   return head('Assistant IA — écritures à valider','Le logiciel analyse chaque pièce, repère le tiers, le montant, la date, le libellé et la TVA, et propose l\'écriture comptable. Vérifiez, corrigez si besoin, puis comptabilisez (à l\'unité ou en lot).')+
     flow(['Pièce créée','Analyse IA (tiers · montant · date · TVA)','Proposition d\'écriture','Vérification / correction','Comptabilisation'])+
     `<div class="card"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-       <b style="font-size:15px">✨ ${att.length} proposition(s) à vérifier</b>
-       <button class="btn btn-gold btn-sm" onclick="iaToutComptabiliser()" ${att.length?'':'disabled'}>✅ Tout comptabiliser</button>
+       <b style="font-size:15px">${att.length} proposition(s) à vérifier</b>
+       <button class="btn btn-gold btn-sm" onclick="iaToutComptabiliser()" ${att.length?'':'disabled'}>Tout comptabiliser</button>
        <span class="mini" style="margin-left:auto">Les propositions viennent des factures clients « en attente » et des factures fournisseurs proposées depuis le module Achats.</span>
      </div></div>`+
-    (cartes || '<div class="card"><div class="empty">Aucune proposition en attente — créez une facture client (elle arrivera ici), ou utilisez « ✨ Proposer via l\'IA » dans le module Achats.</div></div>')+
+    (cartes || '<div class="card"><div class="empty">Aucune proposition en attente — créez une facture client (elle arrivera ici), ou utilisez « Proposer via l\'IA » dans le module Achats.</div></div>')+
     `<div class="card"><h2>Historique des propositions</h2>
       <table><thead><tr><th>N°</th><th>Type</th><th>Tiers</th><th>Date</th><th class="r">HT</th><th>Statut</th></tr></thead>
       <tbody>${histRows}</tbody></table></div>`;
@@ -7900,19 +7900,19 @@ function pageIA(){
 function acAction(){
   if(acSource==='manuelle'){
     return `<div class="right">
-      <button class="btn btn-ghost" onclick="iaProposerAchat()">✨ Proposer via l'IA</button>
+      <button class="btn btn-ghost" onclick="iaProposerAchat()">Proposer via l'IA</button>
       <button class="btn btn-pri" onclick="validerAchat()">Valider l'écriture d'achat</button></div>`;
   }
   return `<div class="right">
     <span class="mini" style="margin-right:auto">La facture ${acSource==='ocr'?'photographiée (OCR)':'scannée'} est déversée automatiquement dans l'Assistant IA pour validation de l'écriture.</span>
-    <button class="btn btn-pri" onclick="ocrVersIA()">📤 Envoyer à l'Assistant IA</button></div>`;
+    <button class="btn btn-pri" onclick="ocrVersIA()">Envoyer à l'Assistant IA</button></div>`;
 }
 
 /* Déversement scan/OCR → Assistant IA */
 function ocrVersIA(){
   iaProposerAchat();                       // crée la proposition depuis le formulaire de capture
   const q=iaQueue(); const last=q[q.length-1]; if(last) last.sourceEntree=acSource;
-  toast('✨ Facture '+(acSource==='ocr'?'photographiée (OCR)':'scannée')+' → déversée dans l\'Assistant IA');
+  toast('Facture '+(acSource==='ocr'?'photographiée (OCR)':'scannée')+' → déversée dans l\'Assistant IA');
   current='ia'; render();
 }
 
@@ -7959,7 +7959,7 @@ function cdFermer(){ const ov=document.getElementById('cd-overlay'); if(ov) ov.c
 function cdFormHTML(){
   const formes=['SAS','SASU','SARL','EURL','SA','SCI','SNC','SC','EI','Auto-entrepreneur','Association','Autre'];
   return `<div class="cd-win">
-    <div class="cd-bar"><span>➕ Créer un dossier — fiche d'information complète</span>
+    <div class="cd-bar"><span>Créer un dossier — fiche d'information complète</span>
       <button class="cd-x" onclick="cdFermer()">✕</button></div>
     <div class="cd-body">
       <div class="card"><h2>Identification</h2>
@@ -7967,7 +7967,7 @@ function cdFormHTML(){
         <div class="row g3">
           <div class="field"><label>SIREN (9 chiffres)</label><input id="cd-siren" placeholder="123456789"></div>
           <div class="field"><label>SIRET (14 chiffres)</label><input id="cd-siret" placeholder="12345678900012"></div>
-          <div class="field"><label>&nbsp;</label><button class="btn btn-gold" onclick="cdLookup()">🔎 Récupérer les informations</button></div>
+          <div class="field"><label>&nbsp;</label><button class="btn btn-gold" onclick="cdLookup()">Récupérer les informations</button></div>
         </div>
         <div class="hint" id="cd-lookup-status"></div>
         <div class="row g3">
@@ -8066,7 +8066,7 @@ async function cdLookup(){
       if(sel){ const opt=[...sel.options].find(o=>o.value.toUpperCase()===String(info.formeJuridique).toUpperCase()); sel.value=opt?opt.value:'Autre'; } }
     if(st) st.textContent='✓ Informations récupérées — complétez puis joignez le K-bis et les Statuts';
     if(info.siret){ lookupConvention(info.siret).then(cc=>{ if(cc) set('cd-conv', cc); }).catch(()=>{}); }
-  }catch(e){ if(st) st.textContent='⚠ '+e.message; }
+  }catch(e){ if(st) st.textContent=''+e.message; }
 }
 
 function creerDossierComplet(){
@@ -8125,7 +8125,7 @@ function dossiersGestionCard(){
       <td>${d.forme||'—'}</td><td>${d.ville||'—'}</td><td class="num">${d.siren||'—'}</td>
       <td class="r" style="white-space:nowrap">
         <button class="btn btn-ghost btn-sm" onclick="ouvrirDossierDepuisGestion('${d.id}')">Ouvrir</button>
-        <button class="btn btn-ghost btn-sm" onclick="supprimerDossier('${d.id}')">🗑 Supprimer</button>
+        <button class="btn btn-ghost btn-sm" onclick="supprimerDossier('${d.id}')">Supprimer</button>
       </td></tr>`).join('') || '<tr><td colspan="5" class="empty">Aucun dossier dans le portefeuille</td></tr>';
   return `<div class="card"><h2>Dossiers du cabinet</h2>
     <div class="sub">Ouvrir ou supprimer un dossier. La suppression efface définitivement toutes les données du dossier (écritures, factures, tiers, banque…).</div>
@@ -8170,9 +8170,9 @@ function iaFournisseursCard(){
   const props=(db.propositions||[]).filter(p=>p.type==='achat' && p.statut==='a_valider');
   if(!props.length){
     return `<div class="card ia-card">
-      <div class="ia-head"><span class="ia-spark">✨</span><b>Assistant IA — propositions fournisseurs</b>
+      <div class="ia-head"><span class="ia-spark"></span><b>Assistant IA — propositions fournisseurs</b>
         <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="current='ia';render()">Ouvrir l'Assistant IA →</button></div>
-      <div class="sub">Aucune proposition fournisseur en attente. Les factures <b>scannées / OCR</b> et le bouton <b>« ✨ Proposer via l'IA »</b> arrivent automatiquement ici pour validation de l'écriture.</div>
+      <div class="sub">Aucune proposition fournisseur en attente. Les factures <b>scannées / OCR</b> et le bouton <b>« Proposer via l'IA »</b> arrivent automatiquement ici pour validation de l'écriture.</div>
     </div>`;
   }
   const rows=props.map(p=>{ const t=db.tiers.find(x=>x.id===p.tiersId); const pv=iaPreview(p);
@@ -8182,13 +8182,13 @@ function iaFournisseursCard(){
       <td class="num">${p.compteContre} <span class="mini">${iaCompteLib(p.compteContre)}</span></td>
       <td class="r num">${eur(pv.m.ht)}</td><td class="r num">${eur(pv.m.tva)}</td><td class="r num"><b>${eur(pv.m.ttc)}</b></td>
       <td class="r" style="white-space:nowrap">
-        <button class="btn btn-gold btn-sm" onclick="iaComptabiliser('${p.id}')">✅ Comptabiliser</button>
-        <button class="btn btn-ghost btn-sm" onclick="current='ia';render()" title="Vérifier / corriger dans l'Assistant IA">🔍</button>
+        <button class="btn btn-gold btn-sm" onclick="iaComptabiliser('${p.id}')">Comptabiliser</button>
+        <button class="btn btn-ghost btn-sm" onclick="current='ia';render()" title="Vérifier / corriger dans l'Assistant IA"></button>
         <button class="btn btn-ghost btn-sm" onclick="iaRejeter('${p.id}')" title="Rejeter">✖</button>
       </td></tr>`;
   }).join('');
   return `<div class="card ia-card">
-    <div class="ia-head"><span class="ia-spark">✨</span><b>Assistant IA — propositions fournisseurs (${props.length})</b>
+    <div class="ia-head"><span class="ia-spark"></span><b>Assistant IA — propositions fournisseurs (${props.length})</b>
       <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="current='ia';render()">Ouvrir l'Assistant IA →</button></div>
     <div class="sub">Factures fournisseurs détectées (scan / OCR ou « Proposer via l'IA ») — tiers, montant, date et TVA repérés. Comptabilisez directement ici, ou ouvrez l'Assistant IA pour corriger.</div>
     <table><thead><tr><th>Fournisseur</th><th>Date</th><th>Compte</th><th class="r">HT</th><th class="r">TVA</th><th class="r">TTC</th><th></th></tr></thead>
@@ -8241,7 +8241,7 @@ function pageEspaceClient(){
       <td>${(typeof docEtatTag==='function')?docEtatTag(d):''}</td>
       <td class="r" style="white-space:nowrap">
         <button class="btn btn-ghost btn-sm" onclick="voirDoc('${d.id}')">Voir</button>
-        <button class="btn btn-ghost btn-sm" onclick="telechargerDoc('${d.id}')">⬇ PDF</button></td></tr>`;
+        <button class="btn btn-ghost btn-sm" onclick="telechargerDoc('${d.id}')">PDF</button></td></tr>`;
   }).join('') || '<tr><td colspan="7" class="empty">Aucun document — créez un devis ou une facture.</td></tr>';
 
   // Suivi par client : CA HT + encours
@@ -8270,9 +8270,9 @@ function pageEspaceClient(){
     <div class="sub">Le client dépose ses justificatifs : ils partent en OCR puis dans l'Assistant IA pour générer l'écriture.</div>
     <div class="grid g2">
       <div class="field"><label>Facture / justificatif fournisseur (achat)</label>
-        <button class="btn btn-pri" style="width:100%" onclick="dashRoute('achat','pièce déposée')">📥 Déposer une facture fournisseur → OCR / Assistant IA</button></div>
+        <button class="btn btn-pri" style="width:100%" onclick="dashRoute('achat','pièce déposée')">Déposer une facture fournisseur → OCR / Assistant IA</button></div>
       <div class="field"><label>Document de vente (client)</label>
-        <button class="btn btn-gold" style="width:100%" onclick="dashRoute('vente','document client')">🧾 Émettre un devis / une facture client</button></div>
+        <button class="btn btn-gold" style="width:100%" onclick="dashRoute('vente','document client')">Émettre un devis / une facture client</button></div>
     </div>
   </div>
 
@@ -8333,18 +8333,18 @@ function efacturationCard(){
          <div class="field"><label>Nom de l'opérateur</label><input id="ef-op" placeholder="Ex : mon opérateur agréé"></div>
          <div class="field"><label>Identifiant / SIRET opérateur</label><input id="ef-id" placeholder="N° d'immatriculation"></div>
        </div>
-       <div class="right"><button class="btn btn-gold" onclick="efactConnecter()">🔌 Relier l'opérateur</button></div>`;
+       <div class="right"><button class="btn btn-gold" onclick="efactConnecter()">Relier l'opérateur</button></div>`;
 
   const rows = facts.map(d=>{ const cl=db.tiers.find(x=>x.id===d.clientId); const s=d.efact?d.efact.statut:'';
     const term = (s==='Encaissée'||s==='Refusée');
     const actions = !c.connecte
       ? `<span class="mini">opérateur non relié</span>`
       : (!d.efact
-          ? `<button class="btn btn-gold btn-sm" onclick="efactTransmettre('${d.id}')">📡 Transmettre</button>`
+          ? `<button class="btn btn-gold btn-sm" onclick="efactTransmettre('${d.id}')">Transmettre</button>`
           : `${!term?`<button class="btn btn-ghost btn-sm" onclick="efactAvancer('${d.id}')">▸ Étape suivante</button>
                <button class="btn btn-ghost btn-sm" onclick="efactRefuser('${d.id}')" title="Simuler un refus">✖</button>`:''}
              <button class="btn btn-ghost btn-sm" onclick="efactFlux('${d.id}')">Flux</button>
-             <button class="btn btn-ghost btn-sm" onclick="efactXML('${d.id}')">🧾 Factur-X</button>`);
+             <button class="btn btn-ghost btn-sm" onclick="efactXML('${d.id}')">Factur-X</button>`);
     return `<tr><td class="num">${d.numero}</td><td>${cl?cl.nom:''}</td><td class="num">${d.date}</td>
       <td class="r num">${eur(d.ttc)}</td><td>${efactStatutTag(s)}</td>
       <td class="r" style="white-space:nowrap">${actions}</td></tr>`;
@@ -8353,7 +8353,7 @@ function efacturationCard(){
   return `<div class="card"><h2>Facturation électronique — opérateur relié</h2>
     <div class="sub">Connectez votre opérateur agréé (PPF ou PDP) puis transmettez vos factures au format <b>Factur-X</b>. Le cycle de vie (dépôt → mise à disposition → approbation → encaissement) est suivi ici.</div>
     ${config}
-    <div class="hint">⚠ Réforme de la facturation électronique B2B : un PDF par e-mail ne suffira plus — les factures devront transiter par une <b>plateforme agréée (PPF/PDP)</b> au format structuré (Factur-X / XML). Le calendrier officiel a été décalé plusieurs fois : vérifiez les dates en vigueur avant la mise en production.</div>
+    <div class="hint">Réforme de la facturation électronique B2B : un PDF par e-mail ne suffira plus — les factures devront transiter par une <b>plateforme agréée (PPF/PDP)</b> au format structuré (Factur-X / XML). Le calendrier officiel a été décalé plusieurs fois : vérifiez les dates en vigueur avant la mise en production.</div>
     <table style="margin-top:12px"><thead><tr><th>N° facture</th><th>Client</th><th>Date</th><th class="r">TTC</th><th>Statut e-invoice</th><th></th></tr></thead>
       <tbody>${rows}</tbody></table>
     <div class="mini" style="margin-top:8px">${transmises}/${facts.length} facture(s) transmise(s) à l'opérateur.</div>
@@ -8376,7 +8376,7 @@ function efactTransmettre(id){
   const now=todayStr();
   d.efact={ statut:'Émise par la plateforme', operateur:c.operateur, mode:c.mode,
     flux:[{etape:'Déposée', date:now},{etape:'Émise par la plateforme', date:now}] };
-  save(); render(); toast('📡 Facture '+d.numero+' transmise via '+c.operateur+' (Factur-X)');
+  save(); render(); toast('Facture '+d.numero+' transmise via '+c.operateur+' (Factur-X)');
 }
 function efactAvancer(id){
   const d=db.docs.find(x=>x.id===id); if(!d||!d.efact) return;
@@ -8682,7 +8682,7 @@ ${lignes}
         <tr class="tg"><td></td><td class="l">TOTAL ACTIF</td><td>${f(B.ta)}</td></tr></tbody></table>
       <table class="doc-t" style="margin-top:14px"><thead><tr><th class="l">Compte</th><th class="l">PASSIF</th><th>Net</th></tr></thead><tbody>${prows||'<tr><td colspan=3 style="text-align:center;padding:8px">—</td></tr>'}
         <tr class="tg"><td></td><td class="l">TOTAL PASSIF</td><td>${f(B.totP)}</td></tr></tbody></table>
-      <div class="doc-res">${Math.abs(B.ta-B.totP)<0.01?'Bilan équilibré ✓ (Actif = Passif)':'⚠ Écart de bilan : '+f(Math.abs(B.ta-B.totP))}</div>
+      <div class="doc-res">${Math.abs(B.ta-B.totP)<0.01?'Bilan équilibré ✓ (Actif = Passif)':'Écart de bilan : '+f(Math.abs(B.ta-B.totP))}</div>
       <div class="doc-foot">${S().raison}</div></div>`;
   }
   window.t4Afficher=function(kind){
@@ -8704,7 +8704,7 @@ ${lignes}
         <button class="btn btn-gold" onclick="t4Afficher('cr')">Générer le compte de résultat</button>
         <button class="btn btn-gold" onclick="t4Afficher('bilan')">Générer le bilan</button>
         <span style="margin-left:auto"></span>
-        <button class="btn btn-pri" onclick="imprimerDoc()">🖶 Imprimer / PDF</button>
+        <button class="btn btn-pri" onclick="imprimerDoc()">Imprimer / PDF</button>
       </div>
       <div class="hint">Total actif ${eur(B.ta)} · total passif ${eur(B.totP)} — ${eq?'équilibré ✓':'écart à vérifier'}.</div>
     </div>`;
@@ -8756,7 +8756,7 @@ ${lignes}
         if(tb && !win.querySelector('.ec-letbar')){
           const bar=document.createElement('div'); bar.className='ec-letbar'; const n=(window.ecSel||[]).length;
           bar.innerHTML='<span class="ec-llbl">Lettrage :</span>'
-            +'<button class="ec-lbtn" onclick="ecLettrerSel()">🔗 Lettrer la sélection'+(n?(' ('+n+')'):'')+'</button>'
+            +'<button class="ec-lbtn" onclick="ecLettrerSel()">Lettrer la sélection'+(n?(' ('+n+')'):'')+'</button>'
             +'<button class="ec-lbtn" onclick="ecDelettrerSel()">Délettrer</button>'
             +'<span class="ec-lhint">Cliquez les lignes de ce compte à rapprocher (Σ débit = Σ crédit), puis « Lettrer ».</span>';
           tb.parentNode.insertBefore(bar, tb.nextSibling);
@@ -8820,7 +8820,7 @@ ${lignes}
   if(typeof pageReglements==='function'){ const _p=pageReglements;
     pageReglements=function(){ return _p().replace('</h1>','</h1>')
       .replace('<div class="card"><h2>Encours</h2>',
-        '<div class="card" style="border-left:4px solid var(--gold)"><div class="hint">💡 « Validé ✓ » et « À écart » génèrent désormais automatiquement l\'écriture de banque (512) et lettrent la facture — la créance/dette est réellement soldée par la trésorerie.</div></div><div class="card"><h2>Encours</h2>'); };
+        '<div class="card" style="border-left:4px solid var(--gold)"><div class="hint">« Validé ✓ » et « À écart » génèrent désormais automatiquement l\'écriture de banque (512) et lettrent la facture — la créance/dette est réellement soldée par la trésorerie.</div></div><div class="card"><h2>Encours</h2>'); };
   }
 })();
 </script>
@@ -8886,7 +8886,7 @@ ${lignes}
   ecRender=function(){ _er(); try{ const win=document.getElementById('ec-win'); if(!win)return;
     const mb=win.querySelector('.ec-menubar'); if(mb && !win.querySelector('.ec-filtbar')){
       const bar=document.createElement('div'); bar.className='ec-filtbar';
-      bar.innerHTML='<span class="ec-flbl">🔍 Filtre</span>'
+      bar.innerHTML='<span class="ec-flbl">Filtre</span>'
         +'<input id="ec-filtre-inp" class="ec-flinp" placeholder="date, journal, compte, libellé, lettre…" value="'+String(window.ecFiltre||'').replace(/"/g,'&quot;')+'" oninput="ecSetFiltre(this.value)">'
         +'<button class="ec-flbtn" onclick="ecToggleSort()">Date '+(window.ecSortDir==='desc'?'▼':'▲')+'</button>'
         +(window.ecFiltre?'<button class="ec-flbtn" onclick="ecSetFiltre(\'\')">✕</button>':'');
@@ -8906,7 +8906,7 @@ ${lignes}
     const opt=(arr,sel)=>arr.map(c=>'<option value="'+c+'" '+(c===sel?'selected':'')+'>'+c+' — '+(COMPTES[c]||'')+'</option>').join('');
     const contre=t.type==='client'?COMPTES_PRODUIT:COMPTES_CHARGE; const tva=t.type==='client'?['44571']:['44566','44562'];
     document.getElementById('modal-c').innerHTML='<div class="modal-h"><h3>Modifier — '+t.nom+(t.nouveau?' <span class="new-tag">NOUVEAU</span>':'')+'</h3><button class="x" onclick="closeModal()">×</button></div>'
-      +'<div class="modal-b">'+(t.nouveau?'<div class="hint" style="color:#1c7a52">🆕 Fournisseur créé par le client'+(t.origine==='client'?'':'')+' — complétez l\'IBAN, l\'e-mail et le téléphone puis enregistrez (le marquage « nouveau » sera retiré).</div>':'')+(mv?'<div class="hint" style="color:#c0584f">⚠ Tiers mouvementé : le type et les comptes des écritures passées ne sont pas modifiés rétroactivement.</div>':'')
+      +'<div class="modal-b">'+(t.nouveau?'<div class="hint" style="color:#1c7a52">Fournisseur créé par le client'+(t.origine==='client'?'':'')+' — complétez l\'IBAN, l\'e-mail et le téléphone puis enregistrez (le marquage « nouveau » sera retiré).</div>':'')+(mv?'<div class="hint" style="color:#c0584f">Tiers mouvementé : le type et les comptes des écritures passées ne sont pas modifiés rétroactivement.</div>':'')
       +'<div class="row g2"><div class="field"><label>Dénomination</label><input id="te-nom" value="'+(t.nom||'').replace(/"/g,'&quot;')+'"></div>'
       +'<div class="field"><label>Taux TVA</label><select id="te-taux">'+[20,10,5.5,2.1,0].map(x=>'<option '+(x==t.taux?'selected':'')+'>'+x+'</option>').join('')+'</select></div></div>'
       +'<div class="row g2"><div class="field"><label>Compte de contrepartie</label><select id="te-contre">'+opt(contre,t.compteContre)+'</select></div>'
@@ -8917,9 +8917,9 @@ ${lignes}
       +'<div class="field"><label>IBAN</label><input id="te-iban" value="'+(t.iban||'').replace(/"/g,'&quot;')+'" placeholder="FR76 …"></div>'
       +'<div class="row g3"><div class="field"><label>SIRET</label><input id="te-siret" value="'+(t.siret||'').replace(/"/g,'&quot;')+'" placeholder="14 chiffres"></div>'
       +'<div class="field"><label>N° TVA intracom.</label><input id="te-tvaintra" value="'+(t.tvaIntra||'').replace(/"/g,'&quot;')+'"></div>'
-      +'<div class="field" style="align-self:end"><button class="btn btn-gold" style="width:100%" onclick="tiersEditSiret(\''+id+'\')">🔎 Compléter via le SIRET</button></div></div>'
-      +'<div class="right" style="gap:8px">'+(mv?'':'<button class="btn btn-ghost" onclick="tiersSupprimer(\''+id+'\')">🗑 Supprimer la fiche</button>')
-      +'<button class="btn btn-pri" onclick="tiersEnregistrer(\''+id+'\')">💾 Enregistrer</button></div></div>';
+      +'<div class="field" style="align-self:end"><button class="btn btn-gold" style="width:100%" onclick="tiersEditSiret(\''+id+'\')">Compléter via le SIRET</button></div></div>'
+      +'<div class="right" style="gap:8px">'+(mv?'':'<button class="btn btn-ghost" onclick="tiersSupprimer(\''+id+'\')">Supprimer la fiche</button>')
+      +'<button class="btn btn-pri" onclick="tiersEnregistrer(\''+id+'\')">Enregistrer</button></div></div>';
     document.getElementById('modal').classList.add('show'); };
   window.tiersEnregistrer=function(id){ const t=(db.tiers||[]).find(x=>x.id===id); if(!t)return; const g=i=>{const e=document.getElementById(i);return e?e.value:'';};
     t.nom=g('te-nom').trim()||t.nom; t.taux=+g('te-taux'); t.compteContre=g('te-contre'); t.compteTVA=g('te-tva');
@@ -9006,11 +9006,11 @@ ${lignes}
   window.gedVoir=function(id){ const p=store().find(x=>x.id===id); if(!p)return; const w=window.open(); if(w)w.document.write('<iframe src="'+p.data+'" style="border:0;position:fixed;inset:0;width:100%;height:100%"></iframe>'); };
   window.gedDl=function(id){ const p=store().find(x=>x.id===id); if(!p)return; const a=document.createElement('a'); a.href=p.data; a.download=p.nom||'piece'; document.body.appendChild(a); a.click(); a.remove(); };
   window.gedDel=function(id){ const s=store(); const i=s.findIndex(x=>x.id===id); if(i<0)return; if(!confirm('Supprimer « '+s[i].nom+' » ?'))return; s.splice(i,1); save(); render(); };
-  function ico(p){ const n=(p.nom||'').toLowerCase(); if((p.mime||'').includes('pdf')||n.endsWith('.pdf'))return '📕'; if((p.mime||'').includes('image')||/\.(jpe?g|png|gif|webp)$/.test(n))return '🖼'; return '📄'; }
+  function ico(p){ const n=(p.nom||'').toLowerCase(); if((p.mime||'').includes('pdf')||n.endsWith('.pdf'))return ''; if((p.mime||'').includes('image')||/\.(jpe?g|png|gif|webp)$/.test(n))return ''; return ''; }
   window.gedCard=function(){ const s=store();
     const liste=s.length?s.slice().reverse().map(p=>'<div class="ged-it"><span>'+ico(p)+'</span><span class="ged-nm" title="'+String(p.nom||'').replace(/"/g,'&quot;')+'">'+(p.nom||'pièce')+'</span><span class="ged-mt">'+frDate(p.date)+(p.taille?' · '+sz(p.taille):'')+'</span><span><button class="btn btn-ghost btn-xs" onclick="gedVoir(\''+p.id+'\')">Ouvrir</button> <button class="btn btn-ghost btn-xs" onclick="gedDl(\''+p.id+'\')">⤓</button> <button class="btn btn-ghost btn-xs" onclick="gedDel(\''+p.id+'\')">✕</button></span></div>').join(''):'<div class="hint">Aucune pièce déposée.</div>';
     return '<div class="card"><h2>Pièces du dossier (GED)</h2><div class="sub">Glissez-déposez vos PDF / photos : ils sont réellement stockés (consultables, téléchargeables).</div>'
-      +'<div class="ged-drop" onclick="gedPick()" ondragover="event.preventDefault();this.classList.add(\'drag\')" ondragleave="this.classList.remove(\'drag\')" ondrop="gedDrop(event)"><div style="font-size:24px">⬆</div><div style="font-weight:700">Déposez vos fichiers ici</div><div class="hint">ou cliquez — pdf, jpg, png</div>'
+      +'<div class="ged-drop" onclick="gedPick()" ondragover="event.preventDefault();this.classList.add(\'drag\')" ondragleave="this.classList.remove(\'drag\')" ondrop="gedDrop(event)"><div style="font-size:24px"></div><div style="font-weight:700">Déposez vos fichiers ici</div><div class="hint">ou cliquez — pdf, jpg, png</div>'
       +'<input type="file" id="ged-file" hidden multiple accept=".pdf,.jpg,.jpeg,.png,image/*" onchange="gedFile(event)"></div>'+liste+'</div>'; };
   const _p=pageEspaceClient; pageEspaceClient=function(){ return _p()+gedCard(); };
 })();
@@ -9031,7 +9031,7 @@ ${lignes}
     window.sessionRole='cabinet'; window.selClientMode=true; render(); };
   if(typeof ecranSelectionDossier==='function'){ const _es=ecranSelectionDossier; ecranSelectionDossier=function(){ let h=_es();
     if(window.selClientMode){ h=h.replace(/choisirDossier\(/g,'choisirDossierClient(').replace('Sélectionnez un dossier','Espace client — sélectionnez votre dossier'); }
-    if(!window.__secDual){ const btn=window.selClientMode?'<button class="btn btn-ghost" onclick="selClientMode=false;render()">↩ Accès cabinet</button>':'<button class="btn btn-ghost" onclick="selClientMode=true;render()">👤 Accès client</button>';
+    if(!window.__secDual){ const btn=window.selClientMode?'<button class="btn btn-ghost" onclick="selClientMode=false;render()">↩ Accès cabinet</button>':'<button class="btn btn-ghost" onclick="selClientMode=true;render()">Accès client</button>';
       h=h.replace('<div class="login-actions">','<div class="login-actions">'+btn); }
     return h; }; }
   const _bn=buildNav; buildNav=function(){ if(window.sessionRole==='client'){ const nav=document.getElementById('nav'); if(!nav)return; nav.innerHTML='';
@@ -9064,7 +9064,7 @@ ${lignes}
   window.demSupprimer=function(id){ const s=ds(); const i=s.findIndex(x=>x.id===id); if(i>=0){s.splice(i,1);save();render();} };
   window.messagerieCard=function(){ const r=role(); const msgs=ms();
     const thread=msgs.length?msgs.map(m=>'<div class="msg '+(m.de===r?'me':'them')+'"><div class="msg-b">'+String(m.texte||'').replace(/</g,'&lt;')+'</div><div class="msg-m">'+(m.de==='client'?'Client':'Cabinet')+' · '+frDate(String(m.date||'').slice(0,10))+'</div></div>').join(''):'<div class="hint">Aucun message.</div>';
-    const dem=ds(); const dl=dem.length?dem.map(d=>'<div class="dem-it '+d.statut+'"><span>'+(d.statut==='fournie'?'✓':'⏳')+'</span><span class="dem-lb">'+String(d.libelle||'').replace(/</g,'&lt;')+'</span><span><button class="btn btn-ghost btn-xs" onclick="demBascule(\''+d.id+'\')">'+(d.statut==='fournie'?'À fournir':'Fournie')+'</button>'+(r==='cabinet'?' <button class="btn btn-ghost btn-xs" onclick="demSupprimer(\''+d.id+'\')">✕</button>':'')+'</span></div>').join(''):'<div class="hint">Aucune pièce demandée.</div>';
+    const dem=ds(); const dl=dem.length?dem.map(d=>'<div class="dem-it '+d.statut+'"><span>'+(d.statut==='fournie'?'✓':'')+'</span><span class="dem-lb">'+String(d.libelle||'').replace(/</g,'&lt;')+'</span><span><button class="btn btn-ghost btn-xs" onclick="demBascule(\''+d.id+'\')">'+(d.statut==='fournie'?'À fournir':'Fournie')+'</button>'+(r==='cabinet'?' <button class="btn btn-ghost btn-xs" onclick="demSupprimer(\''+d.id+'\')">✕</button>':'')+'</span></div>').join(''):'<div class="hint">Aucune pièce demandée.</div>';
     return '<div class="card"><h2>Messagerie '+(r==='client'?'— mon cabinet':'— mon client')+'</h2><div class="sub">Échange direct et suivi des pièces demandées.</div>'
       +'<div class="msg-thread">'+thread+'</div>'
       +'<div class="msg-form"><input id="msg-inp" placeholder="Écrire un message…" onkeydown="if(event.key===\'Enter\')msgEnvoyer()"><button class="btn btn-pri" onclick="msgEnvoyer()">Envoyer</button></div>'
@@ -9176,7 +9176,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v89 · police Inter ✨';
+    b.textContent='YADA · v90 · interface épurée';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:600 11px system-ui,sans-serif;background:rgba(47,109,176,.92);color:#fff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.78;pointer-events:none';
     document.body.appendChild(b); }
@@ -9226,8 +9226,8 @@ ${lignes}
     if(!CHOICE){
       o.innerHTML='<div class="sec-screen">'+secHero()
         +'<div class="sec-body"><h2>Bienvenue</h2><p class="sec-p">Choisissez votre espace pour vous connecter.</p>'
-        +'<button class="sec-cta" onclick="secChoisir(\'cabinet\')">🏢 Espace Cabinet</button>'
-        +'<button class="sec-cta sec-cta-2" onclick="secChoisir(\'client\')">🧑 Espace Client</button></div>'
+        +'<button class="sec-cta" onclick="secChoisir(\'cabinet\')">Espace Cabinet</button>'
+        +'<button class="sec-cta sec-cta-2" onclick="secChoisir(\'client\')">Espace Client</button></div>'
         +'<div class="sec-ver">'+secVerTxt()+'</div></div>';
       o.classList.add('show'); return;
     }
@@ -9290,11 +9290,11 @@ ${lignes}
   if(typeof pageParametrage==='function'){ var _pp=pageParametrage; pageParametrage=function(){
     var delaySel='<select onchange="secSetDelay(this.value)">'+[['5','5 min'],['10','10 min'],['15','15 min'],['30','30 min'],['0','Désactivé']].map(function(o){return '<option value="'+o[0]+'" '+(String(secDelay())===o[0]?'selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>';
     return _pp()+'<div class="card"><h2>Connexion & sécurité</h2>'
-      +'<div class="sub">🔒 Deux espaces avec <b>identifiants distincts</b> (Cabinet / Client). À l\'ouverture : choix de l\'espace puis connexion par e-mail + mot de passe (empreinte SHA-256 salée embarquée, clair absent du source). Verrouillage automatique par inactivité. Sécurité côté navigateur : dissuasive. Pour changer les identifiants, demandez au cabinet (redéploiement).</div>'
-      +'<div class="row g3" style="align-items:flex-end"><div class="field"><label>Espace courant</label><div class="kv2 ok">'+(window.sessionRole==='client'?'🧑 Espace Client':'🏢 Espace Cabinet')+'</div></div>'
+      +'<div class="sub">Deux espaces avec <b>identifiants distincts</b> (Cabinet / Client). À l\'ouverture : choix de l\'espace puis connexion par e-mail + mot de passe (empreinte SHA-256 salée embarquée, clair absent du source). Verrouillage automatique par inactivité. Sécurité côté navigateur : dissuasive. Pour changer les identifiants, demandez au cabinet (redéploiement).</div>'
+      +'<div class="row g3" style="align-items:flex-end"><div class="field"><label>Espace courant</label><div class="kv2 ok">'+(window.sessionRole==='client'?'Espace Client':'Espace Cabinet')+'</div></div>'
       +'<div class="field"><label>Verrouillage auto (inactivité)</label>'+delaySel+'</div>'
-      +'<div class="field"><label>&nbsp;</label><button class="btn btn-ghost" onclick="secVerrouiller()">🔒 Se déconnecter</button></div></div></div>'; }; }
-  function addSideBtn(){ try{ var foot=document.querySelector('.side-foot'); if(foot && !document.getElementById('sec-side-btn')){ var b=document.createElement('button'); b.id='sec-side-btn'; b.textContent='🔒 Déconnexion'; b.onclick=window.secVerrouiller; foot.insertBefore(b, foot.firstChild.nextSibling); } }catch(e){} }
+      +'<div class="field"><label>&nbsp;</label><button class="btn btn-ghost" onclick="secVerrouiller()">Se déconnecter</button></div></div></div>'; }; }
+  function addSideBtn(){ try{ var foot=document.querySelector('.side-foot'); if(foot && !document.getElementById('sec-side-btn')){ var b=document.createElement('button'); b.id='sec-side-btn'; b.textContent='Déconnexion'; b.onclick=window.secVerrouiller; foot.insertBefore(b, foot.firstChild.nextSibling); } }catch(e){} }
   if(typeof render==='function'){ var _r=render; render=function(){ var x=_r.apply(this,arguments); addSideBtn(); return x; }; }
   function boot(){ var role=ssGet('yada-role'); var auto=false;
     if(isMobile() && role==='cabinet') role=null; /* mobile : pas d'accès cabinet */
@@ -9328,12 +9328,12 @@ ${lignes}
   window.ecHero=function(){ var s=(db&&db.societe)||{};
     return '<div id="ec-hero"><div class="ec-hero-txt"><div class="ec-hero-hi">Bienvenue dans votre Espace Client</div>'
       +'<div class="ec-hero-sub">'+(s.raison||'Votre dossier')+' · '+(typeof frDate==='function'?frDate(todayStr()):'')+'</div></div>'
-      +'<div class="ec-hero-ico">🧑‍💼</div></div>'
+      +'<div class="ec-hero-ico">‍</div></div>'
       +'<div class="ec-shortcuts">'
-      +tile('🧾','Mes factures &amp; devis',"current='facturation';render()")
-      +tile('📥','Réception factures',"current='achats';render()")
+      +tile('','Mes factures &amp; devis',"current='facturation';render()")
+      +tile('','Réception factures',"current='achats';render()")
       +tile('⊞','Mes tiers (clients/fourn.)',"current='tiers';render()")
-      +tile('📎','Déposer une pièce',"(typeof gedPick===&quot;function&quot;?gedPick():render())")
+      +tile('','Déposer une pièce',"(typeof gedPick===&quot;function&quot;?gedPick():render())")
       +'</div>'; };
   var _p=pageEspaceClient; pageEspaceClient=function(){ return ecHero()+_p(); };
 })();
@@ -9345,14 +9345,14 @@ ${lignes}
   function tile(ic,lbl,act){ return '<button class="ec-tile" onclick="'+act+'"><span class="ec-tile-ic">'+ic+'</span><span class="ec-tile-lbl">'+lbl+'</span></button>'; }
   window.dashHero=function(){ var cab=(db&&db.cabinet)||{}; var s=(db&&db.societe)||{};
     var dossier=(s.dossierNom||s.raison||'dossier courant');
-    return '<div id="ec-hero" class="cab-hero"><div class="ec-hero-txt"><div class="ec-hero-hi">Tableau de bord'+(cab.cabinetNom?' — '+cab.cabinetNom:'')+'</div>'
+    return '<div id="ec-hero" class="cab-hero"><div class="ec-hero-txt"><div class="ec-hero-hi">'+(cab.cabinetNom||'')+'</div>'
       +'<div class="ec-hero-sub">'+dossier+' · '+(typeof frDate==='function'?frDate(todayStr()):'')+'</div></div>'
-      +'<div class="ec-hero-ico">📊</div></div>'
+      +'<div class="ec-hero-ico"></div></div>'
       +'<div class="ec-shortcuts">'
-      +tile('🧾','Facturation client',"current='facturation';render()")
-      +tile('📥','Factures fournisseurs',"current='achats';render()")
-      +tile('📚','Écritures comptables',"current='compta';render()")
-      +tile('🧮','Déclaration de TVA',"current='tva';render()")
+      +tile('','Facturation client',"current='facturation';render()")
+      +tile('','Factures fournisseurs',"current='achats';render()")
+      +tile('','Écritures comptables',"current='compta';render()")
+      +tile('','Déclaration de TVA',"current='tva';render()")
       +'</div>'; };
   var _d=pageDash; pageDash=function(){ var html=_d();
     return html.replace('<div class="dash-wrap">','<div class="dash-wrap">'+dashHero()); };
@@ -9367,7 +9367,7 @@ ${lignes}
   /* ----- Dépôt de factures (réutilise le stockage GED db.parametres.pieces) ----- */
   function gstore(){ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.pieces))db.parametres.pieces=[]; return db.parametres.pieces; }
   function gsz(n){ return !n?'':(n<1024?n+' o':(n<1048576?Math.round(n/1024)+' Ko':(n/1048576).toFixed(1)+' Mo')); }
-  function gico(p){ var n=(p.nom||'').toLowerCase(); if((p.mime||'').includes('pdf')||n.endsWith('.pdf'))return '📕'; if((p.mime||'').includes('image')||/\.(jpe?g|png|gif|webp)$/.test(n))return '🖼'; return '📄'; }
+  function gico(p){ var n=(p.nom||'').toLowerCase(); if((p.mime||'').includes('pdf')||n.endsWith('.pdf'))return ''; if((p.mime||'').includes('image')||/\.(jpe?g|png|gif|webp)$/.test(n))return ''; return ''; }
   window.factDepotAdd=function(file,cat){ return new Promise(function(res){ var r=new FileReader();
     r.onload=function(){ try{ gstore().push({id:uid(),nom:file.name,mime:file.type||'',taille:file.size||0,data:r.result,date:todayStr(),cat:cat}); save(); res(true);}catch(e){ toast('Fichier trop volumineux'); res(false);} };
     r.onerror=function(){res(false);}; r.readAsDataURL(file); }); };
@@ -9386,7 +9386,7 @@ ${lignes}
     }).join('') : '<div class="hint">Aucune facture déposée pour l\'instant.</div>';
     return '<div class="card"><h2>'+titre+'</h2><div class="sub">'+sub+'</div>'
       +'<div class="ged-drop" onclick="factPick(\''+cat+'\')" ondragover="event.preventDefault();this.classList.add(\'drag\')" ondragleave="this.classList.remove(\'drag\')" ondrop="factDrop(event,\''+cat+'\')">'
-      +'<div style="font-size:24px">⬆</div><div style="font-weight:700">Déposez vos factures ici</div><div class="hint">ou cliquez — PDF, JPG, PNG</div>'
+      +'<div style="font-size:24px"></div><div style="font-weight:700">Déposez vos factures ici</div><div class="hint">ou cliquez — PDF, JPG, PNG</div>'
       +'<input type="file" id="fdep-'+cat+'" hidden multiple accept=".pdf,.jpg,.jpeg,.png,image/*" onchange="factFile(event,\''+cat+'\')"></div>'
       +liste+'</div>';
   };
@@ -9404,19 +9404,19 @@ ${lignes}
         +'<div class="li-cell"><span class="li-cl">Total HT</span><input value="'+eur(lht)+'" disabled></div>'
         +'<button class="btn btn-ghost btn-sm li-del" onclick="faDelLigne('+i+')" aria-label="Supprimer la ligne">✕ Supprimer</button></div>'; }).join('');
     var t=faTotaux();
-    return '<div class="card fa-cli-creer"><h2>🧾 Créer une facture</h2>'
+    return '<div class="card fa-cli-creer"><h2>Créer une facture</h2>'
       +'<div class="sub">Choisissez le client, ajoutez vos lignes, validez. C\'est tout.</div>'
       +'<input type="hidden" id="fa-type" value="facture">'
       +'<div class="row g3">'
       +'<div class="field"><label>Type</label><select id="fa-type2" onchange="document.getElementById(&quot;fa-type&quot;).value=this.value"><option value="facture">Facture</option><option value="devis">Devis</option></select></div>'
-      +'<div class="field"><label>Client</label><select id="fa-client" onchange="faClientToggleNew();faMaj()">'+(clients.map(function(c){return '<option value="'+c.id+'">'+c.nom+'</option>';}).join(''))+'<option value="__new__">➕ Nouveau client…</option></select></div>'
+      +'<div class="field"><label>Client</label><select id="fa-client" onchange="faClientToggleNew();faMaj()">'+(clients.map(function(c){return '<option value="'+c.id+'">'+c.nom+'</option>';}).join(''))+'<option value="__new__">Nouveau client…</option></select></div>'
       +'<div class="field"><label>Date d\'émission</label><input type="date" id="fa-date" value="'+todayStr()+'"></div>'
       +'</div>'
       +'<div id="fa-newcli" style="display:none;margin:-4px 0 10px;padding:11px 12px;border:1px dashed var(--line);border-radius:10px;background:var(--paper-2,rgba(127,127,127,.05))">'
-      +'<div class="sub" style="margin-bottom:8px">🆕 Nouveau client — il sera créé et marqué « NOUVEAU » pour que le cabinet complète sa fiche (IBAN, e-mail…).</div>'
+      +'<div class="sub" style="margin-bottom:8px">Nouveau client — il sera créé et marqué « NOUVEAU » pour que le cabinet complète sa fiche (IBAN, e-mail…).</div>'
       +'<div class="row g3"><div class="field"><label>Raison sociale *</label><input id="fa-newnom" placeholder="Nom du client"></div>'
       +'<div class="field"><label>SIRET</label><input id="fa-newsiret" placeholder="14 chiffres"></div>'
-      +'<div class="field" style="align-self:end"><button class="btn btn-gold" style="width:100%" onclick="faClientNewSiret()">🔎 Compléter via le SIRET</button></div></div></div>'
+      +'<div class="field" style="align-self:end"><button class="btn btn-gold" style="width:100%" onclick="faClientNewSiret()">Compléter via le SIRET</button></div></div></div>'
       +'<div class="row g3"><div class="field"><label>Date d\'échéance</label><input type="date" id="fa-ech" value="'+todayStr()+'"></div><div></div><div></div></div>'
       +'<div class="field"><label>Lignes</label>'+liHead+liRows
       +'<button class="btn btn-ghost btn-sm" onclick="faSync();faAddLigne()">+ Ajouter une ligne</button></div>'
@@ -9447,7 +9447,7 @@ ${lignes}
       g('fa-newnom').dataset.tva=info.tvaIntra||''; g('fa-newnom').dataset.adr=((info.adresse||'')+((info.cp||info.ville)?(', '+(info.cp||'')+' '+(info.ville||'')):'')).trim();
       toast('✓ '+(info.raison||'Complété'));
     }).catch(function(e){ toast('Échec : '+(e&&e.message||'réseau requis')); }); };
-  /* émission : crée le nouveau client (marqué NOUVEAU) si « ➕ Nouveau client » puis émet la facture */
+  /* émission : crée le nouveau client (marqué NOUVEAU) si « Nouveau client » puis émet la facture */
   window.faClientEmettre=function(valider){
     var sel=document.getElementById('fa-client');
     if(sel && sel.value==='__new__'){
@@ -9469,11 +9469,11 @@ ${lignes}
       return '<tr><td><b>'+d.numero+'</b></td><td>'+(c?c.nom:'—')+'</td><td class="num">'+frDate(d.date)+'</td>'
         +'<td><span class="tag '+st.c+'">'+st.l+'</span></td><td class="r num"><b>'+eur(d.ttc)+'</b></td>'
         +'<td class="r" style="white-space:nowrap">'
-        +'<button class="btn btn-ghost btn-sm" onclick="voirDoc(\''+d.id+'\')" title="Voir">👁</button> '
-        +(d.type==='facture'&&!d.ecritureId?'<button class="btn btn-gold btn-sm" onclick="genererEcritureDoc(\''+d.id+'\')" title="Comptabiliser">⚙ Comptabiliser</button>':'')
+        +'<button class="btn btn-ghost btn-sm" onclick="voirDoc(\''+d.id+'\')" title="Voir"></button> '
+        +(d.type==='facture'&&!d.ecritureId?'<button class="btn btn-gold btn-sm" onclick="genererEcritureDoc(\''+d.id+'\')" title="Comptabiliser">Comptabiliser</button>':'')
         +(d.type==='devis'&&d.statut==='valide'&&!d.transformeEn?'<button class="btn btn-ghost btn-sm" onclick="transformerDevis(\''+d.id+'\')">→ Facture</button>':'')
         +'</td></tr>'; }).join('');
-    return '<div class="card"><h2>🆕 Factures récemment créées</h2>'
+    return '<div class="card"><h2>Factures récemment créées</h2>'
       +'<div class="sub">Vos 5 derniers documents créés.</div>'
       +'<table><thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Statut</th><th class="r">TTC</th><th class="r">Actions</th></tr></thead>'
       +'<tbody>'+(rows||'<tr><td colspan=6 class=empty>Aucune facture créée — créez-en une ci-dessus.</td></tr>')+'</tbody></table></div>';
@@ -9481,12 +9481,12 @@ ${lignes}
   window.pageFacturationClient=function(){ if(typeof catInit==='function')catInit();
     var out=head('Mes factures clients','Créez une facture en quelques secondes, déposez vos factures existantes, suivez vos ventes et retrouvez les factures envoyées.');
     var left=faClientCreer()
-      +depotFacturesCard('vente','📤 Déposer une facture client','Glissez-déposez vos factures de vente déjà établies (PDF/photo) : elles sont conservées dans le dossier et consultables par votre cabinet.');
+      +depotFacturesCard('vente','Déposer une facture client','Glissez-déposez vos factures de vente déjà établies (PDF/photo) : elles sont conservées dans le dossier et consultables par votre cabinet.');
     var right=faClientRecentes();
     try{ right+=suiviFacturesVente(); }catch(e){}
     try{ right+=listeFacturesEnvoyees(); }catch(e){}
-    out+='<div class="cli-2col"><div class="cli-col"><div class="cli-col-h">✍️ Actions</div>'+left+'</div>'
-       +'<div class="cli-col"><div class="cli-col-h">📊 Suivi & historique</div>'+right+'</div></div>';
+    out+='<div class="cli-2col"><div class="cli-col"><div class="cli-col-h">Actions</div>'+left+'</div>'
+       +'<div class="cli-col"><div class="cli-col-h">Suivi & historique</div>'+right+'</div></div>';
     return out;
   };
 
@@ -9496,8 +9496,8 @@ ${lignes}
     var rows=facs.map(function(f){ var t=(db.tiers||[]).find(function(x){return x.id===f.tiersId;});
       return '<tr><td class="num">'+f.numero+'</td><td>'+(t?t.nom:'')+'</td><td class="num">'+frDate(f.date)+'</td>'
         +'<td>'+(typeof sourceTag==='function'?sourceTag(f.source):'')+'</td><td class="r num"><b>'+eur(f.ttc)+'</b></td>'
-        +'<td class="r"><button class="btn btn-ghost btn-sm" onclick="voirFactureAchat(\''+f.id+'\')">👁 Voir</button></td></tr>'; }).join('');
-    return '<div class="card"><h2>📥 Dernières factures déposées</h2>'
+        +'<td class="r"><button class="btn btn-ghost btn-sm" onclick="voirFactureAchat(\''+f.id+'\')">Voir</button></td></tr>'; }).join('');
+    return '<div class="card"><h2>Dernières factures déposées</h2>'
       +'<div class="sub">Les '+facs.length+' dernières factures fournisseurs reçues.</div>'
       +'<table><thead><tr><th>N°</th><th>Fournisseur</th><th>Date</th><th>Entrée</th><th class="r">TTC</th><th class="r"></th></tr></thead>'
       +'<tbody>'+(rows||'<tr><td colspan=6 class=empty>Aucune facture fournisseur déposée</td></tr>')+'</tbody></table></div>';
@@ -9515,8 +9515,8 @@ ${lignes}
         +'<td>'+(f.modeReglement||'—')+'</td>'
         +'<td class="r num">'+eur(f.ht)+'</td><td class="r num">'+eur(f.tva)+'</td><td class="r num"><b>'+eur(f.ttc)+'</b></td>'
         +'<td>'+pay+'</td>'
-        +'<td class="r"><button class="btn btn-ghost btn-sm" onclick="voirFactureAchat(\''+f.id+'\')">👁 Voir</button></td></tr>'; }).join('');
-    return '<div class="card"><h2>📄 Détail des factures fournisseur</h2>'
+        +'<td class="r"><button class="btn btn-ghost btn-sm" onclick="voirFactureAchat(\''+f.id+'\')">Voir</button></td></tr>'; }).join('');
+    return '<div class="card"><h2>Détail des factures fournisseur</h2>'
       +'<div class="sub">'+facs.length+' facture(s) reçue(s) — montants hors taxe, TVA et TTC.</div>'
       +'<div class="grid g3" style="margin-bottom:14px">'
       +'<div class="kpi"><div class="lbl">Total HT</div><div class="val">'+eur(r2(tHT))+'</div></div>'
@@ -9528,10 +9528,10 @@ ${lignes}
   }
   window.pageAchatsClient=function(){
     var out=head('Mes factures fournisseurs','Déposez vos factures fournisseurs, retrouvez les dernières reçues et leur détail : HT, TVA, TTC et statut.');
-    var left=depotFacturesCard('achat','📤 Déposer une facture fournisseur','Glissez-déposez les factures reçues de vos fournisseurs (PDF/photo) : votre cabinet les récupère pour comptabilisation.');
+    var left=depotFacturesCard('achat','Déposer une facture fournisseur','Glissez-déposez les factures reçues de vos fournisseurs (PDF/photo) : votre cabinet les récupère pour comptabilisation.');
     var right=achatsClientRecentes()+achatsClientDetail();
-    out+='<div class="cli-2col"><div class="cli-col"><div class="cli-col-h">📥 Dépôt</div>'+left+'</div>'
-       +'<div class="cli-col"><div class="cli-col-h">📊 Suivi & détail</div>'+right+'</div></div>';
+    out+='<div class="cli-2col"><div class="cli-col"><div class="cli-col-h">Dépôt</div>'+left+'</div>'
+       +'<div class="cli-col"><div class="cli-col-h">Suivi & détail</div>'+right+'</div></div>';
     return out;
   };
 
@@ -9554,7 +9554,7 @@ ${lignes}
   function dstore(){ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.depots))db.parametres.depots=[]; return db.parametres.depots; }
   function nstore(){ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.notifsDepot))db.parametres.notifsDepot=[]; return db.parametres.notifsDepot; }
   function normName(n){ return String(n||'').trim().toLowerCase(); }
-  function gico(p){ var n=(p&&p.nom||'').toLowerCase(); var m=(p&&p.mime||''); if(m.indexOf('pdf')>=0||n.endsWith('.pdf'))return '📕'; if(m.indexOf('image')>=0||/\.(jpe?g|png|gif|webp)$/.test(n))return '🖼'; return '📄'; }
+  function gico(p){ var n=(p&&p.nom||'').toLowerCase(); var m=(p&&p.mime||''); if(m.indexOf('pdf')>=0||n.endsWith('.pdf'))return ''; if(m.indexOf('image')>=0||/\.(jpe?g|png|gif|webp)$/.test(n))return ''; return ''; }
   function markNotifLu(depotId){ nstore().forEach(function(n){ if(n.depotId===depotId)n.lu=true; }); }
   function notifNonLus(cat){ return nstore().filter(function(n){ return !n.lu && (!cat||n.cat===cat); }).length; }
   window.depotNotifNonLus=notifNonLus;
@@ -9590,8 +9590,8 @@ ${lignes}
     var tiersList=(db.tiers||[]).filter(function(t){return t.type===(cat==='achat'?'fournisseur':'client');});
     return deps.map(function(d){
       var cls=d.doublon?'dep-dup':'dep-ok';
-      var dbl=d.doublon?' <span class="tag t-late" title="'+String(d.doublonRaison||'').replace(/"/g,'&quot;')+'">⚠ doublon</span>':' <span class="tag t-pay">✓ unique</span>';
-      var file=d.fichierId?'<button class="btn btn-ghost btn-xs" onclick="gedVoir(\''+d.fichierId+'\')">📎 Ouvrir</button> <button class="btn btn-ghost btn-xs" onclick="gedDl(\''+d.fichierId+'\')">⤓</button>':'';
+      var dbl=d.doublon?' <span class="tag t-late" title="'+String(d.doublonRaison||'').replace(/"/g,'&quot;')+'">doublon</span>':' <span class="tag t-pay">✓ unique</span>';
+      var file=d.fichierId?'<button class="btn btn-ghost btn-xs" onclick="gedVoir(\''+d.fichierId+'\')">Ouvrir</button> <button class="btn btn-ghost btn-xs" onclick="gedDl(\''+d.fichierId+'\')">⤓</button>':'';
       var info=(d.statut==='comptabilisee')?(' <span class="ged-mt">'+(d.numero||'')+' · '+eur(d.ttc)+'</span>'):'';
       var actions='';
       if(role==='cabinet'){
@@ -9614,7 +9614,7 @@ ${lignes}
           +'</div><div class="row g4">'
           +'<div class="field"><label>TVA %</label><select id="cmp-taux-'+d.id+'"><option>20</option><option>10</option><option>5.5</option><option>0</option></select></div>'
           +'<div></div><div></div>'
-          +'<div class="field" style="align-self:end"><button class="btn btn-pri" style="width:100%" onclick="depotComptabiliser(\''+d.id+'\')">📒 Valider la comptabilisation</button></div>'
+          +'<div class="field" style="align-self:end"><button class="btn btn-pri" style="width:100%" onclick="depotComptabiliser(\''+d.id+'\')">Valider la comptabilisation</button></div>'
           +'</div></div>';
       }
       return row;
@@ -9640,7 +9640,7 @@ ${lignes}
     var tva=(d.cat==='achat'?'44566':'44571');
     var f=posterFacture({ type:d.cat, tiersId:tiersId, date:date, base:ttc, baseEst:'TTC', taux:taux, compteContre:contre, compteTVA:tva, numero:(numero||undefined), source:'depot' });
     d.statut='comptabilisee'; d.tiersId=tiersId; d.numero=f.numero; d.dateFacture=date; d.ttc=f.ttc; d.ht=f.ht; d.tva=f.tva; d.taux=taux; d.ecritureId=f.ecritureId; d.factureId=f.id; markNotifLu(id);
-    save(); toast('✅ Facture '+f.numero+' comptabilisée ('+(d.cat==='achat'?'journal ACH':'journal VTE')+').'); render(); };
+    save(); toast('Facture '+f.numero+' comptabilisée ('+(d.cat==='achat'?'journal ACH':'journal VTE')+').'); render(); };
 
   /* Action client */
   window.depotSupprimer=function(id){ var s=dstore(); var i=s.findIndex(function(x){return x.id===id;}); if(i<0)return;
@@ -9653,16 +9653,16 @@ ${lignes}
   window.depotFacturesCard=function(cat,titre,sub){
     return '<div class="card"><h2>'+titre+'</h2><div class="sub">'+sub+' Chaque dépôt notifie votre cabinet ; un doublon s\'affiche en rouge. La réception et la comptabilisation sont validées par le cabinet.</div>'
       +'<div class="ged-drop" onclick="factPick(\''+cat+'\')" ondragover="event.preventDefault();this.classList.add(\'drag\')" ondragleave="this.classList.remove(\'drag\')" ondrop="factDrop(event,\''+cat+'\')">'
-      +'<div style="font-size:24px">⬆</div><div style="font-weight:700">Déposez vos factures ici</div><div class="hint">ou cliquez — PDF, JPG, PNG</div>'
+      +'<div style="font-size:24px"></div><div style="font-weight:700">Déposez vos factures ici</div><div class="hint">ou cliquez — PDF, JPG, PNG</div>'
       +'<input type="file" id="fdep-'+cat+'" hidden multiple accept=".pdf,.jpg,.jpeg,.png,image/*" onchange="factFile(event,\''+cat+'\')"></div>'
       +depotsListe(cat,'client')+'</div>';
   };
 
   /* Carte de réception côté CABINET (liste + notification + validation) */
   window.depotsCabinetCard=function(cat){
-    var titre=cat==='achat'?'📥 Factures fournisseurs déposées par le client':'📤 Factures client déposées par le client';
+    var titre=cat==='achat'?'Factures fournisseurs déposées par le client':'Factures client déposées par le client';
     var n=notifNonLus(cat);
-    var ban=n?'<div class="dep-notif">🔔 '+n+' nouveau(x) dépôt(s) du client à traiter <button class="btn btn-ghost btn-xs" onclick="notifMarquerLu(\''+cat+'\')">Marquer comme lu</button></div>':'';
+    var ban=n?'<div class="dep-notif">'+n+' nouveau(x) dépôt(s) du client à traiter <button class="btn btn-ghost btn-xs" onclick="notifMarquerLu(\''+cat+'\')">Marquer comme lu</button></div>':'';
     return '<div class="card"><h2>'+titre+'</h2><div class="sub">Validez la <b>réception</b> puis la <b>comptabilisation</b> (saisie). Vert = unique · Rouge = doublon repéré dans le dossier.</div>'+ban+depotsListe(cat,'cabinet')+'</div>';
   };
 
@@ -9723,12 +9723,12 @@ ${lignes}
         selHtml='<div class="field" style="margin-bottom:10px"><label>Fournisseur de cette facture</label>'
           +'<select id="dep-four-achat"><option value="">— Sélectionner —</option>'
           +fourns.map(function(t){return '<option value="'+t.id+'">'+t.nom+'</option>';}).join('')
-          +'<option value="__inconnu__">➕ Fournisseur inconnu / nouveau</option></select>'
+          +'<option value="__inconnu__">Fournisseur inconnu / nouveau</option></select>'
           +'<div class="hint">Fournisseur inconnu ? Une fiche d\'information vous sera demandée après le dépôt.</div></div>'; }
       return '<div class="card"><h2>'+titre+'</h2><div class="sub">'+sub+' Chaque dépôt notifie votre cabinet ; un doublon s\'affiche en rouge. La réception et la comptabilisation sont validées par le cabinet.</div>'
         +selHtml
         +'<div class="ged-drop" onclick="factPick(\''+cat+'\')" ondragover="event.preventDefault();this.classList.add(\'drag\')" ondragleave="this.classList.remove(\'drag\')" ondrop="factDrop(event,\''+cat+'\')">'
-        +'<div style="font-size:24px">⬆</div><div style="font-weight:700">Déposez vos factures ici</div><div class="hint">ou cliquez — PDF, JPG, PNG</div>'
+        +'<div style="font-size:24px"></div><div style="font-weight:700">Déposez vos factures ici</div><div class="hint">ou cliquez — PDF, JPG, PNG</div>'
         +'<input type="file" id="fdep-'+cat+'" hidden multiple accept=".pdf,.jpg,.jpeg,.png,image/*" onchange="factFile(event,\''+cat+'\')"></div>'
         +depotsListe(cat,'client')+'</div>';
     };
@@ -9738,10 +9738,10 @@ ${lignes}
   window.ficheRemplir=function(id){ var f=fstore().find(function(x){return x.id===id;}); if(!f)return;
     var d=dstore().find(function(x){return x.id===f.depotId;});
     document.getElementById('modal-c').innerHTML=
-      '<h2 style="margin-top:0">📝 Fiche d\'information '+(f.type==='client'?'client':'fournisseur')+'</h2>'
+      '<h2 style="margin-top:0">Fiche d\'information '+(f.type==='client'?'client':'fournisseur')+'</h2>'
       +'<div class="sub">Saisissez le <b>SIRET</b> puis « Compléter » : raison sociale, adresse et n° TVA sont récupérés automatiquement depuis l\'annuaire officiel des entreprises'+(d?(' (facture « '+v(d.nom)+' »)'):'')+'. Transmis à votre cabinet.</div>'
       +'<div class="row g2"><div class="field"><label>SIRET (14 chiffres)</label><input id="fi-siret" value="'+v(f.siret)+'" placeholder="ex. 552 081 317 00024"></div>'
-      +'<div class="field" style="align-self:end"><button class="btn btn-gold" style="width:100%" onclick="ficheCompletSiret()">🔎 Compléter via le SIRET</button></div></div>'
+      +'<div class="field" style="align-self:end"><button class="btn btn-gold" style="width:100%" onclick="ficheCompletSiret()">Compléter via le SIRET</button></div></div>'
       +'<div class="field"><label>Raison sociale *</label><input id="fi-raison" value="'+v(f.raison)+'"></div>'
       +'<div class="row g2"><div class="field"><label>N° TVA intracom.</label><input id="fi-tva" value="'+v(f.tvaIntra)+'"></div>'
       +'<div class="field"><label>E-mail</label><input id="fi-email" value="'+v(f.email)+'"></div></div>'
@@ -9780,7 +9780,7 @@ ${lignes}
   };
   window.ficheVoir=function(id){ var f=fstore().find(function(x){return x.id===id;}); if(!f)return;
     var L=function(k,val){ return '<div class="cp-row"><span>'+k+'</span><div>'+(val||'—')+'</div></div>'; };
-    document.getElementById('modal-c').innerHTML='<h2 style="margin-top:0">📝 Fiche '+(f.type==='client'?'client':'fournisseur')+' — '+v(f.raison||'(à compléter)')+'</h2>'
+    document.getElementById('modal-c').innerHTML='<h2 style="margin-top:0">Fiche '+(f.type==='client'?'client':'fournisseur')+' — '+v(f.raison||'(à compléter)')+'</h2>'
       +L('Raison sociale',v(f.raison))+L('SIRET',v(f.siret))+L('N° TVA',v(f.tvaIntra))+L('E-mail',v(f.email))+L('Téléphone',v(f.tel))+L('IBAN',v(f.iban))+L('Adresse',v((f.adresse||'')+(f.cp||f.ville?(', '+(f.cp||'')+' '+(f.ville||'')):'')))
       +'<div class="right" style="margin-top:10px"><button class="btn btn-ghost" onclick="closeModal()">Fermer</button>'+(f.statut==='remplie'?(' <button class="btn btn-pri" onclick="ficheValider(\''+id+'\')">✔ Valider &amp; créer le '+(f.type==='client'?'client':'fournisseur')+'</button>'):'')+'</div>';
     document.getElementById('modal').classList.add('show');
@@ -9799,7 +9799,7 @@ ${lignes}
     /* rattacher TOUTES les factures liées à cette fiche (un seul nouveau tiers pour plusieurs factures) */
     var ids=Array.isArray(f.depotIds)?f.depotIds.slice():[]; if(f.depotId && ids.indexOf(f.depotId)<0) ids.push(f.depotId);
     var nb=0; ids.forEach(function(did){ var d=dstore().find(function(x){return x.id===did;}); if(d){ d.tiersId=t.id; d.tiersInconnu=false; nb++; } });
-    save(); if(typeof closeModal==='function')closeModal(); toast('✅ '+(isCli?'Client':'Fournisseur')+' « '+t.nom+' » créé'+(nb>1?(' — '+nb+' factures rattachées'):'')+'.'); render();
+    save(); if(typeof closeModal==='function')closeModal(); toast(''+(isCli?'Client':'Fournisseur')+' « '+t.nom+' » créé'+(nb>1?(' — '+nb+' factures rattachées'):'')+'.'); render();
   };
 
   function lblTier(type){ return type==='client'?'client':'fournisseur'; }
@@ -9816,11 +9816,11 @@ ${lignes}
     if(!fs.length) return '';
     var rows=fs.map(function(f){ var d=dstore().find(function(x){return x.id===f.depotId;});
       var st=f.statut==='remplie'?'<span class="tag t-part">transmise — en attente cabinet</span>':'<span class="tag t-att">à remplir</span>';
-      var btn=f.statut==='remplie'?'<button class="btn btn-ghost btn-xs" onclick="ficheRemplir(\''+f.id+'\')">Modifier</button>':'<button class="btn btn-gold btn-xs" onclick="ficheRemplir(\''+f.id+'\')">✍ Remplir la fiche</button>';
+      var btn=f.statut==='remplie'?'<button class="btn btn-ghost btn-xs" onclick="ficheRemplir(\''+f.id+'\')">Modifier</button>':'<button class="btn btn-gold btn-xs" onclick="ficheRemplir(\''+f.id+'\')">Remplir la fiche</button>';
       var nbf=window.ficheNbFactures(f); var cnt=nbf>1?(' <span class="ged-mt">('+nbf+' factures)</span>'):'';
-      return '<div class="ged-it dep-dup"><span>📝</span><span class="ged-nm">'+(f.raison||(d?d.nom:'Nouveau '+lblTier(type)))+cnt+'</span>'+st+'<span>'+btn+'</span></div>';
+      return '<div class="ged-it dep-dup"><span></span><span class="ged-nm">'+(f.raison||(d?d.nom:'Nouveau '+lblTier(type)))+cnt+'</span>'+st+'<span>'+btn+'</span></div>';
     }).join('');
-    return '<div class="card"><h2>📝 Fiches '+lblTier(type)+' à compléter</h2><div class="sub">Un '+lblTier(type)+' inconnu a été détecté : complétez sa fiche d\'information pour votre cabinet.</div>'+rows+'</div>';
+    return '<div class="card"><h2>Fiches '+lblTier(type)+' à compléter</h2><div class="sub">Un '+lblTier(type)+' inconnu a été détecté : complétez sa fiche d\'information pour votre cabinet.</div>'+rows+'</div>';
   }
   /* Liste des fiches côté CABINET (à valider) */
   function fichesCabinetCard(type){ type=type||'fournisseur';
@@ -9831,11 +9831,11 @@ ${lignes}
       var st=f.statut==='remplie'?'<span class="tag t-part">remplie — à valider</span>':'<span class="tag t-att">en attente du client</span>';
       var act=f.statut==='remplie'?'<button class="btn btn-gold btn-xs" onclick="ficheValider(\''+f.id+'\')">✔ Valider &amp; créer</button> <button class="btn btn-ghost btn-xs" onclick="ficheVoir(\''+f.id+'\')">Voir</button>':'';
       var nbf2=window.ficheNbFactures(f); var cnt2=nbf2>1?(' <span class="ged-mt">('+nbf2+' factures)</span>'):'';
-      return '<div class="ged-it '+(f.statut==='remplie'?'dep-ok':'dep-dup')+'"><span>📝</span><span class="ged-nm">'+(f.raison||(d?d.nom:'Nouveau '+lblTier(type)))+cnt2+'</span>'+st+det+'<span>'+act+'</span></div>';
+      return '<div class="ged-it '+(f.statut==='remplie'?'dep-ok':'dep-dup')+'"><span></span><span class="ged-nm">'+(f.raison||(d?d.nom:'Nouveau '+lblTier(type)))+cnt2+'</span>'+st+det+'<span>'+act+'</span></div>';
     }).join('');
     var nb=fs.filter(function(f){return f.statut==='remplie';}).length;
-    var ban=nb?'<div class="dep-notif">🔔 '+nb+' fiche(s) '+lblTier(type)+' à valider</div>':'';
-    return '<div class="card"><h2>📝 Nouveaux '+lblTier(type)+'s (fiches d\'information)</h2><div class="sub">Un '+lblTier(type)+' inconnu détecté : le client complète la fiche, validez-la pour créer le '+lblTier(type)+'.</div>'+ban+rows+'</div>';
+    var ban=nb?'<div class="dep-notif">'+nb+' fiche(s) '+lblTier(type)+' à valider</div>':'';
+    return '<div class="card"><h2>Nouveaux '+lblTier(type)+'s (fiches d\'information)</h2><div class="sub">Un '+lblTier(type)+' inconnu détecté : le client complète la fiche, validez-la pour créer le '+lblTier(type)+'.</div>'+ban+rows+'</div>';
   }
 
   /* Greffes : fournisseurs (Achats) + clients (Facturation), côté client & cabinet */
@@ -9926,16 +9926,16 @@ ${lignes}
       +'<div class="cmp-row"><span>HT</span><b>'+eur(f.ht)+'</b></div>'
       +'<div class="cmp-row"><span>TVA</span><b>'+eur(f.tva)+'</b></div>'
       +'<div class="cmp-row tot"><span>TTC</span><b>'+eur(f.ttc)+'</b></div>'
-      +'<div style="margin-top:8px">'+(fileId?('<button class="btn btn-ghost btn-sm" onclick="gedVoir(\''+fileId+'\')">📎 Ouvrir la facture</button> '):'')+(extra||'')+'</div></div>'; }
+      +'<div style="margin-top:8px">'+(fileId?('<button class="btn btn-ghost btn-sm" onclick="gedVoir(\''+fileId+'\')">Ouvrir la facture</button> '):'')+(extra||'')+'</div></div>'; }
 
   function compareModal(p,fOld){
     var t=db.tiers.find(function(x){return x.id===p.tiersId;});
     var m={ht:r2(p.ht||0),tva:r2(p.tva||0),ttc:r2((p.ht||0)+(p.tva||0))};
     var depNew=dstore().find(function(d){return d.id===p.depId;});
     var depOld=dstore().find(function(d){return d.factureId===fOld.id;});
-    var existExtra=(fOld.type==='achat')?('<button class="btn btn-ghost btn-sm" onclick="voirFactureAchat(\''+fOld.id+'\')">👁 Détail</button>'):'';
+    var existExtra=(fOld.type==='achat')?('<button class="btn btn-ghost btn-sm" onclick="voirFactureAchat(\''+fOld.id+'\')">Détail</button>'):'';
     document.getElementById('modal-c').innerHTML=
-      '<h2 style="margin-top:0">⚠ Doublon détecté — confirmation</h2>'
+      '<h2 style="margin-top:0">Doublon détecté — confirmation</h2>'
       +'<div class="sub">Une facture semble déjà comptabilisée pour ce tiers. Comparez les deux factures et indiquez laquelle conserver.</div>'
       +'<div class="cmp-wrap">'
       + col('Facture déjà comptabilisée', info(fOld), depOld?depOld.fichierId:null, existExtra, '')
@@ -9945,7 +9945,7 @@ ${lignes}
       +'<div class="right" style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">'
       +'<button class="btn btn-ghost" onclick="closeModal()">Conserver l\'existante</button>'
       +'<button class="btn btn-ghost" onclick="depotComptaGarderLesDeux()">Comptabiliser les deux</button>'
-      +'<button class="btn btn-pri" onclick="depotComptaRemplacer()">♻ Remplacer par la nouvelle</button>'
+      +'<button class="btn btn-pri" onclick="depotComptaRemplacer()">Remplacer par la nouvelle</button>'
       +'</div>';
     document.getElementById('modal').classList.add('show');
   }
@@ -9956,7 +9956,7 @@ ${lignes}
     var contre=t.compteContre||(d.cat==='achat'?'606000':'706000'); var tvaC=(d.cat==='achat'?'44566':'44571');
     var f=posterFactureMontants({type:d.cat,tiersId:tiersId,date:date,ht:ht,tva:tva,taux:taux,remise:d.remise,compteContre:contre,compteTVA:tvaC,numero:(numero||undefined),source:'depot'},t);
     d.statut='comptabilisee'; d.tiersId=tiersId; d.numero=f.numero; d.dateFacture=date; d.ttc=f.ttc; d.ht=f.ht; d.tva=f.tva; d.taux=taux; d.ecritureId=f.ecritureId; d.factureId=f.id;
-    markNotifLuDep(d.id); save(); toast('✅ Facture '+f.numero+' comptabilisée (HT '+eur(f.ht)+' + TVA '+eur(f.tva)+' = '+eur(f.ttc)+', compte '+(t.compteAux||'401')+').'); render();
+    markNotifLuDep(d.id); save(); toast('Facture '+f.numero+' comptabilisée (HT '+eur(f.ht)+' + TVA '+eur(f.tva)+' = '+eur(f.ttc)+', compte '+(t.compteAux||'401')+').'); render();
   }
 
   /* Override : comptabilisation avec contrôle de doublon + compte auxiliaire */
@@ -10001,7 +10001,7 @@ ${lignes}
   function nstore(){ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.notifsDepot))db.parametres.notifsDepot=[]; return db.parametres.notifsDepot; }
   function fstore(){ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.fichesTiers))db.parametres.fichesTiers=[]; return db.parametres.fichesTiers; }
   function normName(n){ return String(n||'').trim().toLowerCase(); }
-  function gico(p){ var n=(p&&p.nom||'').toLowerCase(); var m=(p&&p.mime||''); if(m.indexOf('pdf')>=0||n.endsWith('.pdf'))return '📕'; if(m.indexOf('image')>=0||/\.(jpe?g|png|gif|webp)$/.test(n))return '🖼'; return '📄'; }
+  function gico(p){ var n=(p&&p.nom||'').toLowerCase(); var m=(p&&p.mime||''); if(m.indexOf('pdf')>=0||n.endsWith('.pdf'))return ''; if(m.indexOf('image')>=0||/\.(jpe?g|png|gif|webp)$/.test(n))return ''; return ''; }
   function statutTagDep(s){ if(s==='recue')return '<span class="tag t-part">réception validée</span>'; if(s==='comptabilisee')return '<span class="tag t-pay">comptabilisée ✓</span>'; if(s==='refusee')return '<span class="tag t-late">refusée</span>'; return '<span class="tag t-att">déposée · à valider</span>'; }
   function markNotifLu(depotId){ nstore().forEach(function(n){ if(n.depotId===depotId)n.lu=true; }); }
   function tauxOpts(sel){ return [20,10,5.5,0].map(function(x){ return '<option '+((sel!=null&&parseFloat(sel)===x)?'selected':'')+'>'+x+'</option>'; }).join(''); }
@@ -10053,7 +10053,7 @@ ${lignes}
   window.depotFacturesCard=function(cat,titre,sub){
     if(cat==='achat'){
       var fourns=(db.tiers||[]).filter(function(t){return t.type==='fournisseur';});
-      var opts='<option value="">— Sélectionner —</option>'+fourns.map(function(t){return '<option value="'+t.id+'">'+t.nom+'</option>';}).join('')+'<option value="__inconnu__">➕ Fournisseur inconnu / nouveau</option>';
+      var opts='<option value="">— Sélectionner —</option>'+fourns.map(function(t){return '<option value="'+t.id+'">'+t.nom+'</option>';}).join('')+'<option value="__inconnu__">Fournisseur inconnu / nouveau</option>';
       return '<div class="card"><h2>'+titre+'</h2><div class="sub">'+sub+' Renseignez les informations de la facture : elles seront reprises automatiquement dans la saisie comptable du cabinet (qui compare avec le fichier avant de valider). Un doublon s\'affiche en rouge.</div>'
         +'<div class="row g3">'
         +'<div class="field"><label>Fournisseur</label><select id="dep-four-achat">'+opts+'</select></div>'
@@ -10066,19 +10066,19 @@ ${lignes}
         +'<div class="field"><label>Justificatif (PDF/photo)</label><input type="file" id="da-file" accept=".pdf,.jpg,.jpeg,.png,image/*"></div>'
         +'</div>'
         +'<div class="da-tot"><span>Net HT : <span id="da-net"><b>'+eur(0)+'</b></span></span><span>TVA : <span id="da-tva"><b>'+eur(0)+'</b></span></span><span>TTC : <span id="da-ttc"><b>'+eur(0)+'</b></span></span></div>'
-        +'<div class="right"><button class="btn btn-pri" onclick="depotAchatDeposer()">📥 Déposer la facture</button></div>'
+        +'<div class="right"><button class="btn btn-pri" onclick="depotAchatDeposer()">Déposer la facture</button></div>'
         +depotsListe('achat','client')+'</div>';
     }
     /* vente : dépôt fichier simple */
     var selCli='';
     if(cat==='vente'){ var clients=(db.tiers||[]).filter(function(t){return t.type==='client';});
       var cpend=(typeof window.fichePendOptions==='function')?window.fichePendOptions('client'):'';
-      var copts='<option value="">— Sélectionner (ou laisser : client inconnu) —</option>'+clients.map(function(t){return '<option value="'+t.id+'">'+t.nom+'</option>';}).join('')+'<option value="__inconnu__">➕ Client inconnu / nouveau</option>'+(cpend?('<optgroup label="Nouveaux clients en cours">'+cpend+'</optgroup>'):'');
-      selCli='<div class="field" style="margin-bottom:10px"><label>Client (facultatif)</label><select id="dep-client-vente">'+copts+'</select><div class="hint">'+(cpend?'➡️ Rattaché par défaut au nouveau client en cours (modifiable) — factures du même client regroupées.':'Client inconnu ? Une fiche d\'information sera demandée puis validée par le cabinet.')+'</div></div>'; }
+      var copts='<option value="">— Sélectionner (ou laisser : client inconnu) —</option>'+clients.map(function(t){return '<option value="'+t.id+'">'+t.nom+'</option>';}).join('')+'<option value="__inconnu__">Client inconnu / nouveau</option>'+(cpend?('<optgroup label="Nouveaux clients en cours">'+cpend+'</optgroup>'):'');
+      selCli='<div class="field" style="margin-bottom:10px"><label>Client (facultatif)</label><select id="dep-client-vente">'+copts+'</select><div class="hint">'+(cpend?'→ Rattaché par défaut au nouveau client en cours (modifiable) — factures du même client regroupées.':'Client inconnu ? Une fiche d\'information sera demandée puis validée par le cabinet.')+'</div></div>'; }
     return '<div class="card"><h2>'+titre+'</h2><div class="sub">'+sub+' Chaque dépôt notifie votre cabinet ; un doublon s\'affiche en rouge. La comptabilisation est validée par le cabinet.</div>'
       +selCli
       +'<div class="ged-drop" onclick="factPick(\''+cat+'\')" ondragover="event.preventDefault();this.classList.add(\'drag\')" ondragleave="this.classList.remove(\'drag\')" ondrop="factDrop(event,\''+cat+'\')">'
-      +'<div style="font-size:24px">⬆</div><div style="font-weight:700">Déposez vos factures ici</div><div class="hint">ou cliquez — PDF, JPG, PNG</div>'
+      +'<div style="font-size:24px"></div><div style="font-weight:700">Déposez vos factures ici</div><div class="hint">ou cliquez — PDF, JPG, PNG</div>'
       +'<input type="file" id="fdep-'+cat+'" hidden multiple accept=".pdf,.jpg,.jpeg,.png,image/*" onchange="factFile(event,\''+cat+'\')"></div>'
       +depotsListe(cat,'client')+'</div>';
   };
@@ -10090,8 +10090,8 @@ ${lignes}
     var tiersList=(db.tiers||[]).filter(function(t){return t.type===(cat==='achat'?'fournisseur':'client');});
     return deps.map(function(d){
       var cls=d.doublon?'dep-dup':'dep-ok';
-      var dbl=d.doublon?' <span class="tag t-late" title="'+String(d.doublonRaison||'').replace(/"/g,'&quot;')+'">⚠ doublon</span>':' <span class="tag t-pay">✓ unique</span>';
-      var file=d.fichierId?'<button class="btn btn-ghost btn-xs" onclick="gedVoir(\''+d.fichierId+'\')">📎 Ouvrir</button> <button class="btn btn-ghost btn-xs" onclick="gedDl(\''+d.fichierId+'\')">⤓</button>':'';
+      var dbl=d.doublon?' <span class="tag t-late" title="'+String(d.doublonRaison||'').replace(/"/g,'&quot;')+'">doublon</span>':' <span class="tag t-pay">✓ unique</span>';
+      var file=d.fichierId?'<button class="btn btn-ghost btn-xs" onclick="gedVoir(\''+d.fichierId+'\')">Ouvrir</button> <button class="btn btn-ghost btn-xs" onclick="gedDl(\''+d.fichierId+'\')">⤓</button>':'';
       var info=(d.statut==='comptabilisee')?(' <span class="ged-mt">'+(d.numero||'')+' · '+eur(d.ttc)+'</span>'):'';
       var actions='';
       if(role==='cabinet'){
@@ -10104,9 +10104,9 @@ ${lignes}
         +'<span style="white-space:nowrap">'+file+(actions?(' '+actions):'')+'</span></div>';
       if(role==='cabinet' && d.statut==='recue'){
         var opts=tiersList.map(function(t){return '<option value="'+t.id+'" '+(t.id===d.tiersId?'selected':'')+'>'+t.nom+'</option>';}).join('')||'<option value="">— aucun tiers —</option>';
-        var recap='<div class="cmp-recap"><span>📄 <b>Informations reçues</b> — N° <b>'+(d.numero||'—')+'</b> · '+(d.dateFacture?frDate(d.dateFacture):frDate(d.date))
+        var recap='<div class="cmp-recap"><span><b>Informations reçues</b> — N° <b>'+(d.numero||'—')+'</b> · '+(d.dateFacture?frDate(d.dateFacture):frDate(d.date))
           +' · HT <b>'+eur(d.ht||0)+'</b>'+((d.remise&&d.remise>0)?(' · Remise <b>'+eur(d.remise)+'</b>'):'')+' · TVA '+(d.taux!=null?d.taux:'')+'% <b>'+eur(d.tva||0)+'</b> · TTC <b>'+eur(d.ttc||0)+'</b></span>'
-          +(d.fichierId?'<button class="btn btn-gold btn-xs" onclick="gedVoir(\''+d.fichierId+'\')">📎 Comparer avec la facture</button>':'<span class="ged-mt">aucun fichier joint</span>')+'</div>';
+          +(d.fichierId?'<button class="btn btn-gold btn-xs" onclick="gedVoir(\''+d.fichierId+'\')">Comparer avec la facture</button>':'<span class="ged-mt">aucun fichier joint</span>')+'</div>';
         row+='<div class="dep-cmp">'+recap
           +'<div class="sub" style="margin:2px 0 8px">Montants repris automatiquement de la facture (modifiables après vérification) puis validez :</div>'
           +'<div class="row g4">'
@@ -10118,7 +10118,7 @@ ${lignes}
           +'<div class="field"><label>Montant HT</label><input type="number" id="cmp-ht-'+d.id+'" value="'+(d.ht>0?d.ht:'')+'" placeholder="0.00" oninput="depotCmpCalc(\''+d.id+'\')"></div>'
           +'<div class="field"><label>Montant TVA</label><input type="number" id="cmp-tva-'+d.id+'" value="'+(d.tva>0?d.tva:'')+'" placeholder="0.00" oninput="depotCmpCalc(\''+d.id+'\')"></div>'
           +'<div class="field"><label>Total TTC</label><input type="text" id="cmp-ttc-'+d.id+'" value="'+eur(r2((d.ht||0)+(d.tva||0)))+'" disabled></div>'
-          +'<div class="field" style="align-self:end"><button class="btn btn-pri" style="width:100%" onclick="depotComptabiliser(\''+d.id+'\')">📒 Valider la comptabilisation</button></div>'
+          +'<div class="field" style="align-self:end"><button class="btn btn-pri" style="width:100%" onclick="depotComptabiliser(\''+d.id+'\')">Valider la comptabilisation</button></div>'
           +'</div></div>';
       }
       return row;
@@ -10178,23 +10178,23 @@ ${lignes}
     if(cat==='achat'){
       var fourns=(db.tiers||[]).filter(function(t){return t.type==='fournisseur';});
       var pend=(typeof window.fichePendOptions==='function')?window.fichePendOptions('fournisseur'):'';
-      var opts='<option value="">— Sélectionner (ou laisser : fournisseur inconnu) —</option>'+fourns.map(function(t){return '<option value="'+t.id+'">'+t.nom+'</option>';}).join('')+'<option value="__inconnu__">➕ Fournisseur inconnu / nouveau</option>'+(pend?('<optgroup label="Nouveaux fournisseurs en cours">'+pend+'</optgroup>'):'');
+      var opts='<option value="">— Sélectionner (ou laisser : fournisseur inconnu) —</option>'+fourns.map(function(t){return '<option value="'+t.id+'">'+t.nom+'</option>';}).join('')+'<option value="__inconnu__">Fournisseur inconnu / nouveau</option>'+(pend?('<optgroup label="Nouveaux fournisseurs en cours">'+pend+'</optgroup>'):'');
       return '<div class="card"><h2>'+titre+'</h2><div class="sub">'+sub+' Déposez simplement la facture : le système lit automatiquement le montant TTC et calcule la TVA et le HT. Le cabinet n\'a plus qu\'à valider la saisie (après comparaison avec le fichier).</div>'
-        +'<div class="field" style="margin-bottom:10px"><label>Fournisseur (facultatif)</label><select id="dep-four-achat">'+opts+'</select>'+(pend?'<div class="hint">➡️ Rattaché par défaut au nouveau fournisseur en cours (modifiable) — les factures du même fournisseur restent regroupées.</div>':'')+'</div>'
+        +'<div class="field" style="margin-bottom:10px"><label>Fournisseur (facultatif)</label><select id="dep-four-achat">'+opts+'</select>'+(pend?'<div class="hint">→ Rattaché par défaut au nouveau fournisseur en cours (modifiable) — les factures du même fournisseur restent regroupées.</div>':'')+'</div>'
         +'<div class="ged-drop" onclick="factPick(\'achat\')" ondragover="event.preventDefault();this.classList.add(\'drag\')" ondragleave="this.classList.remove(\'drag\')" ondrop="factDrop(event,\'achat\')">'
-        +'<div style="font-size:24px">⬆</div><div style="font-weight:700">Déposez la facture ici</div><div class="hint">ou cliquez — PDF, JPG, PNG · lecture automatique des montants</div>'
+        +'<div style="font-size:24px"></div><div style="font-weight:700">Déposez la facture ici</div><div class="hint">ou cliquez — PDF, JPG, PNG · lecture automatique des montants</div>'
         +'<input type="file" id="fdep-achat" hidden multiple accept=".pdf,.jpg,.jpeg,.png,image/*" onchange="factFile(event,\'achat\')"></div>'
         +depotsListe('achat','client')+'</div>';
     }
     var selCli='';
     if(cat==='vente'){ var clients=(db.tiers||[]).filter(function(t){return t.type==='client';});
       var cpend=(typeof window.fichePendOptions==='function')?window.fichePendOptions('client'):'';
-      var copts='<option value="">— Sélectionner (ou laisser : client inconnu) —</option>'+clients.map(function(t){return '<option value="'+t.id+'">'+t.nom+'</option>';}).join('')+'<option value="__inconnu__">➕ Client inconnu / nouveau</option>'+(cpend?('<optgroup label="Nouveaux clients en cours">'+cpend+'</optgroup>'):'');
-      selCli='<div class="field" style="margin-bottom:10px"><label>Client (facultatif)</label><select id="dep-client-vente">'+copts+'</select><div class="hint">'+(cpend?'➡️ Rattaché par défaut au nouveau client en cours (modifiable) — factures du même client regroupées.':'Client inconnu ? Une fiche d\'information sera demandée puis validée par le cabinet.')+'</div></div>'; }
+      var copts='<option value="">— Sélectionner (ou laisser : client inconnu) —</option>'+clients.map(function(t){return '<option value="'+t.id+'">'+t.nom+'</option>';}).join('')+'<option value="__inconnu__">Client inconnu / nouveau</option>'+(cpend?('<optgroup label="Nouveaux clients en cours">'+cpend+'</optgroup>'):'');
+      selCli='<div class="field" style="margin-bottom:10px"><label>Client (facultatif)</label><select id="dep-client-vente">'+copts+'</select><div class="hint">'+(cpend?'→ Rattaché par défaut au nouveau client en cours (modifiable) — factures du même client regroupées.':'Client inconnu ? Une fiche d\'information sera demandée puis validée par le cabinet.')+'</div></div>'; }
     return '<div class="card"><h2>'+titre+'</h2><div class="sub">'+sub+' Chaque dépôt notifie votre cabinet ; un doublon s\'affiche en rouge. La comptabilisation est validée par le cabinet.</div>'
       +selCli
       +'<div class="ged-drop" onclick="factPick(\''+cat+'\')" ondragover="event.preventDefault();this.classList.add(\'drag\')" ondragleave="this.classList.remove(\'drag\')" ondrop="factDrop(event,\''+cat+'\')">'
-      +'<div style="font-size:24px">⬆</div><div style="font-weight:700">Déposez vos factures ici</div><div class="hint">ou cliquez — PDF, JPG, PNG</div>'
+      +'<div style="font-size:24px"></div><div style="font-weight:700">Déposez vos factures ici</div><div class="hint">ou cliquez — PDF, JPG, PNG</div>'
       +'<input type="file" id="fdep-'+cat+'" hidden multiple accept=".pdf,.jpg,.jpeg,.png,image/*" onchange="factFile(event,\''+cat+'\')"></div>'
       +depotsListe(cat,'client')+'</div>';
   };
@@ -10386,7 +10386,7 @@ ${lignes}
   function idle(e){ e.style.cssText=BASE+'background:rgba(47,109,176,.85);color:#fff;opacity:.7;transform:none'; }
   function flash(e){ e.style.cssText=BASE+'background:rgba(47,158,110,.96);color:#fff;opacity:1;transform:translateY(-1px)'; }
   function markSaved(){ try{ var e=el(); if(!e) return; var d=new Date();
-    e.textContent='💾 Enregistré ✓ '+two(d.getHours())+':'+two(d.getMinutes())+':'+two(d.getSeconds());
+    e.textContent='Enregistré ✓ '+two(d.getHours())+':'+two(d.getMinutes())+':'+two(d.getSeconds());
     flash(e); if(hideT)clearTimeout(hideT); hideT=setTimeout(function(){ idle(e); }, 900);
   }catch(_e){} }
   window.__yadaMarkSaved=markSaved;
@@ -10423,7 +10423,7 @@ ${lignes}
   function mobileInit(){
     if(document.getElementById('m-topbar')||!document.body) return;
     var bar=document.createElement('div'); bar.id='m-topbar';
-    bar.innerHTML='<button class="m-burger" id="m-burger" aria-label="Menu">☰</button><span class="m-title">YADA<small>Précompta</small></span>';
+    bar.innerHTML='<button class="m-burger" id="m-burger" aria-label="Menu"></button><span class="m-title">YADA<small>Précompta</small></span>';
     document.body.appendChild(bar);
     var bd=document.createElement('div'); bd.id='m-backdrop'; document.body.appendChild(bd);
     function close(){ document.body.classList.remove('nav-open'); }
@@ -10441,7 +10441,7 @@ ${lignes}
     return _pp()+'<div class="card"><h2>Installer l\'application</h2>'
       +'<div class="sub">YADA peut s\'installer comme une application de bureau (PWA), avec une icône et un fonctionnement hors-ligne.</div>'
       +'<div class="hint">• <b>Chrome / Edge</b> : icône « Installer » dans la barre d\'adresse, ou menu ⋮ → « Installer YADA ».<br>• <b>Bouton ci-dessous</b> si proposé par le navigateur.<br>• <b>Safari (Mac)</b> : Fichier → « Ajouter au Dock ».<br>• Une fois installée, elle s\'ouvre dans sa propre fenêtre et fonctionne sans connexion.</div>'
-      +'<div class="right" style="gap:8px"><button class="btn btn-ghost" onclick="mobileInstallModal()">📱 Installer sur mobile (QR code)</button><button class="btn btn-pri" onclick="(function(){var b=document.getElementById(\'yada-install\'); if(b){b.click();} else { toast(\'Utilisez l\\\'icône « Installer » de la barre d\\\'adresse (Chrome/Edge) ou le menu du navigateur.\'); }})()">⤓ Installer maintenant</button></div></div>'; }; }
+      +'<div class="right" style="gap:8px"><button class="btn btn-ghost" onclick="mobileInstallModal()">Installer sur mobile (QR code)</button><button class="btn btn-pri" onclick="(function(){var b=document.getElementById(\'yada-install\'); if(b){b.click();} else { toast(\'Utilisez l\\\'icône « Installer » de la barre d\\\'adresse (Chrome/Edge) ou le menu du navigateur.\'); }})()">⤓ Installer maintenant</button></div></div>'; }; }
 })();
 </script>
 <script id="yada-addon62">
@@ -10456,19 +10456,19 @@ ${lignes}
   window.mobileInstallModal=function(){
     var url=appUrl(); var qr='https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=2&data='+encodeURIComponent(url);
     var mc=document.getElementById('modal-c'); if(!mc) return;
-    mc.innerHTML='<h2 style="margin-top:0">📱 Installer YADA sur mobile</h2>'
+    mc.innerHTML='<h2 style="margin-top:0">Installer YADA sur mobile</h2>'
       +'<div class="sub">Scannez ce QR code avec votre téléphone (l\'application s\'ouvre sur l\'<b>Espace Client</b>), puis ajoutez-la à l\'écran d\'accueil.</div>'
       +'<div style="text-align:center;margin:12px 0"><img src="'+qr+'" alt="QR code" width="220" height="220" style="background:#fff;border-radius:14px;padding:10px;box-shadow:0 6px 20px rgba(0,0,0,.25)" onerror="this.style.display=\'none\';var n=document.getElementById(\'qr-fb\');if(n)n.style.display=\'block\'"><div id="qr-fb" style="display:none" class="hint">QR indisponible (hors-ligne) — copiez le lien ci-dessous et ouvrez-le sur votre mobile.</div></div>'
       +'<div class="field"><label>Lien de l\'application</label><input id="mi-url" value="'+String(url).replace(/"/g,'&quot;')+'" readonly onclick="this.select()"></div>'
-      +'<div class="hint">📲 <b>Android (Chrome)</b> : menu ⋮ → « Installer l\'application » / « Ajouter à l\'écran d\'accueil ».<br>🍎 <b>iPhone (Safari)</b> : bouton Partager → « Sur l\'écran d\'accueil ».<br>🔒 Sur mobile, seul l\'<b>Espace Client</b> est accessible.</div>'
-      +'<div class="right" style="margin-top:10px;gap:8px"><button class="btn btn-ghost" onclick="closeModal()">Fermer</button> <button class="btn btn-pri" onclick="(function(){var i=document.getElementById(\'mi-url\');if(!i)return;i.select();try{document.execCommand(\'copy\');}catch(e){} try{ if(navigator.clipboard)navigator.clipboard.writeText(i.value); }catch(e){} toast(\'Lien copié ✓\');})()">📋 Copier le lien</button></div>';
+      +'<div class="hint"><b>Android (Chrome)</b> : menu ⋮ → « Installer l\'application » / « Ajouter à l\'écran d\'accueil ».<br><b>iPhone (Safari)</b> : bouton Partager → « Sur l\'écran d\'accueil ».<br>Sur mobile, seul l\'<b>Espace Client</b> est accessible.</div>'
+      +'<div class="right" style="margin-top:10px;gap:8px"><button class="btn btn-ghost" onclick="closeModal()">Fermer</button> <button class="btn btn-pri" onclick="(function(){var i=document.getElementById(\'mi-url\');if(!i)return;i.select();try{document.execCommand(\'copy\');}catch(e){} try{ if(navigator.clipboard)navigator.clipboard.writeText(i.value); }catch(e){} toast(\'Lien copié ✓\');})()">Copier le lien</button></div>';
     document.getElementById('modal').classList.add('show');
   };
   function banner(){
     if(isMobile()) return; if(lg('yada-mob-prop')) return; if(document.getElementById('mob-prop')||!document.body) return;
     var b=document.createElement('div'); b.id='mob-prop';
     b.style.cssText='position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9998;display:flex;align-items:center;gap:10px;background:linear-gradient(120deg,#0f2138,#0a1422);color:#fff;border:1px solid rgba(95,176,255,.4);border-radius:12px;padding:9px 13px;box-shadow:0 10px 30px rgba(0,0,0,.45);font:500 12.5px system-ui,sans-serif;max-width:92vw';
-    b.innerHTML='📱 Installez aussi YADA sur votre mobile '
+    b.innerHTML='Installez aussi YADA sur votre mobile '
       +'<button id="mob-prop-go" style="background:linear-gradient(120deg,#46d39a,#1f8d63);color:#04130c;border:none;border-radius:8px;padding:6px 11px;font-weight:700;cursor:pointer">Afficher le QR code</button>'
       +'<button id="mob-prop-x" style="background:none;border:none;color:#9fb8d8;cursor:pointer;font-size:16px;line-height:1">×</button>';
     document.body.appendChild(b);
@@ -10487,7 +10487,7 @@ ${lignes}
     var el=document.getElementById('m-tabbar');
     if(!el){ if(!document.body) return; el=document.createElement('div'); el.id='m-tabbar'; document.body.appendChild(el); }
     var cur=(typeof current!=='undefined')?current:'';
-    var tabs=[['facturation','🧾','Facture client','act-strong'],['achats','📥','Facture fournisseur','act-strong']];
+    var tabs=[['facturation','','Facture client','act-strong'],['achats','','Facture fournisseur','act-strong']];
     el.innerHTML=tabs.map(function(t){
       return '<button class="'+(cur===t[0]?'active ':'')+t[3]+'" onclick="current=\''+t[0]+'\';render()"><span class="ic">'+t[1]+'</span>'+t[2]+'</button>';
     }).join('');
