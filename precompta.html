@@ -2011,6 +2011,42 @@ body[data-theme="noir"] .nav-sec{ color:#7b8398 !important; }
 body[data-theme="noir"] .cli-col-h{ color:#7fb0ff !important; }
 body[data-theme="noir"] #m-topbar .m-title{ color:#eaf0ff !important; }
 </style>
+<style id="glass-fx">
+/* ===== Effets liquid glass : halos animés, bords dégradés bleu↔cyan↔lime, contraste max ===== */
+body[data-theme="noir"]{ background:#03040a !important; }
+/* couche d'arrière-plan : grands halos colorés (bleu / cyan / lime / violet) */
+body[data-theme="noir"]::before{ content:""; position:fixed; inset:-30%; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(38% 40% at 16% 12%, rgba(91,140,255,.55), transparent 60%),
+    radial-gradient(34% 36% at 86% 16%, rgba(34,211,238,.42), transparent 60%),
+    radial-gradient(40% 42% at 78% 86%, rgba(163,230,53,.40), transparent 60%),
+    radial-gradient(40% 42% at 12% 84%, rgba(140,80,255,.36), transparent 60%);
+  filter:blur(36px); will-change:transform; }
+/* cartes : remplissage verre + BORD dégradé (reflet) bleu→cyan→lime, halo */
+body[data-theme="noir"] .mod-wrap .card, body[data-theme="noir"] .dash-wrap .card, body[data-theme="noir"] .card, body[data-theme="noir"] .cli-col>.card{
+  background:linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,.035)) padding-box,
+            linear-gradient(135deg, rgba(91,140,255,.95), rgba(34,211,238,.55) 45%, rgba(163,230,53,.95)) border-box !important;
+  border:1.5px solid transparent !important; border-radius:18px !important;
+  box-shadow:0 16px 44px rgba(0,0,0,.6), 0 0 24px rgba(91,140,255,.16), 0 0 30px rgba(163,230,53,.08), inset 0 1px 0 rgba(255,255,255,.16) !important; }
+body[data-theme="noir"] .kpi, body[data-theme="noir"] .ec-tile{
+  background:linear-gradient(160deg, rgba(255,255,255,.11), rgba(255,255,255,.04)) padding-box,
+            linear-gradient(135deg, rgba(91,140,255,.85), rgba(163,230,53,.85)) border-box !important;
+  border:1.5px solid transparent !important; }
+/* navigation active : accent lime */
+body[data-theme="noir"] .nav-btn.active{ background:linear-gradient(120deg, rgba(91,140,255,.20), rgba(163,230,53,.16)) !important; border:1px solid rgba(163,230,53,.5) !important; box-shadow:0 0 20px rgba(163,230,53,.20) !important; color:#fff !important; }
+body[data-theme="noir"] .nav-btn.active .ico{ color:#b6ff3c !important; }
+/* logo : pastille dégradé bleu→lime (via fond) */
+body[data-theme="noir"] aside .brand svg rect{ fill:#5b8cff !important; }
+/* second bouton / accent secondaire en lime */
+body[data-theme="noir"] .btn-gold{ background:linear-gradient(120deg,#a3e635,#22d3ee) !important; color:#06210a !important; }
+body[data-theme="noir"] .ec-tile:hover{ box-shadow:0 0 30px rgba(163,230,53,.28) !important; }
+@media (prefers-reduced-motion: no-preference){
+  @keyframes yadaHalo{ 0%{ transform:translate3d(0,0,0) rotate(0deg) scale(1);} 50%{ transform:translate3d(-3%,2%,0) rotate(7deg) scale(1.10);} 100%{ transform:translate3d(2%,-2%,0) rotate(-5deg) scale(1.05);} }
+  @keyframes yadaPulse{ 0%{ box-shadow:0 16px 44px rgba(0,0,0,.6), 0 0 18px rgba(91,140,255,.14), inset 0 1px 0 rgba(255,255,255,.14);} 100%{ box-shadow:0 20px 52px rgba(0,0,0,.62), 0 0 34px rgba(163,230,53,.22), 0 0 28px rgba(91,140,255,.24), inset 0 1px 0 rgba(255,255,255,.20);} }
+  body[data-theme="noir"]::before{ animation:yadaHalo 24s ease-in-out infinite alternate; }
+  body[data-theme="noir"] .mod-wrap .card, body[data-theme="noir"] .dash-wrap .card, body[data-theme="noir"] .cli-col>.card{ animation:yadaPulse 7s ease-in-out infinite alternate; }
+}
+</style>
 <style id="theme-refine">
 /* ============ Thème CLAIR : blanc + bleu clair, contour NOIR intense ============ */
 body[data-theme="liquid-clair"]{ background:linear-gradient(160deg,#eaf3ff,#ffffff) !important; }
@@ -9120,7 +9156,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v82 · liquid glass dark ✨';
+    b.textContent='YADA · v83 · glass animé, bleu + lime ✨';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:600 11px system-ui,sans-serif;background:rgba(47,109,176,.92);color:#fff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.78;pointer-events:none';
     document.body.appendChild(b); }
