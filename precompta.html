@@ -3061,6 +3061,16 @@ body[data-theme] aside nav .nav-group{ display:flex; flex-direction:column; gap:
   body[data-role="client"] .mod-wrap .num,body[data-role="client"] .mod-wrap td{ font-size:12px !important; }
 }
 </style>
+<style id="nf-fullpage">
+/* « Nouvelle facture » : l'overlay prend toute la page (au lieu d'une fenêtre flottante) */
+#nf-overlay .nf-wrap{
+  position:fixed !important; inset:0 !important; top:0 !important; left:0 !important; right:0 !important; bottom:0 !important;
+  transform:none !important; width:100vw !important; height:100vh !important; height:100dvh !important;
+  max-width:none !important; max-height:none !important; border-radius:0 !important; box-shadow:none !important;
+}
+#nf-overlay .nf-form{ height:100% !important; max-width:44% !important; }
+#nf-overlay .nf-prev{ height:100% !important; }
+</style>
 </head>
 <body data-theme="noir">
 <div class="layout">
@@ -10132,7 +10142,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v108 · noir & lime';
+    b.textContent='YADA · v109 · noir & lime';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#c4ff3d,#6fb800);color:#16210a;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
