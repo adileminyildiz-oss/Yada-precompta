@@ -1932,6 +1932,8 @@ body[data-theme="noir"] #ec-hero.cab-hero{background:linear-gradient(120deg,#1c5
 #sec-lock .sec-cta-2{ margin-top:12px; background:#fff; color:#000; border:1.5px solid #111; box-shadow:none; }
 #sec-lock .sec-remember{ display:flex; align-items:center; gap:8px; color:#6b7280; font-size:13px; margin:14px 2px 0; }
 #sec-lock .sec-remember input{ width:auto !important; padding:0 !important; accent-color:#000; box-shadow:none; }
+#sec-lock .sec-id{ font-size:14px; color:#374151; margin:4px 2px 6px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+#sec-lock .sec-id .sec-link{ font-size:12.5px; }
 #sec-lock .sec-err{ color:#c0392b; font-size:13px; min-height:16px; }
 #sec-lock .sec-links{ display:flex; justify-content:space-between; gap:8px; margin-top:16px; flex-wrap:wrap; }
 #sec-lock .sec-link{ background:none; border:none; color:#6b7280; font-size:13px; text-decoration:underline; cursor:pointer; }
@@ -9009,7 +9011,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v72 · écran de connexion épuré ✨';
+    b.textContent='YADA · v73 · connexion en 2 étapes ✨';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:600 11px system-ui,sans-serif;background:rgba(47,109,176,.92);color:#fff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.78;pointer-events:none';
     document.body.appendChild(b); }
@@ -9031,7 +9033,7 @@ ${lignes}
   var CAB={ salt:'bde7c60ed8ebbc65', hash:'c439eeb815469a50d3b3aad73f63759ee5e045689956710fc297f27d2676a87f' };
   var CLI={ salt:'9fb44c9e64732c08', hash:'281b9f17f7420ac6a1173aa6d0655042d555be7c9eab6d9f4460686c614054ce' };
   var CLIENT_DOSSIER='d-ama'; /* dossier exclusif du portail Client */
-  var CHOICE=null;
+  var CHOICE=null; var secStep=1; var secEmail='';
   window.__secLocked=false; var secTimer=null;
   function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
   function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
@@ -9064,22 +9066,34 @@ ${lignes}
         +'<div class="sec-ver">'+secVerTxt()+'</div></div>';
       o.classList.add('show'); return;
     }
-    var isCab=(CHOICE==='cabinet');
-    o.innerHTML='<div class="sec-screen">'+secHero()
-      +'<div class="sec-body"><h2>Bienvenue</h2>'
-      +'<div class="sec-err" id="sec-err"></div>'
-      +'<label class="sec-lab">Nom d\'utilisateur / e-mail</label>'
-      +'<input id="sec-email" type="email" autocomplete="username" placeholder="vous@exemple.fr" onkeydown="if(event.key===\'Enter\'){var p=document.getElementById(\'sec-pwd\');if(p)p.focus();}">'
-      +'<label class="sec-lab">Mot de passe</label>'
-      +'<input id="sec-pwd" type="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key===\'Enter\')secEssayer()">'
-      +'<label class="sec-remember"><input type="checkbox" id="sec-remember" '+(lsGet(KR)===CHOICE?'checked':'')+'> Rester connecté sur cet appareil</label>'
-      +'<button class="sec-cta" onclick="secEssayer()">Suivant</button>'
-      +'<div class="sec-links">'+(mob?'':'<button class="sec-link" onclick="secRetour()">← Changer d\'espace</button>')+'<button class="sec-link" onclick="secAide()">Identifiants oubliés ?</button></div>'
-      +'</div><div class="sec-ver">'+secVerTxt()+'</div></div>';
-    o.classList.add('show'); setTimeout(function(){ var i=document.getElementById('sec-email'); if(i)i.focus(); },30);
+    var html='<div class="sec-screen">'+secHero()+'<div class="sec-body"><h2>Bienvenue</h2>'
+      +'<div class="sec-err" id="sec-err"></div>';
+    if(secStep!==2){
+      /* Étape 1 : identifiant */
+      html+='<label class="sec-lab">Nom d\'utilisateur / e-mail</label>'
+        +'<input id="sec-email" type="email" autocomplete="username" placeholder="vous@exemple.fr" value="'+String(secEmail||'').replace(/"/g,'&quot;')+'" onkeydown="if(event.key===\'Enter\')secEtape1()">'
+        +'<button class="sec-cta" onclick="secEtape1()">Suivant</button>'
+        +'<div class="sec-links">'+(mob?'':'<button class="sec-link" onclick="secRetour()">← Changer d\'espace</button>')+'<button class="sec-link" onclick="secAide()">Identifiants oubliés ?</button></div>';
+    } else {
+      /* Étape 2 : mot de passe */
+      html+='<div class="sec-id">'+String(secEmail||'').replace(/</g,'&lt;')+' <button class="sec-link" onclick="secEtapeRetour()">modifier</button></div>'
+        +'<label class="sec-lab">Mot de passe</label>'
+        +'<input id="sec-pwd" type="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key===\'Enter\')secEssayer()">'
+        +'<label class="sec-remember"><input type="checkbox" id="sec-remember" '+(lsGet(KR)===CHOICE?'checked':'')+'> Rester connecté sur cet appareil</label>'
+        +'<button class="sec-cta" onclick="secEssayer()">Se connecter</button>'
+        +'<div class="sec-links"><button class="sec-link" onclick="secEtapeRetour()">← Retour</button><button class="sec-link" onclick="secAide()">Identifiants oubliés ?</button></div>';
+    }
+    html+='</div><div class="sec-ver">'+secVerTxt()+'</div></div>';
+    o.innerHTML=html;
+    o.classList.add('show'); setTimeout(function(){ var i=document.getElementById(secStep===2?'sec-pwd':'sec-email'); if(i)i.focus(); },30);
   }
-  window.secChoisir=function(r){ CHOICE=(isMobile()?'client':r); secAfficher(); };
-  window.secRetour=function(){ CHOICE=null; secAfficher(); };
+  window.secEtape1=function(){ var i=document.getElementById('sec-email'); var v=(i&&i.value||'').trim();
+    var e=document.getElementById('sec-err');
+    if(!v){ if(e)e.textContent='Renseignez votre identifiant.'; if(i)i.focus(); return; }
+    secEmail=v; secStep=2; secAfficher(); };
+  window.secEtapeRetour=function(){ secStep=1; secAfficher(); };
+  window.secChoisir=function(r){ CHOICE=(isMobile()?'client':r); secStep=1; secAfficher(); };
+  window.secRetour=function(){ CHOICE=null; secStep=1; secEmail=''; secAfficher(); };
   function secCacher(){ var o=document.getElementById('sec-lock'); if(o){ o.classList.remove('show'); o.innerHTML=''; } window.__secLocked=false; secResetTimer(); }
   function clientDossierId(){ try{ if(CLIENT_DOSSIER && db&&db.dossiersData&&db.dossiersData[CLIENT_DOSSIER]) return CLIENT_DOSSIER;
       if(db&&db.cabinet&&db.cabinet.dossiers){ var d=db.cabinet.dossiers.find(function(x){return x.id===CLIENT_DOSSIER;}); if(d) return d.id; }
@@ -9092,9 +9106,10 @@ ${lignes}
     else if(typeof render==='function'){ render(); }
     secCacher(); if(typeof toast==='function') toast(role==='cabinet'?'Espace Cabinet ✓':'Espace Client ✓'); }
   window.secEssayer=async function(){ if(!CHOICE){ secAfficher(); return; } var e=document.getElementById('sec-err');
-    var em=(document.getElementById('sec-email')||{}).value||''; em=em.trim().toLowerCase();
+    var em=((document.getElementById('sec-email')||{}).value||secEmail||''); em=em.trim().toLowerCase();
+    if(!em){ secStep=1; secAfficher(); return; }
     var pw=(document.getElementById('sec-pwd')||{}).value||'';
-    if(!em||!pw){ if(e)e.textContent='Renseignez l\'identifiant et le mot de passe.'; return; }
+    if(!pw){ if(e)e.textContent='Renseignez votre mot de passe.'; var pp=document.getElementById('sec-pwd'); if(pp)pp.focus(); return; }
     var rec=(CHOICE==='client')?CLI:CAB; var h=await sha(rec.salt+em+SEP+pw);
     var rem=!!((document.getElementById('sec-remember')||{}).checked);
     if(h===rec.hash){ return secOuvrir(CHOICE, rem); }
@@ -9102,7 +9117,7 @@ ${lignes}
     var p=document.getElementById('sec-pwd'); if(p){p.value='';p.focus();}
   };
   window.secAide=function(){ alert('Identifiants gérés par le cabinet.\n\nEspace Cabinet et Espace Client ont des identifiants distincts. Contactez le cabinet pour les obtenir ou les réinitialiser.'); };
-  window.secVerrouiller=function(){ ssDel('yada-role'); lsDel(KR); CHOICE=null; window.sessionRole='cabinet'; window.selClientMode=false; try{ connecte=false; }catch(e){} secAfficher(); };
+  window.secVerrouiller=function(){ ssDel('yada-role'); lsDel(KR); CHOICE=null; secStep=1; secEmail=''; window.sessionRole='cabinet'; window.selClientMode=false; try{ connecte=false; }catch(e){} secAfficher(); };
   window.secSetDelay=function(v){ lsSet(KD,String(v)); secResetTimer(); if(typeof toast==='function')toast('Verrouillage auto : '+(v==0?'désactivé':v+' min')); };
   function unlocked(){ return !!ssGet('yada-role'); }
   function secResetTimer(){ if(secTimer){clearTimeout(secTimer);secTimer=null;} var d=secDelay(); if(d>0 && !secLocked() && unlocked() && !lsGet(KR)){ secTimer=setTimeout(window.secVerrouiller, d*60000); } }
