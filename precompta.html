@@ -10239,7 +10239,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v124 · noir & lime';
+    b.textContent='YADA · v125 · noir & lime';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#c4ff3d,#6fb800);color:#16210a;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -11781,9 +11781,11 @@ ${lignes}
     } else if(step==='done'){
       var d=(db.docs||[]).filter(function(x){return x.id===window.mFac.docId;})[0];
       bar='<div class="mfac-bar"><button class="btn btn-ghost btn-sm" onclick="mFacBack()">\u2190 Retour</button><b>Facture cr\u00e9\u00e9e \u2713</b><span style="width:60px"></span></div>';
-      var envBtn=(d && typeof peutEnvoyer==='function' && peutEnvoyer(d))?'<button class="btn btn-gold" style="flex:1" onclick="mFacEnvoyer()">\u2709 Envoyer au client</button>':'';
       doc='<div class="mfac-doc">'+((d&&typeof docHTML==='function')?('<div class="inv">'+docHTML(d)+'</div>'):'<div class="empty">Facture introuvable</div>')+'</div>'
-        +'<div class="mfac-actions" style="display:flex;gap:10px;margin-top:14px">'+envBtn+'<button class="btn btn-ghost" style="flex:1" onclick="mFacNew()">Nouvelle facture</button></div>';
+        +'<div class="mfac-actions" style="display:flex;gap:10px;margin-top:14px">'
+        +'<button class="btn btn-gold" style="flex:1" onclick="mFacEnvoyerCabinet()">Envoyer au cabinet</button>'
+        +'<button class="btn btn-ghost" style="flex:1" onclick="mFacAnnuler()">Annuler la facture</button>'
+        +'</div>';
     } else {
       bar='<div class="mfac-cta"><button class="btn btn-pri" style="width:100%" onclick="mFacCreate()">\u2795 Cr\u00e9er une facture</button></div>';
     }
@@ -11793,6 +11795,22 @@ ${lignes}
   window.mFacBack=function(){ window.mFac.step='list'; window.mFac.docId=null; if(typeof render==='function')render(); window.scrollTo(0,0); };
   window.mFacNew=function(){ window.mFac.step='form'; window.mFac.docId=null; if(typeof render==='function')render(); window.scrollTo(0,0); };
   window.mFacEnvoyer=function(){ if(window.mFac.docId && typeof envoyerDoc==='function'){ envoyerDoc(window.mFac.docId); } };
+  /* Envoyer la facture créée au cabinet (marque + notifie le cabinet) */
+  window.mFacEnvoyerCabinet=function(){
+    var id=window.mFac.docId; var d=(db.docs||[]).filter(function(x){return x.id===id;})[0]; if(!d) return;
+    d.transmisCabinet=true; d.dateTransmis=(typeof todayStr==='function'?todayStr():'');
+    try{ if(!db.parametres)db.parametres={}; if(!Array.isArray(db.parametres.notifsDepot))db.parametres.notifsDepot=[];
+      db.parametres.notifsDepot.push({id:(typeof uid==='function'?uid():String(Math.random())),cat:'vente',type:'facture',nom:'Facture '+(d.numero||''),date:d.dateTransmis,lu:false}); }catch(e){}
+    try{ if(typeof save==='function')save(); }catch(e){}
+    if(typeof toast==='function') toast('Facture '+(d.numero||'')+' transmise au cabinet ✓');
+    window.mFac.step='list'; window.mFac.docId=null; if(typeof render==='function')render(); window.scrollTo(0,0);
+  };
+  /* Annuler (supprimer) la facture créée */
+  window.mFacAnnuler=function(){
+    var id=window.mFac.docId; if(!id) return;
+    if(typeof supprimerDoc==='function') supprimerDoc(id);
+    if(!(db.docs||[]).some(function(x){return x.id===id;})){ window.mFac.step='list'; window.mFac.docId=null; if(typeof render==='function')render(); window.scrollTo(0,0); }
+  };
   /* Réduit (met à l'échelle) la facture générée pour qu'elle tienne dans la largeur mobile,
      sans modifier son contenu (état de base conservé). */
   window.mFacFit=function(){
