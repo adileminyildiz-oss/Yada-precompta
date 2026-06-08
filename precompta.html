@@ -6435,7 +6435,7 @@ function integrerFEC(data, exoD, exoF){
     // 3) création
     t={ id:uid(), type:estClient?'client':'fournisseur', categorie:'societe', nom,
         compteContre:estClient?'706000':'606400', compteTVA:estClient?'44571':'44566', taux:20,
-        compteAux:cleAux||genAux(estClient?'client':'fournisseur', nom), email:'', tel:'', siret:'', adresse:'' };
+        compteAux:cleAux||genAux(estClient?'client':'fournisseur', nom), email:'', tel:'', siret:'', adresse:'', importeFEC:true };
     db.tiers.push(t); if(cleAux) tiersParAux[cleAux]=t; nTiers++;
     return t;
   }
@@ -10293,7 +10293,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v131 · noir & lime';
+    b.textContent='YADA · v132 · noir & lime';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#c4ff3d,#6fb800);color:#16210a;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -12051,6 +12051,62 @@ ${lignes}
     return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
   function nomSociete(){ try{ return (db.societe && (db.societe.raison||db.societe.dossierNom)) || 'cette société'; }catch(e){ return 'cette société'; } }
 
+  /* 1) Données importées du FEC uniquement (écritures + banque + tiers + journal d'import) */
+  window.purgeFEC=function(){
+    var nom=nomSociete();
+    var nEcr=(db.ecritures||[]).filter(function(e){return e.importeFEC;}).length;
+    if(!confirm('Supprimer les données IMPORTÉES DU FEC de « '+nom+' » ?\n\n'
+      +'Seront effacés : les écritures importées du FEC ('+nEcr+'), les mouvements bancaires reconstruits par le FEC, '
+      +'les tiers créés par le FEC et le journal d\'import FEC.\n\n'
+      +'Les saisies manuelles sont conservées. Action irréversible.')) return;
+    try{
+      var n=0;
+      db.ecritures=(db.ecritures||[]).filter(function(e){ if(e.importeFEC){ n++; return false; } return true; });
+      db.banque=(db.banque||[]).filter(function(b){ return !b.importeFEC; });
+      db.tiers=(db.tiers||[]).filter(function(t){ return !t.importeFEC; });
+      db.fecLog=[];
+      if(typeof save==='function') save();
+      if(typeof toast==='function') toast(n+' écriture(s) issue(s) du FEC supprimée(s) ✓');
+      if(typeof render==='function') render();
+    }catch(e){ if(typeof toast==='function') toast('Erreur : '+((e&&e.message)||e)); }
+  };
+
+  /* 2) Tous les tiers (référentiel clients & fournisseurs) + fiches en attente */
+  window.purgeTiers=function(){
+    var nom=nomSociete();
+    var n=(db.tiers||[]).length;
+    if(!confirm('Supprimer TOUS les tiers (clients & fournisseurs) de « '+nom+' » ?\n\n'
+      +n+' fiche(s) tiers seront effacées, ainsi que les fiches de nouveaux tiers en attente. '
+      +'Les écritures déjà comptabilisées restent sur leurs comptes mais ne seront plus reliées à une fiche tiers.\n\n'
+      +'Action irréversible.')) return;
+    if(!confirm('Confirmer la suppression de l\'ensemble des tiers de « '+nom+' » ?')) return;
+    try{
+      db.tiers=[];
+      if(db.parametres && Array.isArray(db.parametres.fichesTiers)) db.parametres.fichesTiers=[];
+      if(typeof save==='function') save();
+      if(typeof toast==='function') toast(n+' tiers supprimé(s) ✓');
+      if(typeof render==='function') render();
+    }catch(e){ if(typeof toast==='function') toast('Erreur : '+((e&&e.message)||e)); }
+  };
+
+  /* 3) Banque : mouvements bancaires + relevés de rapprochement */
+  window.purgeBanque=function(){
+    var nom=nomSociete();
+    var n=(db.banque||[]).length;
+    if(!confirm('Supprimer la BANQUE de « '+nom+' » ?\n\n'
+      +n+' mouvement(s) bancaire(s) et les relevés de rapprochement seront effacés. '
+      +'Les écritures comptables restent inchangées.\n\n'
+      +'Action irréversible.')) return;
+    try{
+      db.banque=[];
+      if(Array.isArray(db.releves)) db.releves=[];
+      if(typeof save==='function') save();
+      if(typeof toast==='function') toast(n+' mouvement(s) bancaire(s) supprimé(s) ✓');
+      if(typeof render==='function') render();
+    }catch(e){ if(typeof toast==='function') toast('Erreur : '+((e&&e.message)||e)); }
+  };
+
+  /* 4) Toutes les données comptables (réinitialisation complète) */
   window.purgeComptaSociete=function(){
     var nom=nomSociete();
     if(!confirm('⚠️ Supprimer TOUTES les données comptables de « '+nom+' » ?\n\n'
@@ -12079,15 +12135,28 @@ ${lignes}
     var _ppPurge=pageParametrage;
     pageParametrage=function(){
       var html=_ppPurge();
+      var soc=esc(nomSociete());
       var card='<div class="card" id="purge-compta" style="border:1.5px solid #c0392b;background:rgba(192,57,43,.06)">'
-        +'<h2 style="color:#e74c3c">🗑️ Réinitialiser la comptabilité</h2>'
-        +'<div class="sub">Supprime en un clic <b>toutes les données comptables</b> de « '+esc(nomSociete())+' » : '
-        +'écritures, factures, règlements, banque &amp; relevés, documents et pièces déposées, '
-        +'immobilisations / emprunts, paie, import FEC, numérotation, propositions IA et relances. '
-        +'La <b>société</b>, les <b>tiers</b>, le <b>plan comptable</b> et les <b>journaux</b> sont conservés. '
-        +'<b>Action irréversible</b> — pensez à exporter une sauvegarde JSON avant.</div>'
-        +'<div class="right"><button class="btn" style="background:#c0392b;color:#fff;border:none" '
-        +'onclick="purgeComptaSociete()">Supprimer toutes les données comptables</button></div></div>';
+        +'<h2 style="color:#e74c3c">🗑️ Suppression de données — « '+soc+' »</h2>'
+        +'<div class="sub">Boutons de nettoyage ciblé. <b>Actions irréversibles</b> — pensez à exporter une sauvegarde JSON avant.</div>'
+        +'<div class="purge-grid" style="display:flex;flex-direction:column;gap:12px;margin-top:6px">'
+        +'<div style="border:1px solid var(--line);border-radius:10px;padding:11px 12px">'
+          +'<b>Données importées du FEC</b>'
+          +'<div class="hint" style="margin:4px 0 9px">Écritures, mouvements bancaires et tiers générés par un import FEC, + journal d\'import. Les saisies manuelles restent.</div>'
+          +'<button class="btn" style="background:#c0392b;color:#fff;border:none" onclick="purgeFEC()">Supprimer les données du FEC</button></div>'
+        +'<div style="border:1px solid var(--line);border-radius:10px;padding:11px 12px">'
+          +'<b>Tous les tiers</b>'
+          +'<div class="hint" style="margin:4px 0 9px">Référentiel clients &amp; fournisseurs + fiches de nouveaux tiers en attente. Les écritures comptabilisées restent sur leurs comptes.</div>'
+          +'<button class="btn" style="background:#c0392b;color:#fff;border:none" onclick="purgeTiers()">Supprimer tous les tiers</button></div>'
+        +'<div style="border:1px solid var(--line);border-radius:10px;padding:11px 12px">'
+          +'<b>Banque</b>'
+          +'<div class="hint" style="margin:4px 0 9px">Mouvements bancaires et relevés de rapprochement. Les écritures comptables restent inchangées.</div>'
+          +'<button class="btn" style="background:#c0392b;color:#fff;border:none" onclick="purgeBanque()">Supprimer la banque</button></div>'
+        +'<div style="border:1px solid var(--line);border-radius:10px;padding:11px 12px">'
+          +'<b>Toutes les données comptables</b>'
+          +'<div class="hint" style="margin:4px 0 9px">Réinitialisation complète : écritures, factures, règlements, banque &amp; relevés, documents/pièces, immos/emprunts, paie, import FEC, numérotation, propositions IA, relances. La société, les tiers, le plan comptable et les journaux sont conservés.</div>'
+          +'<button class="btn" style="background:#c0392b;color:#fff;border:none" onclick="purgeComptaSociete()">Supprimer toutes les données comptables</button></div>'
+        +'</div></div>';
       return html+card;
     };
   }
