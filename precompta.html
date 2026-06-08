@@ -3372,9 +3372,10 @@ body[data-theme] .doc, body[data-theme] .doc *{ color:#1b1b1b !important; }
     <div class="side-foot">
       <button id="theme-toggle-side" class="theme-toggle-side" onclick="toggleJourNuit()">🌙 Mode nuit</button>
       <button onclick="retourSelectionDossier()">⇆ Changer de dossier</button>
-      <button onclick="exportJSON()">Exporter les données</button>
+      <button onclick="exportJSON()">⬇️ Télécharger la base</button>
       <button onclick="document.getElementById('imp').click()">Importer</button>
       <input type="file" id="imp" accept="application/json" hidden onchange="importJSON(event)">
+      <button class="sf-discard" onclick="yadaAnnulerModifs()">↩️ Ne pas enregistrer (annuler mes modifs)</button>
       <button onclick="if(confirm('Réinitialiser avec les données de démonstration ?')){seed();save();connecte=false;render();}">↺ Réinitialiser (démo)</button>
     </div>
   </aside>
@@ -10431,7 +10432,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v143 · noir & bleu';
+    b.textContent='YADA · v144 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -12359,6 +12360,54 @@ ${lignes}
   };
   if(document.body) maj(); else document.addEventListener('DOMContentLoaded', maj);
   if(typeof render==='function'){ var _r=render; render=function(){ var x=_r.apply(this,arguments); try{ maj(); }catch(e){} return x; }; }
+})();
+</script>
+<script id="yada-addon80">
+/* Sauvegarde à la fermeture + Télécharger la base + « Ne pas enregistrer »
+   (annuler les modifications de la session, retour au point d'ouverture). */
+(function(){
+  function lget(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lset(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function sget(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } }
+  function sset(k,v){ try{ sessionStorage.setItem(k,v); }catch(e){} }
+  function snapNow(){ try{ if(typeof persistActif==='function') persistActif(); }catch(e){}
+    try{ return JSON.stringify(db); }catch(e){ return lget('yada-db'); } }
+
+  /* Point de restauration = état AU MOMENT DE L'OUVERTURE de la session (1 fois par onglet) */
+  function ensureCheckpoint(){ if(sget('yada-cp-set')) return; var s=snapNow(); if(s){ lset('yada-db-cp', s); sset('yada-cp-set','1'); } }
+  if(document.body) ensureCheckpoint(); else document.addEventListener('DOMContentLoaded', ensureCheckpoint);
+
+  /* « Ne pas enregistrer » : on revient à l'état d'ouverture (annule tout le travail de la session) */
+  window.yadaAnnulerModifs=function(){
+    var cp=lget('yada-db-cp');
+    if(!cp){ if(typeof toast==='function') toast('Aucun point de restauration pour cette session.'); return; }
+    if(!confirm('Annuler TOUTES les modifications faites depuis l\'ouverture de cette session ?\n\n'
+      +'La base reviendra à son état d\'ouverture ; le travail effectué depuis sera perdu.\n\nContinuer ?')) return;
+    /* On remet aussi l'état EN MÉMOIRE au point de restauration : ainsi une éventuelle
+       sauvegarde déclenchée par le rechargement (beforeunload/pagehide) réécrit l'état
+       d'ouverture et n'annule pas la restauration. */
+    try{ db=JSON.parse(cp); }catch(e){}
+    lset('yada-db', cp);
+    try{ if(typeof toast==='function') toast('Modifications annulées — retour à l\'état d\'ouverture.'); }catch(e){}
+    location.reload();
+  };
+
+  /* Télécharger la base = export JSON, et on en profite pour rafraîchir le point de restauration
+     (l'utilisateur a sauvegardé son travail → c'est son nouveau point sûr). */
+  if(typeof window.exportJSON==='function'){ var _ex=window.exportJSON;
+    window.exportJSON=function(){ var r=_ex.apply(this,arguments); try{ lset('yada-db-cp', snapNow()); }catch(e){} return r; }; }
+
+  /* Sauvegarde automatique renforcée à la fermeture / mise en arrière-plan (mobile inclus) */
+  function saveNow(){ try{ if(typeof save==='function') save(); }catch(e){} }
+  try{ window.addEventListener('beforeunload', saveNow); }catch(e){}
+  try{ window.addEventListener('pagehide', saveNow); }catch(e){}
+  try{ document.addEventListener('visibilitychange', function(){ if(document.hidden) saveNow(); }); }catch(e){}
+
+  /* Style du bouton « Ne pas enregistrer » (teinte d'avertissement) */
+  try{ var st=document.createElement('style'); st.textContent=
+    'body .side-foot button.sf-discard{ color:#ffd9b0 !important; border-color:rgba(255,150,60,.45) !important; }'
+    +'body .side-foot button.sf-discard:hover{ background:rgba(255,140,40,.18) !important; }';
+    document.head.appendChild(st); }catch(e){}
 })();
 </script>
 </body>
