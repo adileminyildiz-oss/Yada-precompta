@@ -86,6 +86,7 @@ Feuille de route : voir **`ROADMAP.md`** (finalisation par module).
    - balises `</head>`/`</body>`/`</html>` uniques ;
    - **rendu réel via Playwright** (Chromium) sur les 2 démos : parcourir les modules, capturer pageerror/console, vérifier que **toutes les écritures sont équilibrées** (Σ débit = Σ crédit).
    - Pré-requis test : `npm i -g playwright && npx playwright install chromium`.
+   - **Filet de tests automatisé** : `node tests/equilibre-ecritures.mjs` charge `precompta.html` dans Chromium, réinitialise sur les 2 démos et vérifie que **chaque écriture est équilibrée** (Σ débit = Σ crédit) + exerce `posterFacture` (vente/achat). Lancé en CI à chaque push/PR via `.github/workflows/tests.yml` (installe Playwright à la volée — pas de `package.json` committé, voir `.gitignore`). En local hors-ligne, pointer un Chrome via `YADA_CHROME=/chemin/vers/chrome`.
 
 ## Architecture
 - `render()` lit `current`, pose `document.body.dataset.page=current`, puis appelle le module via un objet de **dispatch réévalué à chaque rendu**. Réassigner `pageX = function(){…}` fonctionne → pattern de greffe : `const _p=pageX; pageX=function(){ return _p()+complement(); }`.
