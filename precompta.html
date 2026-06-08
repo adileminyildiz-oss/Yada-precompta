@@ -1959,6 +1959,31 @@ body[data-theme="noir"] #ec-hero.cab-hero{background:linear-gradient(120deg,#1c5
 #sec-lock .sec-ver{ text-align:right; color:#aab2bd; font-size:12px; padding:6px 20px 16px; }
 @media(max-width:820px){ #sec-lock .sec-screen{ max-width:100%; } #sec-lock .sec-hero{ padding-top:calc(54px + env(safe-area-inset-top)); } }
 </style>
+<style id="sec-lock-noir">
+/* Écran de connexion : MÊME code couleur que le reste du logiciel (noir + lime),
+   identique au fond des pages de dossier. */
+body #sec-lock{ background:
+   radial-gradient(900px 620px at 8% -10%, rgba(155,239,0,.20), transparent 60%),
+   radial-gradient(820px 600px at 114% 4%, rgba(155,239,0,.16), transparent 60%),
+   radial-gradient(760px 760px at 50% 122%, rgba(155,239,0,.12), transparent 62%),
+   #0a0a0a !important; }
+body #sec-lock .sec-screen{ background:transparent !important; }
+body #sec-lock .sec-hero{ background:linear-gradient(160deg,#1b3300,#0a0a0a) !important; color:#fff !important; }
+body #sec-lock .sec-logo, body #sec-lock .sec-logo small{ color:#fff !important; }
+body #sec-lock .sec-body h2{ color:#eaf0ff !important; }
+body #sec-lock .sec-p{ color:#9aa49a !important; }
+body #sec-lock .sec-lab{ color:#9aa49a !important; }
+body #sec-lock .sec-id{ color:#c8d0c8 !important; }
+body #sec-lock input{ background:rgba(255,255,255,.05) !important; border:1px solid #6fb800 !important; color:#fff !important; box-shadow:none !important; }
+body #sec-lock input:focus{ border-color:#9bef00 !important; }
+body #sec-lock .sec-cta{ background:linear-gradient(120deg,#c4ff3d,#6fb800) !important; color:#16210a !important; box-shadow:0 8px 22px rgba(111,184,0,.4) !important; }
+body #sec-lock .sec-cta-2{ background:rgba(255,255,255,.05) !important; color:#eaf0ff !important; border:1.5px solid #6fb800 !important; box-shadow:none !important; }
+body #sec-lock .sec-remember{ color:#9aa49a !important; }
+body #sec-lock .sec-remember input{ accent-color:#9bef00 !important; }
+body #sec-lock .sec-link{ color:#c4ff3d !important; }
+body #sec-lock .sec-err{ color:#ff9d8f !important; }
+body #sec-lock .sec-ver{ color:#6f7a6f !important; }
+</style>
 <style id="app-skin">
 /* ===== Thème : NOIR TOTAL + contours/reflets bleus intenses (néon) ===== */
 /* ===== Thème : LIQUID GLASS DARK — surfaces translucides, halos, moderne ===== */
@@ -10268,7 +10293,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v129 · noir & lime';
+    b.textContent='YADA · v130 · noir & lime';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#c4ff3d,#6fb800);color:#16210a;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
