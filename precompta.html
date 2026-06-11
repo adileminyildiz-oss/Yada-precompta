@@ -6160,7 +6160,7 @@ function pageCompta(){
         </div>
       </div>
       <div class="sg-right">
-        <div class="sg-tabs">${tabs}<div class="sg-tabnav"><span>◄</span><span>►</span></div></div>
+        ${sgJrn ? '' : `<div class="sg-tabs">${tabs}<div class="sg-tabnav"><span>◄</span><span>►</span></div></div>`}
         ${sgJrn ? sgJournalGrid(sgJrn, sgPer) : `<div class="sg-grid">
           <table class="sg-tbl"><thead><tr><th style="width:120px">Compte</th><th>Libellé</th><th class="r">Solde N</th><th class="sg-sens"></th></tr></thead>
           <tbody>${rows}</tbody></table>
@@ -10491,7 +10491,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v150 · noir & bleu';
+    b.textContent='YADA · v151 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
