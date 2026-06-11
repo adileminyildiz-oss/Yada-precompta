@@ -3409,6 +3409,12 @@ body[data-theme="noir"] .fk-t tr.fk-tot td{ background:rgba(30,144,255,.12); }
 .fk-warn{ margin-top:10px; padding:12px 14px; border-radius:10px; background:rgba(224,160,32,.10); border:1px solid rgba(224,160,32,.4); color:#ffd27a; font-size:13.5px; }
 .fk-ok2{ color:#86e0aa; font-weight:700; font-size:12px; }
 </style>
+<style id="fa-select-css">
+/* Facturation client : sélection d'une facture → pré-saisie */
+tr.fa-sel-row td{ background:rgba(30,144,255,.14) !important; box-shadow:inset 3px 0 0 #1e90ff; }
+.fa-sel-banner{ margin:6px 0 12px; padding:9px 13px; border-radius:9px; background:rgba(30,144,255,.10); border:1px solid rgba(30,144,255,.4); font-size:13px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.fa-sel-banner b{ color:#1e90ff; }
+</style>
 </head>
 <body data-theme="noir">
 <div class="layout">
@@ -8278,7 +8284,7 @@ function factureListe(){
   let page=window.faListePage||1; if(page>pages)page=pages; if(page<1)page=1; window.faListePage=page;
   const slice=docs.slice((page-1)*per,page*per);
   const rows=slice.map(d=>{ const c=db.tiers.find(x=>x.id===d.clientId); const st=docStatutFac(d);
-    return `<tr>
+    return `<tr class="${d.id===window.faDocSel?'fa-sel-row':''}">
       <td><b>${d.numero}</b></td><td>${c?c.nom:'<span class="mini">—</span>'}</td>
       <td class="num">${frDate(d.date)}</td><td class="num">${frDate(d.echeance||d.date)}</td>
       <td><span class="tag ${st.c}">${st.l}</span></td>
@@ -8286,6 +8292,7 @@ function factureListe(){
       <td class="num">${d.dateEnvoi?frDate(d.dateEnvoi):'—'}</td>
       <td class="r" style="white-space:nowrap">
         <button class="btn btn-ghost btn-sm" onclick="voirDoc('${d.id}')" title="Voir la facture"></button>
+        ${d.type==='facture'&&!d.ecritureId?`<button class="btn btn-ghost btn-sm" onclick="faReprendre('${d.id}')" title="Reprendre dans la saisie rapide pour générer les écritures">↧ Saisir</button>`:''}
         ${d.type==='facture'&&!d.ecritureId?`<button class="btn btn-gold btn-sm" onclick="genererEcritureDoc('${d.id}')" title="Générer l'écriture (autorisation requise)">Générer</button>`:''}
         ${d.type==='devis'&&d.statut==='valide'&&!d.transformeEn?`<button class="btn btn-ghost btn-sm" onclick="transformerDevis('${d.id}')">→ Facture</button>`:''}
       </td></tr>`;}).join('');
@@ -8329,14 +8336,22 @@ function formulaireRapide(){
       <input value="${eur(lht)}" disabled style="background:#f3efe6">
       <button class="btn btn-ghost btn-sm" onclick="faDelLigne(${i})">✕</button></div>`; }).join('');
   const t=faTotaux();
+  const sel = window.faDocSel ? (db.docs||[]).find(x=>x.id===window.faDocSel) : null;
+  const banner = sel ? `<div class="fa-sel-banner">Facture <b>${sel.numero}</b> sélectionnée — vérifiez les lignes ci-dessous puis <b>générez les lignes comptables</b>. <button class="btn btn-ghost btn-xs" onclick="faAnnulerSel()">Annuler la sélection</button></div>` : '';
+  const actions = sel
+    ? `<button class="btn btn-ghost" onclick="faAnnulerSel()">Annuler</button>
+       <button class="btn btn-pri" onclick="faGenererSel()">✓ Générer les lignes comptables</button>`
+    : `<button class="btn btn-ghost" onclick="emettre(false)">Enregistrer (brouillon)</button>
+       <button class="btn btn-pri" onclick="emettre(true)">Valider</button>`;
   return flow(['Saisie lignes','Validation','Écriture VTE','Génération PDF','E-mail au client (mail enregistré)'])+
-  `<div class="card"><h2>Émettre un document client (saisie rapide)</h2>
-    <div class="sub">Alternative directe au bouton « Nouveau » : saisie dans la page, sans aperçu plein écran.</div>
+  `<div class="card fa-rapide-card"><h2>Émettre un document client (saisie rapide)</h2>
+    <div class="sub">Alternative directe au bouton « Nouveau » : saisie dans la page, sans aperçu plein écran. Vous pouvez aussi <b>sélectionner une facture de la liste</b> (« ↧ Saisir ») pour la reprendre ici et générer ses écritures.</div>
+    ${banner}
     <div class="row g4">
-      <div class="field"><label>Type</label><select id="fa-type"><option value="facture">Facture</option><option value="devis">Devis</option><option value="avoir">Avoir</option></select></div>
-      <div class="field"><label>Client</label><select id="fa-client" onchange="faMaj()">${clients.map(c=>`<option value="${c.id}">${c.nom}${c.categorie==='particulier'?' (particulier)':''}</option>`).join('')}</select></div>
-      <div class="field"><label>Date d'émission</label><input type="date" id="fa-date" value="${todayStr()}"></div>
-      <div class="field"><label>Date d'échéance</label><input type="date" id="fa-ech" value="${todayStr()}"></div>
+      <div class="field"><label>Type</label><select id="fa-type"><option value="facture" ${sel&&sel.type==='facture'?'selected':''}>Facture</option><option value="devis" ${sel&&sel.type==='devis'?'selected':''}>Devis</option><option value="avoir" ${sel&&sel.type==='avoir'?'selected':''}>Avoir</option></select></div>
+      <div class="field"><label>Client</label><select id="fa-client" onchange="faMaj()">${clients.map(c=>`<option value="${c.id}" ${sel&&sel.clientId===c.id?'selected':''}>${c.nom}${c.categorie==='particulier'?' (particulier)':''}</option>`).join('')}</select></div>
+      <div class="field"><label>Date d'émission</label><input type="date" id="fa-date" value="${sel?sel.date:todayStr()}"></div>
+      <div class="field"><label>Date d'échéance</label><input type="date" id="fa-ech" value="${sel?(sel.echeance||sel.date):todayStr()}"></div>
     </div>
     <div class="field"><label>Lignes de facturation</label>${liHead}${liRows}
       <button class="btn btn-ghost btn-sm" onclick="faSync();faAddLigne()">+ Ajouter une désignation</button></div>
@@ -8348,12 +8363,38 @@ function formulaireRapide(){
       </tbody></table></div>
     <div id="fa-apercu"></div>
     <div class="right">
-      <button class="btn btn-ghost" onclick="emettre(false)">Enregistrer (brouillon)</button>
-      <button class="btn btn-pri" onclick="emettre(true)">Valider</button>
+      ${actions}
     </div>
     <div class="hint">L'envoi par e-mail n'est possible qu'<b>après validation</b>. Conformité 2026 B2B : l'outil retenu devra être <b>Plateforme Agréée DGFiP</b> et émettre du <b>Factur-X</b>.</div>
   </div>`;
 }
+/* Sélection d'une facture de la liste → pré-saisie dans le formulaire rapide */
+window.faReprendre=function(docId){
+  var d=(db.docs||[]).find(function(x){return x.id===docId;}); if(!d) return;
+  if(d.ecritureId){ if(typeof toast==='function')toast('Écriture déjà générée pour '+d.numero); return; }
+  faLignes=(d.lignes&&d.lignes.length)?JSON.parse(JSON.stringify(d.lignes)):[{desc:('Facture '+d.numero),qte:1,pu:Math.abs(d.ht),taux:20,unite:''}];
+  window.faDocSel=docId;
+  render();
+  setTimeout(function(){ try{ if(typeof faMaj==='function')faMaj(); var el=document.querySelector('.fa-rapide-card'); if(el)el.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} },60);
+};
+window.faAnnulerSel=function(){ window.faDocSel=null; faLignes=[{desc:'',qte:1,pu:0,taux:20,unite:''}]; if(typeof render==='function')render(); };
+window.faGenererSel=function(){
+  var docId=window.faDocSel; if(!docId){ return; }
+  var d=(db.docs||[]).find(function(x){return x.id===docId;}); if(!d){ window.faDocSel=null; return; }
+  if(typeof faSync==='function') faSync();
+  var tot=faTotaux();
+  /* mettre à jour le document depuis le formulaire (lignes, montants, client, dates) */
+  d.lignes=JSON.parse(JSON.stringify(faLignes)).map(function(l){return Object.assign({},l,{qte:l.qte*1});});
+  var signe=(d.type==='avoir')?-1:1;
+  d.ht=r2(tot.ht*signe); d.tva=r2(tot.tva*signe); d.ttc=r2(tot.ttc*signe);
+  var cl=document.getElementById('fa-client'); if(cl)d.clientId=cl.value;
+  var dt=document.getElementById('fa-date'); if(dt)d.date=dt.value;
+  var ec=document.getElementById('fa-ech'); if(ec)d.echeance=ec.value;
+  if(typeof save==='function') save();
+  window.faDocSel=null; faLignes=[{desc:'',qte:1,pu:0,taux:20,unite:''}];
+  if(typeof genererEcritureDoc==='function') genererEcritureDoc(docId);
+  else { if(typeof render==='function')render(); }
+};
 
 /* Page recomposée : nouvelle version + éléments d'origine réaffectés */
 pageFacturation=function(){ if(typeof catInit==='function')catInit();
@@ -10491,7 +10532,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v151 · noir & bleu';
+    b.textContent='YADA · v152 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
