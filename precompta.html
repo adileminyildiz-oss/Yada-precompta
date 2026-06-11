@@ -3397,6 +3397,17 @@ body[data-theme] .doc, body[data-theme] .doc *{ color:#1b1b1b !important; }
 #fact-review .fr-ko{ color:#ffd27a; font-weight:700; }
 @media(max-width:820px){ #fact-review .fr-body{ grid-template-columns:1fr; } #fact-review .fr-left{ height:42vh; } }
 </style>
+<style id="fraiskm-css">
+/* Module Frais kilométriques & carburant */
+.fk-t{ width:100%; border-collapse:collapse; margin-top:10px; font-size:13px; }
+.fk-t th{ text-align:left; font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); padding:7px 9px; border-bottom:1px solid var(--line); }
+.fk-t th.r{ text-align:right; }
+.fk-t td{ padding:7px 9px; border-bottom:1px solid var(--line); }
+.fk-t td.num{ text-align:right; font-variant-numeric:tabular-nums; }
+.fk-t tr.fk-tot td{ font-weight:700; border-top:2px solid var(--line-strong); background:rgba(30,144,255,.08); }
+body[data-theme="noir"] .fk-t tr.fk-tot td{ background:rgba(30,144,255,.12); }
+.fk-warn{ margin-top:10px; padding:12px 14px; border-radius:10px; background:rgba(224,160,32,.10); border:1px solid rgba(224,160,32,.4); color:#ffd27a; font-size:13.5px; }
+</style>
 </head>
 <body data-theme="noir">
 <div class="layout">
@@ -4022,6 +4033,7 @@ const PAGES=[
   {id:'rappro',ico:'⊜',sec:'Trésorerie',lbl:'Rapprochement (lettrage)'},
   {id:'reglements',ico:'⇄',sec:'Trésorerie',lbl:'Suivi des règlements'},
   {id:'immos',ico:'',sec:'Immobilisations',lbl:'Immobilisations & Financements'},
+  {id:'fraiskm',ico:'⛽',sec:'Immobilisations',lbl:'Frais kilométriques & carburant'},
   {id:'dossier',ico:'',sec:'Dossier',lbl:'Société & création du dossier'},
   {id:'infosociete',ico:'',sec:'Dossier',lbl:'Informations société'},
   {id:'coffre',ico:'',sec:'Dossier',lbl:'Coffre-fort identifiants'},
@@ -4035,6 +4047,9 @@ function buildNav(){
     b.innerHTML=`<span class="ico">${p.ico}</span>${p.lbl}`; b.onclick=()=>{current=p.id;render();}; nav.appendChild(b); });
 }
 let connecte=false;   // false = écran de sélection de dossier ; true = logiciel ouvert
+/* Stub remplacé par le module Frais kilométriques (addon) ; présent ici car référencé
+   dans le dispatch de render() qui s'exécute avant le chargement des addons. */
+function pageFraisKm(){ return '<div class="card"><h2>Frais kilométriques &amp; carburant</h2><div class="sub">Initialisation du module…</div></div>'; }
 function render(){
   const layout=document.querySelector('.layout'); const aside=document.querySelector('aside'); const mainEl=document.getElementById('main');
   if(!connecte){ if(aside) aside.style.display='none'; if(layout) layout.classList.add('solo'); mainEl.className='login-bleed'; mainEl.innerHTML=ecranSelectionDossier(); return; }
@@ -4048,7 +4063,7 @@ function render(){
   dash:pageDash, societe:pageSociete, tiers:pageTiers, facturation:pageFacturation, achats:pageAchats,
   client:pageEspaceClient, compta:pageCompta, compteaux:pageCompteAux, chargespaie:pageChargesPaie, journal:pageJournal, ia:pageIA, tva:pageTVA, editions:pageEditions, fec:pageFEC,
   analytique:pageAnalytique, banque:pageBanque, saisiebq:pageSaisieBq, rappro:pageRappro, reglements:pageReglements,
-  immos:pageImmos,
+  immos:pageImmos, fraiskm:pageFraisKm,
   dossier:pageDossier, parametrage:pageParametrage, infosociete:pageInfoSociete, coffre:pageCoffre
 })[current]();
   // compta/compteaux et dash/societe fournissent déjà leur propre conteneur plein cadre ; les autres sont enveloppés
@@ -10475,7 +10490,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v148 · noir & bleu';
+    b.textContent='YADA · v149 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -11599,6 +11614,14 @@ ${lignes}
     return { ttc:r2(ttc), tva:(tva!=null?r2(tva):null), ht:(ht!=null?r2(ht):null), taux:taux, numero:numero, dateEmission:emission, echeance:echeance, conditions:conditions, siret:siret, tvaIntra:tvaIntra };
   }
 
+  /* Lecteur réutilisable (autres modules) : lit un fichier reçu et renvoie les montants/infos. */
+  window.yadaLireRecu=async function(file){
+    try{ var ab=await file.arrayBuffer(); var isPdf=/pdf/i.test(file.type||'')||/\.pdf$/i.test(file.name||'');
+      if(isPdf && ab){ var txt=await pdfExtractText(ab); var a=pdfParseAmounts(txt); if(a){ a.lecture='lecture PDF'; return a; } } }catch(e){}
+    try{ var ex=extractFromFile(file.name||''); return { ttc:ex.ttc, taux:ex.taux, numero:ex.numero, tva:null, ht:null, dateEmission:'', echeance:'', conditions:'', siret:'', tvaIntra:'', lecture:'nom de fichier' }; }catch(e){}
+    return null;
+  };
+
   /* --- Dépôt : lecture réelle du PDF puis repli --- */
   window.factDepotAdd=function(file,cat){ return new Promise(function(res){
     (async function(){
@@ -12651,6 +12674,113 @@ ${lignes}
     if(d.ecritureId){ try{ current='compta'; if(typeof render==='function') render(); }catch(e){} if(typeof toast==='function') toast('Écriture visible dans la Consultation des comptes.'); }
     else if(d.fichierId && typeof gedVoir==='function') gedVoir(d.fichierId);
   };
+})();
+</script>
+<script id="yada-addon83">
+/* MODULE FRAIS KILOMÉTRIQUES & CARBURANT.
+   - Véhicules de société = immobilisations au compte 218200000 (Matériel de transport).
+   - Reçus de gasoil : dépôt + lecture IA + revue (reçu à gauche / infos à droite) + total déversé.
+   - Kilométrage par véhicule : saisie manuelle (uniquement pour un véhicule immobilisé). */
+(function(){
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];}); }
+  function cstore(){ if(!db.parametres)db.parametres={}; return (db.parametres.carburant=db.parametres.carburant||[]); }
+  function kmstore(){ if(!db.parametres)db.parametres={}; return (db.parametres.kmlog=db.parametres.kmlog||[]); }
+  function vehicules(){ return (db.immos||[]).filter(function(im){ try{ return c9(im.compte)==='218200000'; }catch(e){ return false; } }); }
+  function vehName(v){ return v.numero||v.nature||v.modele||'Véhicule'; }
+  function piece(id){ try{ return (db.parametres&&db.parametres.pieces||[]).find(function(p){return p.id===id;}); }catch(e){ return null; } }
+
+  window.pageFraisKm=function(){
+    var vehs=vehicules(); var carb=cstore(), km=kmstore();
+    var head1=(typeof head==='function')?head('Frais kilométriques & carburant','Reçus de gasoil (lecture IA, revue reçu/infos), total déversé dans le carburant, et kilométrage manuel par véhicule. Un véhicule doit être immobilisé (compte 218200000) pour être un véhicule de société.'):'';
+    var vehCard='<div class="card"><h2>🚗 Véhicules de société (immobilisations)</h2>'
+      +'<div class="sub">Un véhicule doit être enregistré dans les <b>Immobilisations</b> au compte <b>218200000 — Matériel de transport</b> pour saisir des frais kilométriques. Il est alors considéré comme <b>véhicule de société</b>.</div>'
+      +(vehs.length?('<table class="fk-t"><thead><tr><th>Véhicule</th><th>Compte</th></tr></thead><tbody>'
+          +vehs.map(function(v){ return '<tr><td><b>'+esc(vehName(v))+'</b></td><td class="num">'+c9(v.compte)+'</td></tr>'; }).join('')+'</tbody></table>')
+        :'<div class="fk-warn">⚠️ Aucun véhicule en immobilisations. <button class="btn btn-pri btn-sm" onclick="current=\'immos\';render()">Aller aux Immobilisations</button> pour enregistrer le véhicule (compte 218200000 — Matériel de transport).</div>')
+      +'</div>';
+    if(!vehs.length) return head1+vehCard;
+    var vopt=vehs.map(function(v){return '<option value="'+v.id+'">'+esc(vehName(v))+'</option>';}).join('');
+    /* Reçus de gasoil */
+    var recRows=carb.map(function(r){ var v=vehs.find(function(x){return x.id===r.vehiculeId;});
+      return '<tr><td>'+(r.date?frDate(r.date):'—')+'</td><td>'+esc(r.fournisseur||'—')+'</td><td>'+esc(v?vehName(v):'—')+'</td>'
+        +'<td class="num">'+eur(r.ht||0)+'</td><td class="num">'+eur(r.tva||0)+'</td><td class="num">'+eur(r.ttc||0)+'</td>'
+        +'<td><button class="btn btn-ghost btn-xs" onclick="fkRevue(\''+r.id+'\')">Examiner</button> <button class="btn btn-ghost btn-xs" onclick="fkSuppRecu(\''+r.id+'\')">✕</button></td></tr>'; }).join('');
+    var tHt=r2(carb.reduce(function(a,r){return a+(+r.ht||0);},0)), tTva=r2(carb.reduce(function(a,r){return a+(+r.tva||0);},0)), tTtc=r2(carb.reduce(function(a,r){return a+(+r.ttc||0);},0));
+    var recCard='<div class="card"><h2>⛽ Reçus de gasoil (carburant)</h2>'
+      +'<div class="sub">Déposez un reçu : l\'IA lit la date et les montants HT / TVA / TTC. Examinez (reçu à gauche, informations à droite), complétez le fournisseur, puis enregistrez.</div>'
+      +'<div class="row g3" style="align-items:end"><div class="field"><label>Véhicule</label><select id="fk-veh">'+vopt+'</select></div>'
+        +'<div class="field"><label>Reçu de gasoil (PDF / image)</label><input type="file" id="fk-file" accept=".pdf,image/*" onchange="fkAjouterRecu(this)"></div><div></div></div>'
+      +(carb.length?('<table class="fk-t"><thead><tr><th>Date du reçu</th><th>Fournisseur de gasoil</th><th>Véhicule</th><th class="r">HT</th><th class="r">TVA</th><th class="r">TTC</th><th></th></tr></thead><tbody>'+recRows
+          +'<tr class="fk-tot"><td colspan="3">Montant déversé dans le gasoil</td><td class="num">'+eur(tHt)+'</td><td class="num">'+eur(tTva)+'</td><td class="num">'+eur(tTtc)+'</td><td></td></tr></tbody></table>')
+        :'<div class="hint">Aucun reçu déposé.</div>')
+      +'</div>';
+    /* Kilométrage */
+    var kmRows=km.map(function(k){ var v=vehs.find(function(x){return x.id===k.vehiculeId;});
+      return '<tr><td>'+(k.date?frDate(k.date):'—')+'</td><td>'+esc(v?vehName(v):'—')+'</td><td class="num">'+(+k.km||0)+' km</td><td>'+esc(k.motif||'')+'</td>'
+        +'<td><button class="btn btn-ghost btn-xs" onclick="fkSuppKm(\''+k.id+'\')">✕</button></td></tr>'; }).join('');
+    var totByVeh={}; km.forEach(function(k){ totByVeh[k.vehiculeId]=(totByVeh[k.vehiculeId]||0)+(+k.km||0); });
+    var totRows=vehs.filter(function(v){return totByVeh[v.id];}).map(function(v){ return '<tr class="fk-tot"><td colspan="2">Total '+esc(vehName(v))+'</td><td class="num">'+totByVeh[v.id]+' km</td><td colspan="2"></td></tr>'; }).join('');
+    var kmCard='<div class="card"><h2>🛣️ Kilométrage par véhicule (saisie manuelle)</h2>'
+      +'<div class="sub">Enregistrez les trajets manuellement. La saisie n\'est possible que pour un <b>véhicule de société</b> (immobilisé).</div>'
+      +'<div class="row g4" style="align-items:end"><div class="field"><label>Véhicule</label><select id="km-veh">'+vopt+'</select></div>'
+        +'<div class="field"><label>Date</label><input type="date" id="km-date" value="'+todayStr()+'"></div>'
+        +'<div class="field"><label>Kilomètres</label><input type="number" id="km-km" min="0" placeholder="0"></div>'
+        +'<div class="field"><label>Motif</label><input id="km-motif" placeholder="ex. déplacement client"></div></div>'
+      +'<div class="right"><button class="btn btn-pri" onclick="fkAjouterKm()">+ Enregistrer le kilométrage</button></div>'
+      +(km.length?('<table class="fk-t" style="margin-top:10px"><thead><tr><th>Date</th><th>Véhicule</th><th class="r">Km</th><th>Motif</th><th></th></tr></thead><tbody>'+kmRows+totRows+'</tbody></table>')
+        :'<div class="hint" style="margin-top:8px">Aucun kilométrage enregistré.</div>')
+      +'</div>';
+    return head1+vehCard+recCard+kmCard;
+  };
+
+  window.fkAjouterRecu=function(input){ var file=input&&input.files&&input.files[0]; if(!file) return;
+    var veh=(document.getElementById('fk-veh')||{}).value||'';
+    (async function(){
+      var dataUrl=await new Promise(function(rz){ try{ var rd=new FileReader(); rd.onload=function(){rz(rd.result);}; rd.onerror=function(){rz(null);}; rd.readAsDataURL(file); }catch(e){ rz(null); } });
+      if(!db.parametres)db.parametres={}; db.parametres.pieces=db.parametres.pieces||[];
+      var p={ id:uid(), nom:file.name, mime:file.type||'', taille:file.size||0, data:dataUrl, date:todayStr(), cat:'carburant' }; db.parametres.pieces.push(p);
+      var a=null; try{ if(typeof window.yadaLireRecu==='function') a=await window.yadaLireRecu(file); }catch(e){}
+      var ttc=(a&&a.ttc)||0, taux=(a&&a.taux)||20;
+      var ht=(a&&a.ht!=null)?a.ht:(ttc?r2(ttc/(1+taux/100)):0);
+      var tva=(a&&a.tva!=null)?a.tva:(ttc?r2(ttc-ht):0);
+      var rec={ id:uid(), date:(a&&a.dateEmission)||todayStr(), fournisseur:'', ht:r2(ht), tva:r2(tva), ttc:r2(ttc), taux:taux, fichierId:p.id, vehiculeId:veh, lecture:(a&&a.lecture)||'' };
+      cstore().push(rec); if(typeof save==='function')save();
+      if(typeof toast==='function') toast('Reçu lu'+(ttc?(' — TTC '+eur(ttc)):'')+'. Vérifiez puis enregistrez.');
+      if(typeof render==='function')render(); window.fkRevue(rec.id);
+    })();
+  };
+  window.fkRevue=function(id){ var r=cstore().find(function(x){return x.id===id;}); if(!r) return;
+    var ov=document.getElementById('fact-review'); if(!ov){ ov=document.createElement('div'); ov.id='fact-review'; document.body.appendChild(ov); }
+    var p=r.fichierId?piece(r.fichierId):null;
+    var left=(p&&p.data)?(/pdf/i.test((p.mime||'')+' '+(p.nom||''))?('<iframe class="fr-doc" src="'+p.data+'"></iframe>'):'<img class="fr-doc" src="'+p.data+'">'):'<div class="fr-nofile">Aucun fichier joint.</div>';
+    var vehs=vehicules(); var vopt=vehs.map(function(v){return '<option value="'+v.id+'" '+(v.id===r.vehiculeId?'selected':'')+'>'+esc(vehName(v))+'</option>';}).join('');
+    ov.innerHTML='<div class="fr-bar"><button class="btn btn-ghost btn-sm" onclick="factFermerRevue()">← Retour</button><b>Reçu de gasoil</b><span class="fr-src">'+(r.lecture?esc(r.lecture):'')+'</span></div>'
+      +'<div class="fr-body"><div class="fr-left">'+left+'</div><div class="fr-right"><h3>Informations du reçu <span class="fr-hint">— comparez avec le reçu, corrigez si besoin</span></h3>'
+      +'<label class="fr-l">Fournisseur de gasoil</label><input id="fk-r-four" value="'+esc(r.fournisseur||'')+'" placeholder="ex. TotalEnergies, Esso, Avia…">'
+      +'<label class="fr-l">Véhicule</label><select id="fk-r-veh">'+vopt+'</select>'
+      +'<div class="fr-grid"><div><label class="fr-l">Date du reçu</label><input id="fk-r-date" type="date" value="'+(r.date||'')+'"></div>'
+        +'<div><label class="fr-l">Taux TVA (%)</label><input id="fk-r-taux" type="number" value="'+(r.taux||20)+'" oninput="fkRRecalc()"></div></div>'
+      +'<div class="fr-grid"><div><label class="fr-l">Montant HT</label><input id="fk-r-ht" type="number" step="0.01" value="'+(r.ht||'')+'" oninput="fkRRecalc()"></div>'
+        +'<div><label class="fr-l">Montant TVA</label><input id="fk-r-tva" type="number" step="0.01" value="'+(r.tva||'')+'" oninput="fkRRecalc()"></div>'
+        +'<div><label class="fr-l">Montant TTC</label><input id="fk-r-ttc" type="number" step="0.01" value="'+(r.ttc||'')+'" readonly></div></div>'
+      +'<div class="fr-actions"><button class="btn btn-ghost" onclick="factFermerRevue()">Annuler</button><button class="btn btn-pri" onclick="fkRecuSave(\''+r.id+'\')">✓ Enregistrer le reçu</button></div></div></div>';
+    ov.classList.add('show'); window.fkRRecalc();
+  };
+  window.fkRRecalc=function(){ var g=function(x){var e=document.getElementById(x);return e?parseFloat(e.value):NaN;}; var ht=g('fk-r-ht'),tva=g('fk-r-tva'); var t=document.getElementById('fk-r-ttc'); if(t&&!isNaN(ht)) t.value=r2((isNaN(ht)?0:ht)+(isNaN(tva)?0:tva)).toFixed(2); };
+  window.fkRecuSave=function(id){ var r=cstore().find(function(x){return x.id===id;}); if(!r) return; var g=function(x){var e=document.getElementById(x);return e?e.value:'';};
+    r.fournisseur=g('fk-r-four').trim(); if(g('fk-r-veh')) r.vehiculeId=g('fk-r-veh'); r.date=g('fk-r-date'); r.taux=parseFloat(g('fk-r-taux'))||0;
+    r.ht=r2(parseFloat(g('fk-r-ht'))||0); r.tva=r2(parseFloat(g('fk-r-tva'))||0); r.ttc=r2(r.ht+r.tva);
+    if(typeof save==='function')save(); if(typeof window.factFermerRevue==='function') window.factFermerRevue();
+    if(typeof toast==='function')toast('Reçu de gasoil enregistré ✓'); if(typeof render==='function')render();
+  };
+  window.fkSuppRecu=function(id){ if(!confirm('Supprimer ce reçu de gasoil ?')) return; var s=cstore(); var i=s.findIndex(function(x){return x.id===id;}); if(i>=0)s.splice(i,1); if(typeof save==='function')save(); if(typeof render==='function')render(); };
+  window.fkAjouterKm=function(){ var g=function(x){var e=document.getElementById(x);return e?e.value:'';};
+    var veh=g('km-veh'); if(!veh){ if(typeof toast==='function')toast('Sélectionnez un véhicule de société.'); return; }
+    var kmv=parseFloat(g('km-km'))||0; if(kmv<=0){ if(typeof toast==='function')toast('Saisissez un nombre de kilomètres.'); return; }
+    kmstore().push({ id:uid(), vehiculeId:veh, date:g('km-date')||todayStr(), km:kmv, motif:g('km-motif').trim() });
+    if(typeof save==='function')save(); if(typeof toast==='function')toast('Kilométrage enregistré ✓'); if(typeof render==='function')render();
+  };
+  window.fkSuppKm=function(id){ var s=kmstore(); var i=s.findIndex(function(x){return x.id===id;}); if(i>=0)s.splice(i,1); if(typeof save==='function')save(); if(typeof render==='function')render(); };
 })();
 </script>
 </body>
