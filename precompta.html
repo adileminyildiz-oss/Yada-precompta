@@ -10471,7 +10471,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v146 · noir & bleu';
+    b.textContent='YADA · v147 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -11575,7 +11575,20 @@ ${lignes}
     var taux=null; if(ht&&tva&&ht>0){ var t=tva/ht*100; [20,10,5.5,2.1,0].forEach(function(x){ if(Math.abs(x-t)<1.2)taux=x; }); }
     if(taux==null){ var mt=low.match(/(20|10|5[.,]5|2[.,]1)\s*%/); taux=mt?frNum(mt[1]):20; }
     var numero=''; var mn=T.match(/facture\s*(?:n[°o]?|num[ée]ro)?\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9\/-]{2,})/i); if(mn)numero=mn[1];
-    return { ttc:r2(ttc), tva:(tva!=null?r2(tva):null), ht:(ht!=null?r2(ht):null), taux:taux, numero:numero };
+    /* --- Dates (émission / échéance) et conditions de règlement --- */
+    function parseDateFr(s){ var m=String(s||'').match(/(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/); if(!m) return '';
+      var d=m[1], mo=m[2], y=m[3]; if(y.length===2) y=(+y>70?'19':'20')+y;
+      if(+mo>12 && +d<=12){ var t2=d; d=mo; mo=t2; } if(+mo<1||+mo>12||+d<1||+d>31) return '';
+      return y+'-'+('0'+mo).slice(-2)+'-'+('0'+d).slice(-2); }
+    function dateNear(kw){ var i=low.indexOf(kw); if(i<0) return ''; return parseDateFr(T.slice(i, i+55)); }
+    var emission=dateNear("date d'émission")||dateNear("date d'emission")||dateNear('date de facture')||dateNear('date facture')||dateNear('émise le')||dateNear('emise le')||dateNear('date :')||dateNear('date du')||parseDateFr(T);
+    var echeance=dateNear('échéance')||dateNear('echeance')||dateNear('payable le')||dateNear('payable avant')||dateNear('à payer avant')||dateNear('a payer avant')||dateNear('date limite')||dateNear('avant le');
+    var conditions='';
+    var mc=T.match(/(\d{1,3})\s*jours?(\s*(?:fin de mois|net|à\s*r[ée]ception|date de facture|de date de facture))?/i);
+    if(mc) conditions=mc[0].replace(/\s+/g,' ').trim();
+    else { var mm2=low.match(/comptant|à\s*r[ée]ception|a\s*r[ée]ception|à\s*la\s*commande|paiement\s*immédiat/); if(mm2) conditions=mm2[0]; }
+    if(!conditions){ var ci=low.indexOf('conditions'); if(ci>=0){ var seg=T.slice(ci, ci+60).split(/[\n\r]/)[0].replace(/conditions\s*(de\s*r[èe]glement)?\s*[:\-]?\s*/i,'').trim(); if(seg.length>2 && seg.length<48) conditions=seg; } }
+    return { ttc:r2(ttc), tva:(tva!=null?r2(tva):null), ht:(ht!=null?r2(ht):null), taux:taux, numero:numero, dateEmission:emission, echeance:echeance, conditions:conditions };
   }
 
   /* --- Dépôt : lecture réelle du PDF puis repli --- */
@@ -11608,7 +11621,9 @@ ${lignes}
         if(!amounts){ var ex=extractFromFile(nom); amounts={ttc:ex.ttc,taux:ex.taux,numero:ex.numero,tva:null,ht:null};
           src=isPdf?'nom de fichier (PDF non lisible)':(isImg?'nom de fichier (OCR image indisponible)':'nom de fichier'); }
         var taux=amounts.taux||20; var ttc=amounts.ttc; var net=r2(ttc/(1+taux/100)); var tva=r2(ttc-net);
-        dep.numero=amounts.numero||''; dep.dateFacture=todayStr(); dep.taux=taux; dep.ht=net; dep.tva=tva; dep.ttc=ttc; dep.auto=true; dep.lecture=src;
+        dep.numero=amounts.numero||''; dep.dateEmission=amounts.dateEmission||todayStr(); dep.dateFacture=dep.dateEmission;
+        dep.echeance=amounts.echeance||''; dep.conditions=amounts.conditions||'';
+        dep.taux=taux; dep.ht=net; dep.tva=tva; dep.ttc=ttc; dep.auto=true; dep.lecture=src;
       }
       dstore().push(dep);
       nstore().push({ id:uid(), date:todayStr(), cat:cat, depotId:dep.id, nom:nom, doublon:dep.doublon, lu:false });
