@@ -10586,7 +10586,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v169 · noir & bleu';
+    b.textContent='YADA · v170 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -13239,10 +13239,10 @@ ${lignes}
    après chaque rendu via greffes sur render/ecRender/ouvrirCompteLecture/clNav).
    ============================================================ */
 (function(){
-  var WM={ KEY:'yada-wm', st:{ sg:{}, lx:{}, cl:{}, ec:{} } };
-  try{ var saved=JSON.parse(localStorage.getItem(WM.KEY)||'null'); if(saved){ ['sg','lx','cl','ec'].forEach(function(k){ if(saved[k]) WM.st[k]=saved[k]; }); } }catch(e){}
+  var WM={ KEY:'yada-wm', st:{ sg:{}, lx:{}, cl:{}, ec:{}, rb:{}, cp:{}, im:{} } };
+  try{ var saved=JSON.parse(localStorage.getItem(WM.KEY)||'null'); if(saved){ ['sg','lx','cl','ec','rb','cp','im'].forEach(function(k){ if(saved[k]) WM.st[k]=saved[k]; }); } }catch(e){}
   /* md (modales = sous-pages) = état éphémère, non persisté */
-  function wmSave(){ try{ localStorage.setItem(WM.KEY, JSON.stringify({sg:WM.st.sg,lx:WM.st.lx,cl:WM.st.cl,ec:WM.st.ec})); }catch(e){} }
+  function wmSave(){ try{ localStorage.setItem(WM.KEY, JSON.stringify({sg:WM.st.sg,lx:WM.st.lx,cl:WM.st.cl,ec:WM.st.ec,rb:WM.st.rb,cp:WM.st.cp,im:WM.st.im})); }catch(e){} }
   function wmDefault(){ var vw=window.innerWidth||1200, vh=window.innerHeight||800;
     var w=Math.min(1040, vw-80), h=Math.min(640, vh-100);
     return {x:Math.round((vw-w)/2), y:Math.round((vh-h)/2), w:w, h:h}; }
@@ -13253,6 +13253,9 @@ ${lignes}
       {k:'lx', el:document.querySelector('#main .lx-app'),         title:'.lx-title',     overlay:null},
       {k:'cl', el:document.querySelector('#cl-overlay .lx-app'),   title:'.lx-title',     overlay:document.getElementById('cl-overlay')},
       {k:'ec', el:document.querySelector('#ec-overlay .ec-win'),   title:'.ec-titlebar',  overlay:document.getElementById('ec-overlay')},
+      {k:'rb', el:document.querySelector('#main .rb-app'),         title:'.rb-title',     overlay:null},
+      {k:'cp', el:document.querySelector('#main .cp-wrap'),        title:'.cp-topbar',    overlay:null},
+      {k:'im', el:document.querySelector('#main .im-app'),         title:'.im-title',     overlay:null},
       {k:'md', el:document.querySelector('#modal.show #modal-c'),  title:'.modal-h',      overlay:document.getElementById('modal')}
     ].filter(function(t){ return t.el; });
   }
@@ -13343,10 +13346,11 @@ ${lignes}
 
   /* ---- injection des contrôles + handles + réapplication géométrie ---- */
   function ctrlAnchor(k, titleEl){
-    if(k==='sg') return {parent:titleEl.querySelector('.sg-win'), mode:'prepend'};
+    if(k==='sg'||k==='im') return {parent:titleEl.querySelector('.sg-win'), mode:'prepend'};
     if(k==='ec') return {parent:titleEl.querySelector('.ec-winbtn'), mode:'prepend'};
     if(k==='cl'){ var x=titleEl.querySelector('.cl-x'); if(x) return {parent:titleEl, before:x, mode:'before'}; }
     if(k==='md'){ var mx=titleEl.querySelector('.x'); if(mx) return {parent:titleEl, before:mx, mode:'before'}; }
+    if(k==='cp') return {parent:titleEl, mode:'append'};
     var sp=titleEl.querySelector('span'); return {parent:sp||titleEl, mode:'prepend'};
   }
   function mkBtn(label, title, fn){ var b=document.createElement('button'); b.className='wm-b'; b.type='button'; b.textContent=label; b.title=title;
@@ -13361,6 +13365,7 @@ ${lignes}
       var a=ctrlAnchor(k, titleEl);
       try{
         if(a.mode==='before' && a.before) a.parent.insertBefore(ctr, a.before);
+        else if(a.mode==='append' && a.parent) a.parent.appendChild(ctr);
         else if(a.parent) a.parent.insertBefore(ctr, a.parent.firstChild);
         else titleEl.appendChild(ctr);
       }catch(e){ titleEl.appendChild(ctr); }
@@ -13393,7 +13398,7 @@ ${lignes}
       +'background:linear-gradient(135deg,transparent 0 45%,rgba(120,120,120,.55) 45% 55%,transparent 55% 64%,rgba(120,120,120,.55) 64% 74%,transparent 74%)}'
     +'.wm-float>.wm-resize,.sg-app.sg-reduit>.wm-resize{display:block}'
     +'.wm-float{box-shadow:0 18px 52px rgba(0,0,0,.5);border-radius:9px;overflow:hidden}'
-    +'main.fullbleed .lx-app.wm-float{border:1px solid #6f6f6f}'
+    +'main.fullbleed .lx-app.wm-float,main.fullbleed .rb-app.wm-float,main.fullbleed .cp-wrap.wm-float,main.fullbleed .im-app.wm-float{border:1px solid #6f6f6f}'
     +'#cl-overlay.wm-floating,#ec-overlay.wm-floating{background:transparent;pointer-events:none}'
     +'#cl-overlay.wm-floating .lx-app,#ec-overlay.wm-floating .ec-win{pointer-events:auto}'
     +'body[data-theme="noir"] .wm-resize{background:linear-gradient(135deg,transparent 0 45%,rgba(30,144,255,.6) 45% 55%,transparent 55% 64%,rgba(30,144,255,.6) 64% 74%,transparent 74%)}';
