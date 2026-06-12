@@ -6041,7 +6041,7 @@ function pageCompta(){
       rows+=`<tr style="background:#eef1f4"><td colspan="4" style="font-weight:700;color:#0a5ec2">${cl}. ${CLASSES[cl]||''}</td></tr>`;
       let cd=0,cc=0;
       byClass[cl].forEach(a=>{ cd+=a.debit; cc+=a.credit;
-        rows+=`<tr class="${a.code9===sgRow?'on':''}" onclick="sgSelRow('${a.code9}')" ondblclick="ouvrirEcrituresCompte('${a.code9}')" style="cursor:pointer" title="Double-clic : éditer les écritures du compte"><td>${a.code9}</td><td>${a.lib} (${a.n})</td><td class="sg-amt">${a.sens==='S'?'':sageNum(a.solde)}</td><td class="sg-sens">${a.sens}</td></tr>`; });
+        rows+=`<tr class="sg-tier ${a.code9===sgRow?'on':''}" onclick="ouvrirCompteLecture('${a.code9}')" style="cursor:pointer" title="Cliquer : ouvrir le compte (lecture seule) — clic droit sur une ligne pour aller au journal"><td class="sg-tier-code">${a.code9}</td><td>${a.lib} (${a.n})</td><td class="sg-amt">${a.sens==='S'?'':sageNum(a.solde)}</td><td class="sg-sens">${a.sens}</td></tr>`; });
       const s=r2(cd-cc);
       rows+=`<tr style="font-weight:700;background:#f4f4f4"><td></td><td>Total ${cl}</td><td class="sg-amt">${Math.abs(s)<0.005?'':sageNum(Math.abs(s))}</td><td class="sg-sens">${Math.abs(s)<0.005?'S':(s>0?'D':'C')}</td></tr>`;
     });
@@ -10586,7 +10586,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v166 · noir & bleu';
+    b.textContent='YADA · v167 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -13046,15 +13046,15 @@ ${lignes}
    - Les lignes ne sont PAS modifiables. Pour modifier : CLIC DROIT sur une ligne →
      « Journal » → redirection vers l'éditeur d'écritures (le journal). Le compte en
      lecture reste ouvert : on ne le ferme QU'AVEC le bouton de fermeture.
-   - Valable pour TOUS les comptes fournisseurs et clients enregistrés & utilisés.
+   - Valable pour TOUS les comptes fournisseurs et clients enregistrés & utilisés,
+     ET pour les COMPTES GÉNÉRAUX (grand-livre du compte général, lecture seule).
    100% additif (overlay propre #cl-overlay, aucune modification des données).
    ============================================================ */
 (function(){
   window.clCode=null;
   function tiersDe(code){ try{ return db.tiers.find(function(x){ return sageCode(x)===code; }); }catch(e){ return null; } }
   window.ouvrirCompteLecture=function(code){
-    var t=tiersDe(code);
-    if(!t){ if(typeof toast==='function') toast('Compte de tiers introuvable'); return; }
+    if(!code){ return; }
     window.clCode=code;
     var ov=document.getElementById('cl-overlay');
     if(!ov){ ov=document.createElement('div'); ov.id='cl-overlay'; document.body.appendChild(ov); }
@@ -13062,11 +13062,25 @@ ${lignes}
   };
   window.clFermer=function(){ var ov=document.getElementById('cl-overlay'); if(ov) ov.classList.remove('show'); clMenuClose(); };
   window.clMenuClose=function(){ var m=document.getElementById('cl-ctx'); if(m) m.classList.remove('show'); };
+  /* Grand-livre d'un compte général (toutes les écritures qui le touchent), trié par date. */
+  function clLignesGeneral(code){
+    var out=[]; var k=(typeof c9==='function'?c9(code):code);
+    (db.ecritures||[]).slice().sort(function(a,b){ return a.date<b.date?-1:(a.date>b.date?1:0); }).forEach(function(e){
+      (e.lignes||[]).forEach(function(l){
+        if(l.compte!==code && !(typeof c9==='function' && c9(l.compte)===k)) return;
+        out.push({ ecritureId:e.id, date:e.date, journal:e.journal,
+          piece:(e.libelle||'').split(' · ')[0], lib:e.libelle, debit:l.debit||0, credit:l.credit||0, lettre:l.lettre||'' });
+      });
+    });
+    return out;
+  }
   function clRender(){
     var ov=document.getElementById('cl-overlay'); if(!ov) return;
-    var t=tiersDe(window.clCode); if(!t){ window.clFermer(); return; }
-    var code=sageCode(t);
-    var lignes=(typeof auxLignes==='function')?auxLignes(t):[];
+    if(!window.clCode){ window.clFermer(); return; }
+    var t=tiersDe(window.clCode);
+    var code, nom, lignes;
+    if(t){ code=sageCode(t); nom=t.nom||''; lignes=(typeof auxLignes==='function')?auxLignes(t):[]; }
+    else { code=window.clCode; nom=(COMPTES[code]||COMPTES[String(code).replace(/0+$/,'')]||''); lignes=clLignesGeneral(code); }
     var solde=0, TD=0, TC=0;
     var rows=lignes.map(function(l){
       solde=r2(solde+l.debit-l.credit); TD+=l.debit; TC+=l.credit;
@@ -13086,7 +13100,7 @@ ${lignes}
     var sF=r2(TD-TC); var sens=Math.abs(sF)<0.005?'S':(sF>0?'D':'C');
     var dossier=(db.societe&&db.societe.dossierNom)||'YADA';
     ov.innerHTML='<div class="lx-app cl-app">'
-      +'<div class="lx-title">'+dossier+' — Compte '+code+' ('+(t.nom||'')+') · lecture seule'
+      +'<div class="lx-title">'+dossier+' — Compte '+code+(nom?(' ('+nom+')'):'')+' · lecture seule'
         +'<span class="cl-x" onclick="clFermer()" title="Fermer la page">✕</span></div>'
       +'<div class="lx-bar">'
         +'<button class="btn btn-ghost btn-sm" onclick="clFermer()">Fermer</button>'
