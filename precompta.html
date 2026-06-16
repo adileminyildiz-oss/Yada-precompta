@@ -8869,8 +8869,16 @@ function ecRender(){
   let body='';
   if(!list.length){
     body='<tr><td colspan="11" style="text-align:center;padding:26px;color:#999">Aucune écriture ne touche ce compte.</td></tr>';
-  } else list.forEach(e=>{
+  } else list.forEach((e, idx)=>{
     const t=ecTot(e); const ok=Math.abs(t.diff)<0.005 && (t.d>0||t.c>0); if(!ok) allOk=false;
+    const jl=(e.journal==='ACH'?'HA':e.journal==='VTE'?'VT':(e.journal||''));
+    /* En-tête de séparation : chaque écriture est un bloc distinct et singulier. */
+    body+=`<tr class="ec-ecr-sep ${ok?'is-ok':'is-ko'}"><td colspan="11">
+        <span class="ec-ecr-badge">Écriture ${idx+1} / ${nEcr}</span>
+        <span class="ec-ecr-piece">${ecAttr(ecPiece(e))}</span>
+        <span class="ec-ecr-meta">${frDate(e.date)} · ${jl}</span>
+        <span class="ec-ecr-state ${ok?'ok':'ko'}">${ok?'Équilibrée ✓':'À équilibrer'}</span>
+      </td></tr>`;
     e.lignes.forEach((l,i)=>{
       const first=i===0; const mine=ecMatch(l.compte, ecCode);
       if(mine) solde=r2(solde + (+l.debit||0) - (+l.credit||0));
@@ -10598,7 +10606,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v172 · noir & bleu';
+    b.textContent='YADA · v173 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -13606,6 +13614,35 @@ ${lignes}
     +'.ec-sage .ec-status{background:#0a1422 !important;border-top:1px solid #16212e !important;color:#9fb6d0 !important}'
     +'.ec-sage .ec-status *{color:#9fb6d0 !important;-webkit-text-fill-color:#9fb6d0 !important}'
     +'.ec-sage .ec-brand{color:#cfe0f5 !important}';
+    document.head.appendChild(st); }catch(e){}
+})();
+</script>
+
+<script id="yada-addon92">
+/* ============================================================
+   ÉDITEUR D'ÉCRITURES — différenciation de CHAQUE écriture.
+   Quand un compte regroupe plusieurs écritures, chacune devient un BLOC
+   distinct et singulier : en-tête « Écriture i / N · Pièce · date · journal »
+   + état Équilibrée ✓ / À équilibrer, séparateur bleu net, pied espacé.
+   100% additif (CSS ; l'en-tête ligne est généré par ecRender).
+   ============================================================ */
+(function(){
+  try{ var st=document.createElement('style'); st.id='ec-ecr-mod'; st.textContent=
+    /* bande d'en-tête de chaque écriture */
+    '.ec-table tbody tr.ec-ecr-sep td{background:linear-gradient(90deg,rgba(30,144,255,.22),rgba(30,144,255,.05)) !important;'
+      +'border-top:3px solid #1e90ff !important;border-bottom:1px solid #16212e !important;padding:7px 12px !important;white-space:nowrap}'
+    +'.ec-table tbody tr.ec-ecr-sep.is-ko td{background:linear-gradient(90deg,rgba(255,160,80,.22),rgba(255,160,80,.05)) !important;border-top-color:#ffae5a !important}'
+    +'.ec-ecr-badge{display:inline-block;background:#1e90ff;color:#fff !important;-webkit-text-fill-color:#fff !important;font-weight:700;font-size:11px;padding:2px 9px;border-radius:11px;margin-right:11px}'
+    +'.ec-ecr-sep.is-ko .ec-ecr-badge{background:#ffae5a;color:#241400 !important;-webkit-text-fill-color:#241400 !important}'
+    +'.ec-ecr-piece{font-weight:700;color:#eaf2ff !important;-webkit-text-fill-color:#eaf2ff !important;margin-right:12px;font-family:"IBM Plex Mono",monospace}'
+    +'.ec-ecr-meta{color:#9fb6d0 !important;-webkit-text-fill-color:#9fb6d0 !important;margin-right:12px;font-size:11.5px}'
+    +'.ec-ecr-state{font-weight:700;font-size:11.5px}'
+    +'.ec-ecr-state.ok{color:#7fe3b4 !important;-webkit-text-fill-color:#7fe3b4 !important}'
+    +'.ec-ecr-state.ko{color:#ffd27a !important;-webkit-text-fill-color:#ffd27a !important}'
+    /* pied de chaque écriture : espacement clair avant la suivante */
+    +'.ec-table tbody tr.ec-act td{padding:7px 10px 12px !important}'
+    +'.ec-table tbody tr.ec-redrow td{padding:0 !important}'
+    +'.ec-table tbody tr.ec-redrow .ec-soldee{border-top:1px dashed #24405d !important;height:0;margin:0}';
     document.head.appendChild(st); }catch(e){}
 })();
 </script>
