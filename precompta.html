@@ -10633,7 +10633,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v182 · noir & bleu';
+    b.textContent='YADA · v183 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -14530,7 +14530,25 @@ ${lignes}
   var KEY='yada-cloud', TSK='yada-cloud-ts';
   var cloudApplying=false, cloudPushTimer=null;
   function cfg(){ try{ var v=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){ v=null; }
-    v=v||{}; return { url:(v.url||'').replace(/\/+$/,''), key:v.key||'', table:v.table||'yada_sync', espace:v.espace||'yada-aemconseil', enabled:!!v.enabled }; }
+    v=v||{}; return { url:(v.url||'').replace(/\/+$/,''), key:v.key||'', table:v.table||'yada_sync', espace:v.espace||'yada-aemconseil', enabled:!!v.enabled,
+      encrypt:(v.encrypt!==false), pass:v.pass||'' }; }
+  /* ---- Chiffrement de bout en bout (AES-256-GCM + PBKDF2) — clé jamais envoyée ---- */
+  function b64(buf){ var s=''; var b=new Uint8Array(buf); for(var i=0;i<b.length;i++) s+=String.fromCharCode(b[i]); return btoa(s); }
+  function ub64(str){ var s=atob(str); var b=new Uint8Array(s.length); for(var i=0;i<s.length;i++) b[i]=s.charCodeAt(i); return b; }
+  function deriveKey(pass, salt){ var enc=new TextEncoder();
+    return crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey'])
+      .then(function(base){ return crypto.subtle.deriveKey({name:'PBKDF2', salt:salt, iterations:150000, hash:'SHA-256'}, base, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']); }); }
+  function encryptStr(plain, pass){
+    if(!pass || !(window.crypto&&crypto.subtle)) return Promise.resolve(plain);
+    var salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12));
+    return deriveKey(pass, salt).then(function(key){ return crypto.subtle.encrypt({name:'AES-GCM', iv:iv}, key, new TextEncoder().encode(plain)); })
+      .then(function(ct){ var c=new Uint8Array(ct); var buf=new Uint8Array(16+12+c.length); buf.set(salt,0); buf.set(iv,16); buf.set(c,28); return 'enc1:'+b64(buf); }); }
+  function decryptStr(payload, pass){
+    if(typeof payload!=='string' || payload.indexOf('enc1:')!==0) return Promise.resolve(payload); /* données en clair (legacy) */
+    if(!pass || !(window.crypto&&crypto.subtle)) return Promise.reject(new Error('Phrase secrète requise'));
+    var buf=ub64(payload.slice(5)); var salt=buf.slice(0,16), iv=buf.slice(16,28), ct=buf.slice(28);
+    return deriveKey(pass, salt).then(function(key){ return crypto.subtle.decrypt({name:'AES-GCM', iv:iv}, key, ct); })
+      .then(function(pt){ return new TextDecoder().decode(pt); }); }
   window.cloudCfg=cfg;
   function setCfg(o){ try{ localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){} }
   function status(txt){ try{ var el=document.getElementById('yada-cloud-ind'); if(!el){ el=document.createElement('div'); el.id='yada-cloud-ind'; document.body.appendChild(el); }
@@ -14555,11 +14573,13 @@ ${lignes}
   window.cloudPushNow=function(){
     var c=cfg(); if(!c.enabled||!c.url||!c.key){ return Promise.resolve(false); }
     if(cloudApplying) return Promise.resolve(false);
+    if(c.encrypt && !c.pass){ status('🔒 Phrase secrète manquante — envoi annulé'); return Promise.resolve(false); }
     try{ if(typeof persistActif==='function') persistActif(); }catch(e){}
-    var ts=Date.now(); var dataStr=JSON.stringify(db);
-    var body=[{ id:c.espace, data:dataStr, ts:ts, updated_at:new Date().toISOString() }];
-    return cloudFetch('POST', '/rest/v1/'+encodeURIComponent(c.table)+'?on_conflict=id', body, {'Prefer':'resolution=merge-duplicates,return=minimal'})
-      .then(function(){ localStorage.setItem(TSK, String(ts)); status('☁ Enregistré dans le cloud'); return true; })
+    var ts=Date.now(); var plain=JSON.stringify(db);
+    return (c.encrypt? encryptStr(plain, c.pass) : Promise.resolve(plain)).then(function(payload){
+      var body=[{ id:c.espace, data:payload, ts:ts, enc:(c.encrypt?1:0), updated_at:new Date().toISOString() }];
+      return cloudFetch('POST', '/rest/v1/'+encodeURIComponent(c.table)+'?on_conflict=id', body, {'Prefer':'resolution=merge-duplicates,return=minimal'})
+        .then(function(){ localStorage.setItem(TSK, String(ts)); status(c.encrypt?'🔒 Enregistré (chiffré) dans le cloud':'☁ Enregistré dans le cloud'); return true; }); })
       .catch(function(e){ status('☁ Échec de l\'envoi'); return false; });
   };
   window.cloudPull=function(silencieux){
@@ -14567,8 +14587,11 @@ ${lignes}
     return cloudFetch('GET', '/rest/v1/'+encodeURIComponent(c.table)+'?id=eq.'+encodeURIComponent(c.espace)+'&select=data,ts', null, {})
       .then(function(rows){ if(!rows||!rows.length){ if(!silencieux) status('☁ Aucune donnée cloud'); return false; }
         var remote=rows[0]; var localTs=parseInt(localStorage.getItem(TSK)||'0',10)||0;
-        if((remote.ts||0) > localTs){ var ok=applyRemote(remote.data, remote.ts); status(ok?'☁ Dernier enregistrement reçu ✓':'☁ Réception impossible'); if(ok&&typeof toast==='function') toast('Dernier enregistrement récupéré depuis le cloud ✓'); return ok; }
-        if(!silencieux) status('☁ Déjà à jour'); return false;
+        if((remote.ts||0) <= localTs){ if(!silencieux) status('☁ Déjà à jour'); return false; }
+        return decryptStr(remote.data, c.pass).then(function(clear){
+          var ok=applyRemote(clear, remote.ts); status(ok?(c.encrypt?'🔒 Dernier enregistrement déchiffré ✓':'☁ Dernier enregistrement reçu ✓'):'☁ Réception impossible');
+          if(ok&&typeof toast==='function') toast('Dernier enregistrement récupéré depuis le cloud ✓'); return ok;
+        }).catch(function(){ status('🔒 Phrase secrète invalide — données protégées non déchiffrées'); if(typeof toast==='function') toast('Phrase secrète invalide : impossible de déchiffrer les données du cloud.'); return false; });
       }).catch(function(){ if(!silencieux) status('☁ Hors-ligne / non configuré'); return false; });
   };
   window.cloudSyncNow=function(){ status('☁ Synchronisation…'); return window.cloudPull(true).then(function(){ return window.cloudPushNow(); }); };
@@ -14592,8 +14615,9 @@ ${lignes}
   /* ---- Réglages (carte greffée dans Paramétrage) ---- */
   window.cloudSaveCfg=function(){
     var g=function(id){ var e=document.getElementById(id); return e?e.value.trim():''; };
-    var en=document.getElementById('cloud-enabled');
-    setCfg({ url:g('cloud-url'), key:g('cloud-key'), table:g('cloud-table')||'yada_sync', espace:g('cloud-espace')||'yada-aemconseil', enabled: en?en.checked:false });
+    var en=document.getElementById('cloud-enabled'); var enc=document.getElementById('cloud-encrypt');
+    setCfg({ url:g('cloud-url'), key:g('cloud-key'), table:g('cloud-table')||'yada_sync', espace:g('cloud-espace')||'yada-aemconseil',
+      enabled: en?en.checked:false, encrypt: enc?enc.checked:true, pass:g('cloud-pass') });
     if(typeof toast==='function') toast('Configuration de synchronisation enregistrée'); if(typeof render==='function') render();
   };
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
@@ -14612,6 +14636,13 @@ ${lignes}
         +'<div class="field"><label>Clé d\'espace (identique sur tous vos appareils)</label><input id="cloud-espace" value="'+esc(c.espace)+'"></div>'
         +'<div class="field" style="display:flex;align-items:flex-end"><label class="md-check" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="cloud-enabled" '+(c.enabled?'checked':'')+'> <b>Activer la synchronisation</b></label></div>'
       +'</div>'
+      +'<div class="cloud-sec"><div class="cloud-sec-h">🔒 Chiffrement de bout en bout (recommandé)</div>'
+        +'<div class="row g2" style="align-items:end">'
+          +'<div class="field"><label class="md-check" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="cloud-encrypt" '+(c.encrypt?'checked':'')+'> <b>Chiffrer les données avant l\'envoi</b></label></div>'
+          +'<div class="field"><label>Phrase secrète de chiffrement (jamais envoyée)</label><input id="cloud-pass" type="password" autocomplete="new-password" placeholder="votre phrase secrète" value="'+esc(c.pass)+'"></div>'
+        +'</div>'
+        +'<div class="mini">Les données sont chiffrées <b>sur votre appareil</b> (AES‑256‑GCM) : le cloud ne stocke qu\'un blob illisible. Utilisez la <b>même phrase secrète sur tous vos appareils</b>. ⚠️ Sans cette phrase, les données sont <b>irrécupérables</b> (aucune réinitialisation possible).</div>'
+      +'</div>'
       +'<div class="right" style="gap:8px;display:flex;flex-wrap:wrap;justify-content:flex-end">'
         +'<span id="cloud-status" class="cloud-status"></span>'
         +'<button class="btn btn-ghost" onclick="cloudSaveCfg()">Enregistrer la configuration</button>'
@@ -14623,7 +14654,8 @@ ${lignes}
         +'<li>Dans <b>Project Settings → API</b> : copiez <b>Project URL</b> et la clé <b>anon public</b> (à coller ci-dessus).</li>'
         +'<li>Dans <b>SQL Editor</b>, exécutez :</li></ol>'
         +'<pre class="cloud-sql">'+esc(sql)+'</pre>'
-        +'<p class="mini">Utilisez la <b>même URL, clé et clé d\'espace</b> sur chaque appareil. La clé anon est publique : ces données ne sont protégées que par votre clé d\'espace — pour un usage strictement personnel.</p>'
+        +'<p class="mini">Utilisez la <b>même URL, clé, clé d\'espace et phrase secrète</b> sur chaque appareil. La clé anon est publique, mais avec le <b>chiffrement de bout en bout activé</b>, le cloud ne contient qu\'un blob chiffré : illisible sans votre phrase secrète.</p>'
+        +'<p class="mini">Pour renforcer encore : créez la table avec une policy restreinte (par ex. limitée à la valeur de votre clé d\'espace) plutôt que « anon all ».</p>'
       +'</details>'
       +'</div>';
   }
@@ -14635,6 +14667,8 @@ ${lignes}
     '#yada-cloud-ind{position:fixed;left:12px;bottom:46px;z-index:9998;display:none;background:linear-gradient(120deg,#10243a,#0a64d6);color:#fff;font:600 11.5px system-ui,sans-serif;padding:6px 12px;border-radius:9px;box-shadow:0 6px 18px rgba(0,0,0,.4)}'
     +'.cloud-card .sub{font-size:12.5px;color:#9fb6d0;margin:2px 0 12px}'
     +'.cloud-status{font-size:12px;color:#5ab0ff;align-self:center;margin-right:auto}'
+    +'.cloud-sec{margin:10px 0;padding:10px 12px;border:1px solid rgba(30,144,255,.3);border-radius:10px;background:rgba(30,144,255,.05)}'
+    +'.cloud-sec-h{font-weight:700;font-size:12.5px;color:#9fd0ff;margin-bottom:6px}'
     +'.cloud-help{margin-top:12px;font-size:12.5px}.cloud-help summary{cursor:pointer;color:#5ab0ff;font-weight:600}'
     +'.cloud-sql{white-space:pre-wrap;background:#0b1118;border:1px solid #24405d;border-radius:8px;padding:10px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:#cfe0f5;overflow:auto}';
     document.head.appendChild(st); }catch(e){}
