@@ -4,7 +4,27 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Facture Client : aperçu A4 en direct + indemnité de recouvrement 40 € — v189
+## 🟢 Dernière mise à jour — Charges & Paie : bulletins de paie éditables (modèle français) + OD de paie multi-mois — v190
+**Quoi :** un module **Bulletins de paie** dans Charges & Paie qui **génère des fiches de paie au modèle français** dont **tous les éléments sont modifiables** (gains, cotisations salariales & patronales, primes, PAS), pour **plusieurs salariés** et **plusieurs mois**, avec **récupération de plusieurs bulletins déposés** et alimentation automatique du **Journal de paie** (addon93) pour produire les **OD de paie**.
+
+**Pourquoi :** l'utilisateur veut que YADA repère les bulletins de paie déposés, génère des fiches de paie entièrement éditables (sur le modèle fourni), récupère les informations de plusieurs fiches et de plusieurs mois de journal de paie pour les OD.
+
+**Ce qu'il fait (description fonctionnelle) :**
+- **Fiche de paie éditable** (`yada-addon106`) : création/édition d'un bulletin au modèle français (employeur depuis `db.societe`, salarié, gains avec nombre/taux/montant, **table de cotisations** où base, taux salarial, part salariale, taux patronal, part patronale sont **tous modifiables** — ajout/suppression de lignes), primes non soumises (panier, Navigo), **PAS** (taux ou montant). Totaux en direct : brut, cotisations salariales, **net imposable**, **net à payer**, charges patronales, coût employeur.
+- **Aperçu A4 + impression** du bulletin (`bpVoir`/`bpImprimer`).
+- **Multi-salariés / multi-mois** : chaque fiche est rattachée à un mois ; la liste du mois affiche brut/net imposable/net à payer/charges patronales + totaux.
+- **Dépôt de plusieurs bulletins** : `bpDepot` (sélection multiple) stocke dans `db.parametres.pieces` (cat `bulletin`) ; **OCR auto quand connecté** (réutilise `window.ocrImage`) → crée une fiche pré-remplie ; repli saisie manuelle (scans sans couche texte).
+- **OD de paie du mois** : `bpGenererODMois` **agrège toutes les fiches du mois**, reporte les totaux dans `db.parametres.paieJournal[mois]` (clés `brut/urssaf/csg/prev/panier/navigo/pas`) et appelle **`pjGenerer`** (addon93) → écriture **OD PAIE équilibrée** (641 / 6451 / 6453 / 648 / 4421 / 421).
+
+**Où / comment (description technique) :**
+- `yada-addon106` : greffe sur `pageChargesPaie` (injection de `bpCard()` avant la carte `.pj-card`). Données dans `db.parametres.bulletins.fiches[]` (chaque fiche : salarié, `gains[]`, `cotis[]` avec org `urssaf/prev/csg` + `ded`, panier/navigo/PAS). `bpCalc(f)` calcule brut/net/charges + les clés du Journal de paie ; `bpGenererODMois` agrège puis délègue à `pjGenerer` (réutilisation testée, OD garantie équilibrée). Rendu A4 `bpBulletinHTML`, CSS `<style id="bp-mod">`. 100% additif.
+- Badge de version → **v190**.
+
+**Limites assumées :** les **taux de cotisation par défaut sont indicatifs** (modèle simplifié 2024) et **entièrement modifiables** ligne par ligne ; l'OCR des bulletins **scannés (images)** nécessite le réseau (Tesseract.js, addon52), les PDF scannés sans couche texte → saisie manuelle ; l'OD de paie suit le mapping pré-compta de l'addon93 (net à payer en équilibrage), garanti équilibré.
+
+---
+
+## 🟢 MAJ précédente — Facture Client : aperçu A4 en direct + indemnité de recouvrement 40 € — v189
 **Quoi :** deux finitions du module **Facture Client** : (1) une **prévisualisation au format A4 mise à jour en direct** pendant la création d'une facture/devis, et (2) l'ajout automatique de l'**indemnité forfaitaire de recouvrement (40 €)** au montant dû de chaque facture **en retard** dans le **Suivi des règlements**.
 
 **Pourquoi :** l'utilisateur veut voir la facture exactement telle qu'elle sera imprimée pendant qu'il la saisit (désignations, RIB, conditions), et veut que le montant réclamé en cas d'impayé inclue l'indemnité de 40 € déjà mentionnée sur la facture (art. L441-10 / D441-5 du Code de commerce).
@@ -144,6 +164,7 @@ Feuille de route : voir **`ROADMAP.md`** (finalisation par module).
 - **`yada-addon103` (mise à jour automatique du système — même version partout)** : garantit que **toutes les surfaces / tous les appareils** convergent vers la **dernière version déployée**, jamais de système divergent. Vérifie périodiquement `version.json` (réseau, `cache:no-store`) + relance `serviceWorker.update()` ; si `remote.version > version courante` (badge), **enregistre les données puis recharge** (`applyUpdate`). Déclencheurs : démarrage (+6 s), toutes les 5 min, retour au premier plan (`visibilitychange`), reconnexion (`online`). Couplé au **SW « réseau d'abord »** (sw.js `CACHE yada-v4`, `version.json` réseau-seulement) et au **`controllerchange` → `save()` + reload**. `version.json` est **auto-généré par la CI** (`build-zip.yml`) depuis le badge de version → pas de dérive. 100% additif.
 - **`yada-addon104` (paramétrage de la facturation)** : carte « Paramètres de facturation » greffée sur `pageFacturation`/`pageFacturationClient` (`factParamCard`/`factParamSave`) persistant dans `db.societe` : **condition TVA** (encaissements/débits), **moyen de paiement par défaut** (CB/Espèces/Chèque/Virement), **indemnité de recouvrement** (40 € par défaut), **escompte** (taux + délai), **RIB** (bénéficiaire/IBAN/BIC). Supprime le tableau « suivi & validation » (`documentsClientsCard`→''). **Plafond année à 4 chiffres** sur les `<input type=date>` (`max=9999-12-31`).
 - **`yada-addon105` (facture — aperçu A4 en direct)** : sous le formulaire d'émission, panneau **« 📄 Aperçu de la facture (format A4 · mis à jour en direct) »** qui rend la vraie page A4 (`docHTML`) à chaque frappe. Greffe le **binding global** `faMaj` (`var _f=faMaj; faMaj=function(){…refreshA4();}`) → intercepte aussi l'appel interne de `render` (premier affichage) et chaque oninput/onchange. `draftDoc()` (champs `fa-*` + `faLignes` + `faTotaux` + `db.societe`), `ensureA4()` insère `#fa-a4-wrap`/`#fa-a4` après `#fa-apercu`, CSS `<style id="fa-a4-mod">`. N° prévisualisé sans consommer le compteur ; Qté masquée pour prestation. 100% additif (aucune écriture).
+- **`yada-addon106` (Charges & Paie — bulletins de paie éditables + OD multi-mois)** : module **Bulletins de paie** greffé sur `pageChargesPaie`. Génère/édite des **fiches de paie au modèle français entièrement modifiables** (gains, **table de cotisations** base/taux/part salariale & patronale, primes panier/Navigo, **PAS** taux ou montant) pour **plusieurs salariés et plusieurs mois** ; totaux en direct (brut, net imposable, net à payer, charges patronales, coût employeur) ; **aperçu A4 + impression** (`bpBulletinHTML`/`bpVoir`/`bpImprimer`). **Dépôt multiple de bulletins** (`bpDepot`, `db.parametres.pieces` cat `bulletin`, OCR auto si connecté → fiche pré-remplie). **OD de paie du mois** : `bpGenererODMois` agrège toutes les fiches du mois → `db.parametres.paieJournal[mois]` → **`pjGenerer`** (addon93) → OD PAIE équilibrée. Données `db.parametres.bulletins.fiches[]` ; CSS `<style id="bp-mod">`. 100% additif.
 
 ## Règles de travail (IMPÉRATIF)
 1. **Ajouter par-dessus l'existant sans rien casser.** Édition chirurgicale, jamais de réécriture globale. Les nouveautés = nouveaux **scripts d'extension** `yada-addonN` injectés avant `</body>` (greffe sur fonctions globales) + éventuels `<style id="...">` avant `</head>`.
