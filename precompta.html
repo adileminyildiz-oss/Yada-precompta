@@ -10644,7 +10644,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v189 · noir & bleu';
+    b.textContent='YADA · v190 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -14902,6 +14902,330 @@ ${lignes}
     +'.fa-a4-paper{background:#6b7280;background:rgba(120,130,150,.18);border:1px solid var(--line,rgba(255,255,255,.12));border-radius:12px;padding:18px;display:flex;justify-content:center;overflow:auto}'
     +'.fa-a4-paper .inv{transform:scale(.92);transform-origin:top center}'
     +'@media(max-width:820px){.fa-a4-paper{padding:8px}.fa-a4-paper .inv{transform:scale(.62);transform-origin:top left}}';
+    document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon106">
+/* ============================================================
+   CHARGES & PAIE — Bulletins de paie : génération & édition complète
+   (modèle français « bulletin simplifié »), multi-salariés, multi-mois,
+   récupération de plusieurs fiches déposées, alimentation du Journal de
+   paie (addon93) pour les OD de paie.
+   100% additif : greffe sur pageChargesPaie (injection dans .cp-scroll
+   après la carte Journal de paie). Réutilise paieJournal + pjGenerer.
+   ============================================================ */
+(function(){
+  if(typeof window.pageChargesPaie!=='function') return;
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];}); }
+  function n2(v){ var n=parseFloat(String(v==null?'':v).replace(/\s/g,'').replace(',','.')); return isNaN(n)?0:n; }
+  function R2(v){ return Math.round((n2(v)+Number.EPSILON)*100)/100; }
+  function bpMois(){ try{ if(typeof cpMois!=='undefined' && cpMois) return cpMois; }catch(e){} var L=moisExoListe(); return L[L.length-1]; }
+
+  function bpStore(){ if(!db.parametres)db.parametres={}; var b=db.parametres.bulletins=db.parametres.bulletins||{}; b.fiches=b.fiches||[]; return b; }
+  function bpFiches(){ return bpStore().fiches; }
+  function bpFichesMois(m){ return bpFiches().filter(function(f){ return f.mois===m; }); }
+  function bpGet(id){ return bpFiches().find(function(f){ return f.id===id; }); }
+
+  /* ---- rubriques de cotisation par défaut (modifiables) ---- */
+  function cotisDefaut(){
+    return [
+      {lib:'Sécurité sociale - Maladie',            base:'brut', txS:0,    txP:7.00, org:'urssaf', ded:true},
+      {lib:'Sécurité sociale - Vieillesse plafonnée',base:'brut',txS:6.90, txP:8.55, org:'urssaf', ded:true},
+      {lib:'Sécurité sociale - Vieillesse déplafonnée',base:'brut',txS:0.40,txP:2.02,org:'urssaf', ded:true},
+      {lib:'Allocations familiales',                base:'brut', txS:0,    txP:5.25, org:'urssaf', ded:true},
+      {lib:'Accident du travail',                   base:'brut', txS:0,    txP:2.00, org:'urssaf', ded:true},
+      {lib:'Assurance chômage',                     base:'brut', txS:0,    txP:4.05, org:'urssaf', ded:true},
+      {lib:'Retraite complémentaire (AGIRC-ARRCO)', base:'brut', txS:3.15, txP:4.72, org:'prev', ded:true},
+      {lib:'Contribution équilibre général (CEG)',  base:'brut', txS:0.86, txP:1.29, org:'prev', ded:true},
+      {lib:'Prévoyance BTP',                        base:'brut', txS:1.00, txP:1.50, org:'prev', ded:true},
+      {lib:'CSG déductible',                        base:'csg',  txS:6.80, txP:0,    org:'csg', ded:true},
+      {lib:'CSG/CRDS non déductible',               base:'csg',  txS:2.90, txP:0,    org:'csg', ded:false}
+    ];
+  }
+  function baseDe(kind, brut){ return kind==='csg' ? R2(brut*0.9825) : R2(brut); }
+  function recalcCotis(c, brut){
+    var b = (c.baseManuelle!=null) ? R2(c.baseManuelle) : baseDe(c.base, brut);
+    c.baseVal=b;
+    if(c.mSManuel==null) c.mS=R2(b*n2(c.txS)/100); else c.mS=R2(c.mSManuel);
+    if(c.mPManuel==null) c.mP=R2(b*n2(c.txP)/100); else c.mP=R2(c.mPManuel);
+    return c;
+  }
+
+  /* ---- création d'une fiche par défaut ---- */
+  function bpNouvelle(m){
+    var s=db.societe||{};
+    var brut=2000;
+    var f={ id:uid(), mois:m, nom:'', emploi:'', numSS:'', classification:'', statut:'Non cadre',
+      dateEntree:'', heures:151.67, txHoraire:R2(brut/151.67),
+      gains:[{lib:'Salaire de base', qte:151.67, pu:R2(brut/151.67), montant:brut, soumis:true}],
+      cotis:cotisDefaut(), panier:0, navigo:0, txPAS:0, pasManuel:null, note:'' };
+    f.cotis.forEach(function(c){ recalcCotis(c, brut); });
+    bpFiches().push(f); return f;
+  }
+
+  /* ---- calculs ---- */
+  function bpCalc(f){
+    var brut=R2((f.gains||[]).reduce(function(a,g){ return a+R2(n2(g.montant)); },0));
+    (f.cotis||[]).forEach(function(c){ recalcCotis(c, brut); });
+    var totSalDed=R2((f.cotis||[]).filter(function(c){return c.ded!==false;}).reduce(function(a,c){return a+R2(c.mS);},0));
+    var totSal=R2((f.cotis||[]).reduce(function(a,c){return a+R2(c.mS);},0));
+    var totPat=R2((f.cotis||[]).reduce(function(a,c){return a+R2(c.mP);},0));
+    var netImpo=R2(brut - totSalDed);
+    var pasBase=netImpo;
+    var pas = (f.pasManuel!=null) ? R2(f.pasManuel) : R2(pasBase*n2(f.txPAS)/100);
+    var panier=R2(n2(f.panier)), navigo=R2(n2(f.navigo));
+    var netAvantPAS=R2(brut - totSal);
+    var netAPayer=R2(netAvantPAS - pas + panier + navigo);
+    /* clés pour le Journal de paie (addon93) : org urssaf/csg/prev = sal+pat */
+    var urssaf=R2((f.cotis||[]).filter(function(c){return c.org==='urssaf';}).reduce(function(a,c){return a+R2(c.mS)+R2(c.mP);},0));
+    var csg=R2((f.cotis||[]).filter(function(c){return c.org==='csg';}).reduce(function(a,c){return a+R2(c.mS)+R2(c.mP);},0));
+    var prev=R2((f.cotis||[]).filter(function(c){return c.org==='prev';}).reduce(function(a,c){return a+R2(c.mS)+R2(c.mP);},0));
+    return { brut:brut, totSal:totSal, totSalDed:totSalDed, totPat:totPat, netImpo:netImpo,
+      pas:pas, panier:panier, navigo:navigo, netAPayer:netAPayer,
+      journal:{ brut:brut, urssaf:urssaf, csg:csg, prev:prev, panier:panier, navigo:navigo, pas:pas } };
+  }
+
+  /* ---- setters (tout est modifiable) ---- */
+  function persist(){ if(typeof save==='function')save(); if(typeof render==='function')render(); }
+  window.bpField=function(id,field,val){ var f=bpGet(id); if(!f)return; f[field]=val; persist(); };
+  window.bpNum=function(id,field,val){ var f=bpGet(id); if(!f)return; f[field]=R2(val); persist(); };
+  window.bpPasManuel=function(id,val){ var f=bpGet(id); if(!f)return; f.pasManuel = (String(val).trim()==='')?null:R2(val); persist(); };
+  window.bpGain=function(id,idx,field,val){ var f=bpGet(id); if(!f)return; var g=f.gains[idx]; if(!g)return;
+    if(field==='lib'){ g.lib=val; } else if(field==='soumis'){ g.soumis=!!val; }
+    else { g[field]=R2(val); g.montant=R2(n2(g.qte)*n2(g.pu)); if(field==='montant'){ g.montant=R2(val); } }
+    persist(); };
+  window.bpGainMontant=function(id,idx,val){ var f=bpGet(id); if(!f)return; var g=f.gains[idx]; if(!g)return; g.montant=R2(val); persist(); };
+  window.bpGainAdd=function(id){ var f=bpGet(id); if(!f)return; f.gains.push({lib:'', qte:1, pu:0, montant:0, soumis:true}); persist(); };
+  window.bpGainDel=function(id,idx){ var f=bpGet(id); if(!f)return; f.gains.splice(idx,1); if(!f.gains.length)f.gains.push({lib:'Salaire de base',qte:0,pu:0,montant:0,soumis:true}); persist(); };
+  window.bpCot=function(id,idx,field,val){ var f=bpGet(id); if(!f)return; var c=f.cotis[idx]; if(!c)return;
+    if(field==='lib'){ c.lib=val; }
+    else if(field==='org'){ c.org=val; }
+    else if(field==='base'){ c.base=val; c.baseManuelle=null; }
+    else if(field==='baseManuelle'){ c.baseManuelle = (String(val).trim()==='')?null:R2(val); }
+    else if(field==='txS'){ c.txS=R2(val); c.mSManuel=null; }
+    else if(field==='txP'){ c.txP=R2(val); c.mPManuel=null; }
+    else if(field==='mS'){ c.mSManuel = (String(val).trim()==='')?null:R2(val); }
+    else if(field==='mP'){ c.mPManuel = (String(val).trim()==='')?null:R2(val); }
+    persist(); };
+  window.bpCotAdd=function(id){ var f=bpGet(id); if(!f)return; f.cotis.push({lib:'Nouvelle cotisation', base:'brut', txS:0, txP:0, org:'urssaf', ded:true}); persist(); };
+  window.bpCotDel=function(id,idx){ var f=bpGet(id); if(!f)return; f.cotis.splice(idx,1); persist(); };
+
+  window.bpCreer=function(){ var f=bpNouvelle(bpMois()); window.bpEditId=f.id; persist(); };
+  window.bpEditer=function(id){ window.bpEditId=id; if(typeof render==='function')render(); };
+  window.bpFermerEdit=function(){ window.bpEditId=null; if(typeof render==='function')render(); };
+  window.bpSupprimer=function(id){ if(!confirm('Supprimer cette fiche de paie ?'))return;
+    var L=bpFiches(); var i=L.findIndex(function(f){return f.id===id;}); if(i>=0)L.splice(i,1);
+    if(window.bpEditId===id)window.bpEditId=null; persist(); };
+  window.bpDupliquerMoisSuivant=function(id){ var f=bpGet(id); if(!f)return; var L=moisExoListe();
+    var i=L.indexOf(f.mois); var nm=(i>=0 && i<L.length-1)?L[i+1]:f.mois;
+    var copie=JSON.parse(JSON.stringify(f)); copie.id=uid(); copie.mois=nm; bpFiches().push(copie);
+    window.bpEditId=copie.id; if(typeof toast==='function')toast('Fiche dupliquée sur '+moisLabel(nm)); persist(); };
+
+  /* ---- A4 bulletin de paie ---- */
+  function bpBulletinHTML(f){ var c=bpCalc(f); var s=db.societe||{};
+    var gains=(f.gains||[]).map(function(g){ return '<tr><td class="l">'+esc(g.lib)+'</td><td>'+(g.qte?n2(g.qte).toLocaleString('fr-FR'):'')+'</td><td>'+(g.pu?eur(g.pu):'')+'</td><td class="r">'+eur(g.montant)+'</td></tr>'; }).join('');
+    var cot=(f.cotis||[]).map(function(x){ return '<tr><td class="l">'+esc(x.lib)+'</td><td class="r">'+eur(x.baseVal||0)+'</td><td class="r">'+(n2(x.txS)?n2(x.txS).toLocaleString('fr-FR',{minimumFractionDigits:2})+' %':'')+'</td><td class="r">'+(x.mS?eur(x.mS):'—')+'</td><td class="r">'+(n2(x.txP)?n2(x.txP).toLocaleString('fr-FR',{minimumFractionDigits:2})+' %':'')+'</td><td class="r">'+(x.mP?eur(x.mP):'—')+'</td></tr>'; }).join('');
+    return '<div class="bp-page">'
+      +'<div class="bp-top"><div><div class="bp-emp">'+esc(s.raison||'—')+'</div><div class="bp-sub">'+esc(s.adresse||'')+' '+esc((s.cp||'')+' '+(s.ville||''))+'</div><div class="bp-sub">SIRET '+esc(s.siret||s.siren||'—')+'</div></div>'
+        +'<div class="bp-titre">Bulletin de paie<br><span>'+esc(moisLabel(f.mois))+'</span></div></div>'
+      +'<div class="bp-sal"><div><b>'+esc(f.nom||'Salarié')+'</b> · '+esc(f.emploi||'')+'</div>'
+        +'<div class="bp-sub">N° SS '+esc(f.numSS||'—')+' · '+esc(f.statut||'')+(f.classification?(' · '+esc(f.classification)):'')+(f.dateEntree?(' · entrée le '+frDate(f.dateEntree)):'')+'</div></div>'
+      +'<table class="bp-t"><thead><tr><th class="l">Gains</th><th>Nombre</th><th>Taux</th><th class="r">Montant</th></tr></thead><tbody>'+gains
+        +'<tr class="bp-st"><td class="l" colspan="3">Salaire brut</td><td class="r">'+eur(c.brut)+'</td></tr></tbody></table>'
+      +'<table class="bp-t"><thead><tr><th class="l">Cotisations</th><th class="r">Base</th><th class="r">Taux sal.</th><th class="r">Part salariale</th><th class="r">Taux pat.</th><th class="r">Part patronale</th></tr></thead><tbody>'+cot
+        +'<tr class="bp-st"><td class="l">Total cotisations</td><td class="r"></td><td class="r"></td><td class="r">'+eur(c.totSal)+'</td><td class="r"></td><td class="r">'+eur(c.totPat)+'</td></tr></tbody></table>'
+      +'<div class="bp-tot">'
+        +'<div><span>Salaire brut</span><span>'+eur(c.brut)+'</span></div>'
+        +'<div><span>Total cotisations salariales</span><span>- '+eur(c.totSal)+'</span></div>'
+        +'<div><span>Net imposable</span><span>'+eur(c.netImpo)+'</span></div>'
+        +(c.pas?('<div><span>Prélèvement à la source</span><span>- '+eur(c.pas)+'</span></div>'):'')
+        +(c.panier?('<div><span>Prime de panier</span><span>+ '+eur(c.panier)+'</span></div>'):'')
+        +(c.navigo?('<div><span>Remboursement transport (Navigo)</span><span>+ '+eur(c.navigo)+'</span></div>'):'')
+        +'<div class="bp-net"><span>Net à payer</span><span>'+eur(c.netAPayer)+'</span></div>'
+      +'</div>'
+      +'<div class="bp-foot">Total charges patronales : '+eur(c.totPat)+' · Coût total employeur : '+eur(R2(c.brut+c.totPat))+'</div>'
+      +'</div>';
+  }
+  window.bpVoir=function(id){ var f=bpGet(id); if(!f)return; var mc=document.getElementById('modal-c'); if(!mc)return;
+    mc.innerHTML='<div class="modal-h"><h3>Bulletin de paie — '+esc(f.nom||'Salarié')+' · '+esc(moisLabel(f.mois))+'</h3><button class="x" onclick="closeModal()">×</button></div>'
+      +'<div class="modal-b"><div class="bp-render">'+bpBulletinHTML(f)+'</div>'
+      +'<div class="right"><button class="btn btn-ghost" onclick="bpImprimer(\''+id+'\')">Télécharger / Imprimer PDF</button></div></div>';
+    document.getElementById('modal').classList.add('show'); };
+  window.bpImprimer=function(id){ var f=bpGet(id); if(!f)return; var pa=document.getElementById('print-area');
+    if(pa){ pa.innerHTML='<div class="bp-render">'+bpBulletinHTML(f)+'</div>'; } if(typeof toast==='function')toast('Fenêtre d\'impression → « Enregistrer en PDF »'); setTimeout(function(){window.print();},150); };
+
+  /* ---- alimentation du Journal de paie + OD ---- */
+  window.bpGenererODMois=function(m){
+    var fs=bpFichesMois(m); if(!fs.length){ if(typeof toast==='function')toast('Aucune fiche de paie pour '+moisLabel(m)+'.'); return; }
+    var agg={brut:0,urssaf:0,csg:0,prev:0,panier:0,navigo:0,pas:0};
+    fs.forEach(function(f){ var j=bpCalc(f).journal; Object.keys(agg).forEach(function(k){ agg[k]=R2(agg[k]+R2(j[k])); }); });
+    if(!db.parametres)db.parametres={}; var pj=db.parametres.paieJournal=db.parametres.paieJournal||{}; pj[m]=pj[m]||{};
+    Object.keys(agg).forEach(function(k){ pj[m][k]=agg[k]; });
+    if(typeof save==='function')save();
+    if(typeof window.pjGenerer==='function'){ window.pjGenerer(m); }
+    else { if(typeof toast==='function')toast('Montants reportés au Journal de paie — générez l\'OD depuis la carte Journal.'); if(typeof render==='function')render(); }
+  };
+
+  /* ---- dépôt de plusieurs bulletins ---- */
+  window.bpDepot=function(input){ var files=input&&input.files; if(!files||!files.length)return; var m=bpMois();
+    var todo=files.length, done=0;
+    [].forEach.call(files,function(file){ var rd=new FileReader(); rd.onload=function(){
+      try{ if(!db.parametres.pieces)db.parametres.pieces=[]; db.parametres.pieces.push({id:uid(), nom:file.name, type:file.type, data:rd.result, cat:'bulletin', mois:m, date:todayStr()}); }catch(e){}
+      done++; if(done>=todo){ if(typeof save==='function')save(); if(typeof toast==='function')toast(todo+' bulletin(s) déposé(s) pour '+moisLabel(m)+'. Analyse OCR si connecté, sinon créez les fiches manuellement.'); if(typeof render==='function')render(); }
+    }; rd.readAsDataURL(file); });
+  };
+  function bpDeposes(m){ try{ return (db.parametres&&db.parametres.pieces||[]).filter(function(p){ return p.cat==='bulletin' && p.mois===m; }); }catch(e){ return []; } }
+  window.bpAnalyserBulletin=function(pieceId){ var p=(db.parametres.pieces||[]).find(function(x){return x.id===pieceId;}); if(!p)return;
+    var isImg=/^image\//.test(p.type||'');
+    if(!navigator.onLine || typeof window.ocrImage!=='function' || !isImg){ if(typeof toast==='function')toast(navigator.onLine?'Reconnaissance auto : images uniquement (PDF scannés sans texte → créez la fiche manuellement).':'OCR indisponible hors-ligne — créez la fiche manuellement.'); return; }
+    if(typeof toast==='function')toast('Analyse du bulletin…');
+    Promise.resolve().then(function(){ return window.ocrImage(null, p.data); }).then(function(txt){
+      var T=(txt||'').toUpperCase(); function num(kw){ var re=new RegExp(kw+'[^0-9]{0,40}([0-9][0-9 .]*,[0-9]{2})'); var mm=T.match(re); if(!mm)return 0; var s=mm[1].replace(/\s/g,'').replace(/\./g,'').replace(',','.'); var v=parseFloat(s); return isNaN(v)?0:v; }
+      var brut=num('BRUT'); var f=bpNouvelle(p.mois||bpMois());
+      if(brut>0){ f.gains=[{lib:'Salaire de base', qte:151.67, pu:R2(brut/151.67), montant:R2(brut), soumis:true}]; f.cotis.forEach(function(c){ recalcCotis(c, R2(brut)); }); }
+      var net=num('NET A PAYER')||num('NET PAYER'); if(net>0) f.note='Net lu : '+net;
+      f.pieceId=p.id; window.bpEditId=f.id;
+      if(typeof save==='function')save(); if(typeof toast==='function')toast(brut?('Brut détecté : '+brut+' € — vérifiez la fiche.'):'Montants non reconnus — saisie manuelle.'); if(typeof render==='function')render();
+    }).catch(function(){ if(typeof toast==='function')toast('Analyse impossible — saisie manuelle.'); });
+  };
+
+  /* ---- éditeur inline d'une fiche ---- */
+  function ed(id){ var f=bpGet(id); if(!f)return ''; var c=bpCalc(f);
+    var gains=(f.gains||[]).map(function(g,i){ return '<tr>'
+      +'<td><input class="bp-in wide" value="'+esc(g.lib)+'" onchange="bpGain(\''+id+'\',\''+i+'\',\'lib\',this.value)"></td>'
+      +'<td><input class="bp-in num" type="number" step="0.01" value="'+(g.qte||'')+'" onchange="bpGain(\''+id+'\',\''+i+'\',\'qte\',this.value)"></td>'
+      +'<td><input class="bp-in num" type="number" step="0.01" value="'+(g.pu||'')+'" onchange="bpGain(\''+id+'\',\''+i+'\',\'pu\',this.value)"></td>'
+      +'<td><input class="bp-in num" type="number" step="0.01" value="'+(g.montant||'')+'" onchange="bpGainMontant(\''+id+'\',\''+i+'\',this.value)"></td>'
+      +'<td class="bp-c"><input type="checkbox" '+(g.soumis!==false?'checked':'')+' onchange="bpGain(\''+id+'\',\''+i+'\',\'soumis\',this.checked)" title="Soumis à cotisations"></td>'
+      +'<td><button class="bp-x" onclick="bpGainDel(\''+id+'\',\''+i+'\')">✕</button></td></tr>'; }).join('');
+    var cot=(f.cotis||[]).map(function(x,i){ return '<tr>'
+      +'<td><input class="bp-in wide" value="'+esc(x.lib)+'" onchange="bpCot(\''+id+'\',\''+i+'\',\'lib\',this.value)"></td>'
+      +'<td><select class="bp-in" onchange="bpCot(\''+id+'\',\''+i+'\',\'org\',this.value)">'
+        +['urssaf','prev','csg'].map(function(o){ return '<option value="'+o+'" '+(x.org===o?'selected':'')+'>'+(o==='urssaf'?'URSSAF':o==='prev'?'Retraite/Prév.':'CSG/CRDS')+'</option>'; }).join('')+'</select></td>'
+      +'<td class="bp-r">'+eur(x.baseVal||0)+'</td>'
+      +'<td><input class="bp-in num" type="number" step="0.01" value="'+(x.txS||'')+'" onchange="bpCot(\''+id+'\',\''+i+'\',\'txS\',this.value)"></td>'
+      +'<td><input class="bp-in num" type="number" step="0.01" value="'+(x.mS||'')+'" onchange="bpCot(\''+id+'\',\''+i+'\',\'mS\',this.value)"></td>'
+      +'<td><input class="bp-in num" type="number" step="0.01" value="'+(x.txP||'')+'" onchange="bpCot(\''+id+'\',\''+i+'\',\'txP\',this.value)"></td>'
+      +'<td><input class="bp-in num" type="number" step="0.01" value="'+(x.mP||'')+'" onchange="bpCot(\''+id+'\',\''+i+'\',\'mP\',this.value)"></td>'
+      +'<td class="bp-c"><input type="checkbox" '+(x.ded!==false?'checked':'')+' onchange="bpCot(\''+id+'\',\''+i+'\',\'ded\',this.checked)" title="Déductible du net imposable"></td>'
+      +'<td><button class="bp-x" onclick="bpCotDel(\''+id+'\',\''+i+'\')">✕</button></td></tr>'; }).join('');
+    return '<div class="bp-editor">'
+      +'<div class="bp-ed-h"><b>Fiche de paie — '+esc(moisLabel(f.mois))+'</b><span style="flex:1"></span>'
+        +'<button class="btn btn-ghost btn-sm" onclick="bpVoir(\''+id+'\')">👁 Aperçu A4</button>'
+        +'<button class="btn btn-ghost btn-sm" onclick="bpDupliquerMoisSuivant(\''+id+'\')">⧉ Dupliquer (mois suivant)</button>'
+        +'<button class="btn btn-ghost btn-sm" onclick="bpFermerEdit()">Fermer</button></div>'
+      +'<div class="bp-grid">'
+        +'<div class="field"><label>Nom du salarié</label><input class="bp-in" value="'+esc(f.nom)+'" onchange="bpField(\''+id+'\',\'nom\',this.value)"></div>'
+        +'<div class="field"><label>Emploi</label><input class="bp-in" value="'+esc(f.emploi)+'" onchange="bpField(\''+id+'\',\'emploi\',this.value)"></div>'
+        +'<div class="field"><label>N° Sécurité sociale</label><input class="bp-in" value="'+esc(f.numSS)+'" onchange="bpField(\''+id+'\',\'numSS\',this.value)"></div>'
+        +'<div class="field"><label>Statut</label><select class="bp-in" onchange="bpField(\''+id+'\',\'statut\',this.value)"><option '+(f.statut==='Non cadre'?'selected':'')+'>Non cadre</option><option '+(f.statut==='Cadre'?'selected':'')+'>Cadre</option></select></div>'
+        +'<div class="field"><label>Classification</label><input class="bp-in" value="'+esc(f.classification)+'" onchange="bpField(\''+id+'\',\'classification\',this.value)"></div>'
+        +'<div class="field"><label>Date d\'entrée</label><input class="bp-in" type="date" max="9999-12-31" value="'+esc(f.dateEntree)+'" onchange="bpField(\''+id+'\',\'dateEntree\',this.value)"></div>'
+      +'</div>'
+      +'<h4 class="bp-h4">Gains</h4>'
+      +'<table class="bp-et"><thead><tr><th class="l">Libellé</th><th>Nombre</th><th>Taux</th><th>Montant</th><th title="Soumis à cotisations">Soum.</th><th></th></tr></thead><tbody>'+gains+'</tbody></table>'
+      +'<button class="btn btn-ghost btn-sm" onclick="bpGainAdd(\''+id+'\')">+ Ajouter un gain</button>'
+      +'<h4 class="bp-h4">Cotisations (tout est modifiable)</h4>'
+      +'<table class="bp-et"><thead><tr><th class="l">Libellé</th><th>Organisme</th><th>Base</th><th>Taux sal.</th><th>Part sal.</th><th>Taux pat.</th><th>Part pat.</th><th title="Déductible du net imposable">Déd.</th><th></th></tr></thead><tbody>'+cot+'</tbody></table>'
+      +'<button class="btn btn-ghost btn-sm" onclick="bpCotAdd(\''+id+'\')">+ Ajouter une cotisation</button>'
+      +'<div class="bp-grid" style="margin-top:12px">'
+        +'<div class="field"><label>Prime de panier (non soumise)</label><input class="bp-in num" type="number" step="0.01" value="'+(f.panier||'')+'" onchange="bpNum(\''+id+'\',\'panier\',this.value)"></div>'
+        +'<div class="field"><label>Remboursement transport / Navigo</label><input class="bp-in num" type="number" step="0.01" value="'+(f.navigo||'')+'" onchange="bpNum(\''+id+'\',\'navigo\',this.value)"></div>'
+        +'<div class="field"><label>Taux PAS (%)</label><input class="bp-in num" type="number" step="0.01" value="'+(f.txPAS||'')+'" onchange="bpNum(\''+id+'\',\'txPAS\',this.value)"></div>'
+        +'<div class="field"><label>PAS (montant — vide = calculé)</label><input class="bp-in num" type="number" step="0.01" value="'+(f.pasManuel!=null?f.pasManuel:'')+'" placeholder="'+eur(c.pas)+'" onchange="bpPasManuel(\''+id+'\',this.value)"></div>'
+      +'</div>'
+      +'<div class="bp-recap">'
+        +'<span>Brut <b>'+eur(c.brut)+'</b></span>'
+        +'<span>Cotis. sal. <b>'+eur(c.totSal)+'</b></span>'
+        +'<span>Net imposable <b>'+eur(c.netImpo)+'</b></span>'
+        +'<span>PAS <b>'+eur(c.pas)+'</b></span>'
+        +'<span>Charges pat. <b>'+eur(c.totPat)+'</b></span>'
+        +'<span class="bp-recap-net">Net à payer <b>'+eur(c.netAPayer)+'</b></span>'
+      +'</div>'
+      +'<div class="right" style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="bpSupprimer(\''+id+'\')">Supprimer la fiche</button></div>'
+      +'</div>';
+  }
+
+  function bpCard(){ var m=bpMois(); var fs=bpFichesMois(m); var edit=window.bpEditId&&bpGet(window.bpEditId)&&bpGet(window.bpEditId).mois===m?window.bpEditId:null;
+    var rows=fs.map(function(f){ var c=bpCalc(f); return '<tr>'
+      +'<td><b>'+esc(f.nom||'(sans nom)')+'</b><div class="bp-sub">'+esc(f.emploi||'')+'</div></td>'
+      +'<td class="r num">'+eur(c.brut)+'</td><td class="r num">'+eur(c.netImpo)+'</td><td class="r num"><b>'+eur(c.netAPayer)+'</b></td><td class="r num">'+eur(c.totPat)+'</td>'
+      +'<td class="r" style="white-space:nowrap">'
+        +'<button class="btn btn-ghost btn-sm" onclick="bpEditer(\''+f.id+'\')">✎ Éditer</button> '
+        +'<button class="btn btn-ghost btn-sm" onclick="bpVoir(\''+f.id+'\')">👁</button></td></tr>'; }).join('');
+    var tot=fs.reduce(function(a,f){ var c=bpCalc(f); a.brut=R2(a.brut+c.brut); a.net=R2(a.net+c.netAPayer); a.pat=R2(a.pat+c.totPat); return a; },{brut:0,net:0,pat:0});
+    var deps=bpDeposes(m);
+    var depList=deps.length?('<ul class="bp-deps">'+deps.map(function(p){ return '<li><span>📄 '+esc(p.nom)+'</span> <button class="btn btn-ghost btn-sm" onclick="bpAnalyserBulletin(\''+p.id+'\')">🔎 Analyser → créer la fiche</button> <button class="btn btn-ghost btn-sm" onclick="gedVoir(\''+p.id+'\')">Voir</button></li>'; }).join('')+'</ul>'):'<div class="bp-sub" style="margin:6px 0">Aucun bulletin déposé pour ce mois.</div>';
+    return '<div class="bp-card card">'
+      +'<h2>🧾 Bulletins de paie — '+moisLabel(m)+' (génération & édition · modèle français, tout modifiable)</h2>'
+      +'<div class="sub">Créez et <b>modifiez chaque élément</b> du bulletin (gains, cotisations salariales & patronales, primes, PAS) pour <b>plusieurs salariés</b>. Déposez plusieurs bulletins existants (reconnaissance OCR si connecté). Les fiches d\'un mois alimentent le <b>Journal de paie</b> pour générer l\'<b>OD de paie</b> du mois ; chaque mois est indépendant.</div>'
+      +'<div class="bp-bar">'
+        +'<button class="btn btn-pri btn-sm" onclick="bpCreer()">+ Nouvelle fiche de paie</button>'
+        +'<label class="btn btn-ghost btn-sm" style="cursor:pointer">📎 Déposer des bulletins<input type="file" accept="image/*,application/pdf" multiple style="display:none" onchange="bpDepot(this)"></label>'
+        +'<span style="flex:1"></span>'
+        +(fs.length?'<button class="btn btn-gold btn-sm" onclick="bpGenererODMois(\''+m+'\')">⚙️ Générer l\'OD de paie du mois ('+fs.length+' fiche'+(fs.length>1?'s':'')+')</button>':'')
+      +'</div>'
+      +(fs.length?('<table class="bp-list"><thead><tr><th class="l">Salarié</th><th class="r">Brut</th><th class="r">Net imposable</th><th class="r">Net à payer</th><th class="r">Charges pat.</th><th></th></tr></thead><tbody>'+rows
+        +'<tr class="bp-totrow"><td class="l">Total '+moisLabel(m)+' · '+fs.length+' fiche(s)</td><td class="r num">'+eur(tot.brut)+'</td><td class="r num"></td><td class="r num"><b>'+eur(tot.net)+'</b></td><td class="r num">'+eur(tot.pat)+'</td><td></td></tr>'
+        +'</tbody></table>'):'<div class="bp-sub" style="margin:8px 0">Aucune fiche de paie pour ce mois — créez-en une ou déposez des bulletins.</div>')
+      +(edit?ed(edit):'')
+      +'<h3 class="bp-h3">Bulletins déposés ('+moisLabel(m)+')</h3>'+depList
+      +'</div>';
+  }
+  window.bpCard=bpCard;
+
+  var _cp=window.pageChargesPaie;
+  window.pageChargesPaie=function(){ var h=_cp.apply(this,arguments);
+    /* injecter la carte bulletins juste avant la carte journal de paie (pjCard) ou en tête du scroll */
+    try{
+      if(h.indexOf('class="pj-card')>=0){ h=h.replace('<div class="pj-card', bpCard()+'<div class="pj-card'); }
+      else { h=h.replace('<div class="cp-scroll">','<div class="cp-scroll">'+bpCard()); }
+    }catch(e){}
+    return h; };
+
+  try{ var st=document.createElement('style'); st.id='bp-mod'; st.textContent=
+    '.bp-card{margin:0 0 18px}'
+    +'.bp-card .sub{font-size:12.5px;color:#9fb6d0;margin:2px 0 12px;line-height:1.5}'
+    +'.bp-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}'
+    +'.bp-sub{font-size:11.5px;color:#7d8aa0}'
+    +'.bp-list,.bp-et{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:6px}'
+    +'.bp-list th,.bp-et th{text-align:left;color:#9fb6d0;font-weight:600;font-size:11px;padding:6px 8px;border-bottom:1px solid #24405d}'
+    +'.bp-list th.r,.bp-et th.r{text-align:right}'
+    +'.bp-list td,.bp-et td{padding:5px 8px;border-bottom:1px solid #16212e;vertical-align:middle}'
+    +'.bp-list td.r,.bp-et td.r{text-align:right}.bp-list td.num{font-family:"IBM Plex Mono",monospace;color:#cfe0f5}'
+    +'.bp-totrow td{border-top:1px solid #24405d;font-weight:700;color:#cfe0f5}'
+    +'.bp-editor{margin:14px 0 6px;padding:14px;border:1px solid #1e90ff;border-radius:12px;background:rgba(30,144,255,.06)}'
+    +'.bp-ed-h{display:flex;align-items:center;gap:8px;margin-bottom:12px;color:#cfe0f5}'
+    +'.bp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}'
+    +'.bp-grid .field label{display:block;font-size:11px;color:#9fb6d0;margin-bottom:3px}'
+    +'.bp-in{width:100%;background:#0d1722;border:1px solid #24405d;border-radius:7px;color:#eaf2ff;padding:7px 8px;font-size:13px}'
+    +'.bp-in.num{text-align:right;font-family:"IBM Plex Mono",monospace}'
+    +'.bp-et td .bp-in{padding:5px 6px;font-size:12px}'
+    +'.bp-et .bp-r{text-align:right;font-family:"IBM Plex Mono",monospace;color:#9fd0ff}'
+    +'.bp-et .bp-c{text-align:center}'
+    +'.bp-x{background:none;border:none;color:#ff9a9a;cursor:pointer;font-size:13px}'
+    +'.bp-h3,.bp-h4{color:#9fd0ff;font-size:13px;margin:16px 0 6px}'
+    +'.bp-recap{display:flex;flex-wrap:wrap;gap:16px;margin-top:14px;padding:10px 12px;background:#0d1722;border:1px solid #24405d;border-radius:9px;font-size:12.5px;color:#9fb6d0}'
+    +'.bp-recap b{color:#eaf2ff;margin-left:4px}'
+    +'.bp-recap-net b{color:#7fe3b4}'
+    +'.bp-deps{list-style:none;padding:0;margin:6px 0;font-size:12.5px}'
+    +'.bp-deps li{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #16212e;color:#cfe0f5;flex-wrap:wrap}'
+    /* rendu A4 du bulletin */
+    +'.bp-render{display:flex;justify-content:center;background:rgba(120,130,150,.14);padding:16px;border-radius:10px;overflow:auto}'
+    +'.bp-page{width:760px;max-width:100%;background:#fff;color:#1a1a1a;padding:28px 32px;font:13px/1.5 system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.3)}'
+    +'.bp-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1a2b45;padding-bottom:10px;margin-bottom:10px}'
+    +'.bp-emp{font-weight:700;font-size:16px}.bp-page .bp-sub{color:#555;font-size:11px}'
+    +'.bp-titre{text-align:right;font-weight:700;color:#1a2b45;font-size:15px}.bp-titre span{font-weight:400;font-size:12px}'
+    +'.bp-sal{margin-bottom:12px}'
+    +'.bp-t{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:12px}'
+    +'.bp-t th{background:#eef2f8;text-align:right;padding:5px 8px;border-bottom:1px solid #cbd6e6;font-size:11px}'
+    +'.bp-t th.l{text-align:left}.bp-t td{padding:4px 8px;border-bottom:1px solid #eee;text-align:right}'
+    +'.bp-t td.l{text-align:left}.bp-t .bp-st td{font-weight:700;background:#f6f8fc;border-top:1px solid #cbd6e6}'
+    +'.bp-tot{margin-left:auto;width:320px;font-size:12.5px}'
+    +'.bp-tot>div{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #eee}'
+    +'.bp-tot .bp-net{font-weight:700;font-size:15px;color:#0a64d6;border-bottom:none;border-top:2px solid #1a2b45;margin-top:4px;padding-top:6px}'
+    +'.bp-foot{margin-top:14px;font-size:11px;color:#666;border-top:1px solid #ddd;padding-top:8px}'
+    +'@media(max-width:820px){.bp-grid{grid-template-columns:1fr 1fr}.bp-et{display:block;overflow-x:auto}}';
     document.head.appendChild(st); }catch(e){}
 })();
 </script>
