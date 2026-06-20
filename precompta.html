@@ -6445,8 +6445,8 @@ function grandLivreDoc(type){
 }
 /* ---- JOURNAUX (détail des écritures par journal) ---- */
 function journauxDoc(filtre){
-  const noms={ACH:'HA - ACHATS',VTE:'VT - VENTES',BQ:'BQ - BANQUE',OD:'OD - OPERATIONS DIVERSES'};
-  const journaux = filtre?[filtre]:['ACH','VTE','BQ','OD'];
+  const noms={ACH:'HA - ACHATS',VTE:'VT - VENTES',BQ:'BQ - BANQUE',OD:'OD - OPERATIONS DIVERSES',ODP:'OD - PAIE',ODTVA:'OD - TVA'};
+  const journaux = filtre?[filtre]:['ACH','VTE','BQ','OD'].concat(['ODP','ODTVA'].filter(j=>db.ecritures.some(e=>e.journal===j)));
   const blocs=journaux.map(j=>{
     const ecr=db.ecritures.filter(e=>e.journal===j).sort((a,b)=>a.date<b.date?-1:1);
     let td=0,tc=0; const rows=ecr.map(e=>e.lignes.map((l,i)=>{ td+=l.debit;tc+=l.credit;
@@ -6465,10 +6465,10 @@ function journauxDoc(filtre){
 }
 /* ---- JOURNAL CENTRALISATEUR (totaux par journal et par mois) ---- */
 function centralisateurDoc(){
-  const noms={ACH:'HA - ACHATS',VTE:'VT - VENTES',BQ:'BQ - BANQUE',OD:'OD - OPERATIONS DIVERSES'};
+  const noms={ACH:'HA - ACHATS',VTE:'VT - VENTES',BQ:'BQ - BANQUE',OD:'OD - OPERATIONS DIVERSES',ODP:'OD - PAIE',ODTVA:'OD - TVA'};
   const months=monthsExo();
   let body='', GD=0,GC=0;
-  ['ACH','VTE','BQ','OD'].forEach(j=>{
+  ['ACH','VTE','BQ','OD'].concat(['ODP','ODTVA'].filter(j=>db.ecritures.some(e=>e.journal===j))).forEach(j=>{
     let jd=0,jc=0; const ec=db.ecritures.filter(e=>e.journal===j);
     body+=`<tr class="cls"><td class="l">${noms[j]||j}</td><td></td><td></td></tr>`;
     months.forEach(m=>{ let d=0,c=0; ec.filter(e=>ym(e.date)===m).forEach(e=>e.lignes.forEach(l=>{d+=l.debit;c+=l.credit;}));
@@ -10644,7 +10644,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v191 · noir & bleu';
+    b.textContent='YADA · v192 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -15059,16 +15059,18 @@ ${lignes}
       var sd=bpSomme(L,'d'), sc=bpSomme(L,'c');
       return '<div class="bp-od-blk"><div class="bp-od-t">'+titre+'</div><table class="bp-et"><thead><tr><th class="l">Compte</th><th class="l">Libellé</th><th class="r">Débit</th><th class="r">Crédit</th></tr></thead><tbody>'+rows
         +'<tr class="bp-totrow"><td></td><td class="l">Totaux</td><td class="r num">'+eur(sd)+'</td><td class="r num">'+eur(sc)+'</td></tr></tbody></table></div>'; }
-    var st=window.bpODStatut(m);
+    var st=window.bpODStatut(m); var poste=(st.paie||st.charges);
     return '<div class="bp-od">'
-      +'<h4 class="bp-h4" style="margin-top:4px">Écritures proposées — '+esc(moisLabel(m))+' ('+r.fs.length+' fiche'+(r.fs.length>1?'s':'')+' du mois)</h4>'
+      +'<h4 class="bp-h4" style="margin-top:4px">'+(poste?'✅ Écritures comptabilisées':'Écritures proposées')+' — '+esc(moisLabel(m))+' ('+r.fs.length+' fiche'+(r.fs.length>1?'s':'')+' du mois)</h4>'
       +tbl('OD de paie (salaires)',Lp)+tbl('OD de charges (patronales)',Lc)
       +'<div class="bp-od-act">'
-        +((st.paie||st.charges)?'<span class="bp-od-flag">✓ Déjà comptabilisées pour ce mois — régénérer remplacera les écritures.</span>':'<span class="bp-sub">Les écritures sont équilibrées et regroupent toutes les fiches du mois.</span>')
+        +(poste?'<span class="bp-od-flag">✓ Comptabilisées (journal OD PAIE, au '+frDate(dernierJourMoisISO(m))+') — régénérer remplacera les écritures.</span>':'<span class="bp-sub">Les écritures sont équilibrées et regroupent toutes les fiches du mois.</span>')
         +'<span style="flex:1"></span>'
-        +((st.paie||st.charges)?'<button class="btn btn-ghost btn-sm" onclick="bpSupprimerOD(\''+m+'\')">Supprimer les écritures</button>':'')
-        +'<button class="btn btn-pri" onclick="bpGenererODMois(\''+m+'\')">⚙️ Générer l\'OD de paie et l\'OD de charges</button>'
-      +'</div></div>';
+        +(poste?'<button class="btn btn-ghost btn-sm" onclick="bpSupprimerOD(\''+m+'\')">Supprimer les écritures</button>':'')
+        +'<button class="btn btn-pri" onclick="bpGenererODMois(\''+m+'\')">⚙️ '+(poste?'Régénérer':'Générer')+' l\'OD de paie et l\'OD de charges</button>'
+      +'</div>'
+      +(poste?'<div class="bp-sub" style="margin-top:6px">Retrouvez ces écritures dans le <b>Journal comptable</b> (filtre « OD ») et dans la <b>Consultation des comptes</b> (comptes 641, 645, 421, 431, 437, 442).</div>':'')
+      +'</div>';
   }
   window.bpVoir=function(id){ var f=bpGet(id); if(!f)return; var mc=document.getElementById('modal-c'); if(!mc)return;
     mc.innerHTML='<div class="modal-h"><h3>Bulletin de paie — '+esc(f.nom||'Salarié')+' · '+esc(moisLabel(f.mois))+'</h3><button class="x" onclick="closeModal()">×</button></div>'
@@ -15242,6 +15244,7 @@ ${lignes}
         +'<tr class="bp-totrow"><td class="l">Total '+moisLabel(m)+' · '+fs.length+' fiche(s)</td><td class="r num">'+eur(tot.brut)+'</td><td class="r num"></td><td class="r num"><b>'+eur(tot.net)+'</b></td><td class="r num">'+eur(tot.pat)+'</td><td></td></tr>'
         +'</tbody></table>'):'<div class="bp-sub" style="margin:8px 0">Aucune fiche de paie pour ce mois — créez-en une ou déposez des bulletins.</div>')
       +(edit?ed(edit):'')
+      +(fs.length?bpODApercu(m):'')
       +'<h3 class="bp-h3">Bulletins déposés ('+moisLabel(m)+')</h3>'+depList
       +'</div>';
   }
