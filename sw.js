@@ -1,7 +1,7 @@
 /* YADA — Service Worker.
    Stratégie : RÉSEAU D'ABORD pour les pages (toujours la dernière version quand
    on est en ligne), repli sur le cache hors-ligne. Cache-first pour les icônes. */
-var CACHE = 'yada-v3';
+var CACHE = 'yada-v4';
 var ASSETS = [
   './',
   './index.html',
@@ -36,6 +36,12 @@ function isPage(req){
 self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET') return;
+
+  /* version.json (vérification de mise à jour) : RÉSEAU SEULEMENT, jamais en cache */
+  if (/version\.json(\?|$)/.test(req.url)) {
+    e.respondWith(fetch(req, { cache: 'no-store' }).catch(function () { return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }); }));
+    return;
+  }
 
   if (isPage(req)) {
     /* réseau d'abord : on récupère toujours la dernière version si possible */
