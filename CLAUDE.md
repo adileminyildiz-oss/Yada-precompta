@@ -4,7 +4,21 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Paie : génération de la fiche + proposition des OD de paie ET de charges — v191
+## 🟢 Dernière mise à jour — Paie : écritures visibles (carte Bulletins + Journal comptable) — v192
+**Quoi :** correctif de **visibilité des écritures de paie**. Les OD de paie / OD de charges (journal `ODP`) sont désormais affichées **directement dans la carte Bulletins de paie** (pas seulement dans la modale du bulletin) et apparaissent dans le **Journal comptable imprimable** et le **centralisateur**.
+
+**Pourquoi :** l'utilisateur ne voyait pas les écritures générées — elles n'apparaissaient que dans la modale du bulletin, et le journal comptable imprimable (`journauxDoc`) n'affichait que `ACH/VTE/BQ/OD` (pas `ODP`/`ODTVA`).
+
+**Ce qu'il fait :**
+- La carte **Bulletins de paie** intègre le panneau **« Écritures proposées / ✅ Écritures comptabilisées »** (détail OD de paie + OD de charges, statut, bouton générer/régénérer/supprimer) en plus de la modale.
+- Indication explicite « Retrouvez ces écritures dans le **Journal comptable** (filtre OD) et la **Consultation des comptes** (641, 645, 421, 431, 437, 442) ».
+- `journauxDoc`/`centralisateurDoc` ajoutent **`ODP` (OD - PAIE)** et **`ODTVA` (OD - TVA)** quand des écritures existent (corrige aussi la visibilité de la paie/TVA héritée).
+
+**Où / comment :** `yada-addon106` — `bpODApercu(m)` injecté dans `bpCard` ; `journauxDoc`/`centralisateurDoc` : liste de journaux = `['ACH','VTE','BQ','OD']` + `ODP`/`ODTVA` présents. Badge → **v192**.
+
+---
+
+## 🟢 MAJ précédente — Paie : génération de la fiche + proposition des OD de paie ET de charges — v191
 **Quoi :** après la saisie d'une fiche de paie, YADA **génère le bulletin** (aperçu A4) puis **propose de comptabiliser** l'**OD de paie** (salaires) **et** l'**OD de charges** (patronales) du mois — deux écritures distinctes et équilibrées.
 
 **Pourquoi :** l'utilisateur veut, suite à la saisie d'une fiche, voir la fiche générée et se voir proposer la génération des écritures d'OD de paie et d'OD de charges.
