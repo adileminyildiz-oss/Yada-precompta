@@ -31,23 +31,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Générer version.json depuis le badge de version
+        run: |
+          V=$(grep -oE "v[0-9]+ · noir & bleu" precompta.html | head -1 | grep -oE "[0-9]+")
+          if [ -n "$V" ]; then
+            echo "{\"version\":\"$V\"}" > version.json
+            echo "version.json → $V"
+          else
+            echo "Version introuvable — version.json inchangé."
+          fi
+
       - name: Construire l'archive
         run: |
           rm -f yada-precompta-github.zip
           zip -q yada-precompta-github.zip \
             precompta.html sw.js manifest.webmanifest \
-            icon-192.png icon-512.png index.html \
+            icon-192.png icon-512.png index.html version.json \
             CLAUDE.md ROADMAP.md README.md PASSATION-YADA-Precompta.md
           echo "Contenu :" && unzip -l yada-precompta-github.zip
 
-      - name: Recommiter si l'archive a changé
+      - name: Recommiter si quelque chose a changé
         run: |
-          if git diff --quiet -- yada-precompta-github.zip; then
-            echo "Archive inchangée — rien à committer."
+          if git diff --quiet -- yada-precompta-github.zip version.json; then
+            echo "Rien à committer."
           else
             git config user.name  "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add yada-precompta-github.zip
-            git commit -m "chore: régénération auto de l'archive ZIP du squelette [skip ci]"
+            git add yada-precompta-github.zip version.json
+            git commit -m "chore: régénération auto archive ZIP + version.json [skip ci]"
             git push
           fi

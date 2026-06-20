@@ -10633,7 +10633,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v183 · noir & bleu';
+    b.textContent='YADA · v184 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -11924,7 +11924,7 @@ ${lignes}
   try{
     if('serviceWorker' in navigator){
       var _swReloaded=false;
-      navigator.serviceWorker.addEventListener('controllerchange', function(){ if(_swReloaded)return; _swReloaded=true; try{ location.reload(); }catch(e){} });
+      navigator.serviceWorker.addEventListener('controllerchange', function(){ if(_swReloaded)return; _swReloaded=true; try{ if(typeof save==='function') save(); }catch(e){} try{ location.reload(); }catch(e){} });
       window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').then(function(reg){ try{ reg.update(); }catch(e){} }).catch(function(){}); });
     }
   }catch(e){}
@@ -14672,6 +14672,45 @@ ${lignes}
     +'.cloud-help{margin-top:12px;font-size:12.5px}.cloud-help summary{cursor:pointer;color:#5ab0ff;font-weight:600}'
     +'.cloud-sql{white-space:pre-wrap;background:#0b1118;border:1px solid #24405d;border-radius:8px;padding:10px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:#cfe0f5;overflow:auto}';
     document.head.appendChild(st); }catch(e){}
+})();
+</script>
+
+<script id="yada-addon103">
+/* ============================================================
+   MISE À JOUR AUTOMATIQUE DU SYSTÈME — même version sur toutes les surfaces /
+   tous les appareils, jamais de système divergent.
+   - Vérifie périodiquement la dernière version déployée (version.json, sans cache)
+     + relance la mise à jour du service worker ; si une version plus récente est
+     en ligne, enregistre les données puis recharge pour appliquer le nouveau système.
+   - Combiné au service worker « réseau d'abord » : chaque appareil converge vers
+     la dernière version dès qu'il est en ligne. 100% additif.
+   ============================================================ */
+(function(){
+  var reloaded=false;
+  function runningVer(){ try{ var b=document.getElementById('yada-ver'); if(b){ var m=(b.textContent||'').match(/v(\d+)/); if(m) return parseInt(m[1],10); } }catch(e){} return 0; }
+  function applyUpdate(){ if(reloaded) return; reloaded=true;
+    try{ if(typeof toast==='function') toast('Nouvelle version disponible — mise à jour…'); }catch(e){}
+    try{ if(typeof save==='function') save(); }catch(e){}
+    setTimeout(function(){ try{ location.reload(); }catch(e){} }, 400);
+  }
+  function checkVersion(){
+    if(reloaded || !navigator.onLine) return;
+    try{
+      fetch('version.json?cb='+Date.now(), {cache:'no-store'})
+        .then(function(r){ return r.ok? r.json() : null; })
+        .then(function(j){ if(!j) return; var remote=parseInt(j.version||j.v||0,10)||0; var local=runningVer();
+          if(remote && local && remote>local){ applyUpdate(); } })
+        .catch(function(){});
+    }catch(e){}
+  }
+  function swUpdate(){ try{ if('serviceWorker' in navigator){ navigator.serviceWorker.getRegistration().then(function(reg){ if(reg){ try{ reg.update(); }catch(e){} } }).catch(function(){}); } }catch(e){} }
+  function checkAll(){ checkVersion(); swUpdate(); }
+  /* au démarrage (léger délai), périodiquement, au retour au premier plan, et à la reconnexion */
+  setTimeout(checkAll, 6000);
+  setInterval(checkAll, 5*60*1000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) checkAll(); });
+  window.addEventListener('online', checkAll);
+  window.cloudCheckUpdate=checkAll;
 })();
 </script>
 </body>
