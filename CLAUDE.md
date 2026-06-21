@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Consultation (grand-livre) : lettrage manuel inter-journaux (solder le tiers : Banque ↔ Vente / Achat) — v232
+## 🟢 Dernière mise à jour — Édition de la Balance : écritures en noir sur fond blanc légèrement bleuté — v233
+**Quoi :** l'**édition de la Balance** (Balance générale / fournisseurs / clients / personnel / immo / retenue, ouverte depuis Éditions → modale) est rendue **plus lisible** : **toutes les écritures en NOIR** (compte, libellé, montants) sur un **fond BLANC légèrement bleuté** (en-têtes bleu clair, lignes alternées bleu très clair, totaux teintés de bleu, titre & filets bleus), **quel que soit le thème** (corrige le faible contraste en mode nuit).
+
+**Où / comment :** `balanceDoc` pose la classe **`bal-doc`** sur le `.doc-page` ; `yada-addon127` injecte `<style id="bal-edit-mod">` : `.bal-doc *{color:#111418}` (noir) + `background:#fff` + accents bleus (`th` `#eaf2fb`/`#0b346e`, lignes impaires `#f5f9ff`, totaux `sub/cls/tg` en bleu clair, titre `#0b346e` souligné `#0a64d6`). 100% CSS additif, aucune donnée ni logique modifiée. Badge → **v233**.
+
+---
+
+## 🟢 MAJ précédente — Consultation (grand-livre) : lettrage manuel inter-journaux (solder le tiers : Banque ↔ Vente / Achat) — v232
 **Quoi :** dans la **Consultation des comptes**, en ouvrant le **grand-livre d'un tiers** (clic sur 411HABI00 / 401…, lecture seule), on peut désormais **lettrer manuellement** : **clic gauche** sélectionne les lignes à rapprocher — typiquement la **VENTE** (journal VT, débit) et son **ENCAISSEMENT** (journal BQ, crédit), ou l'**ACHAT** (HA, crédit) et son **PAIEMENT** (BQ, débit). Une **barre de lettrage** indique Σ Débit / Σ Crédit et **« équilibré ✓ »** ; le bouton **« Lettrer la sélection »** n'est actif que si **Débit = Crédit** → le **compte du tiers est soldé**. Boutons **Délettrer** / **Vider la sélection**. Le déplacement d'un compte (collectif 411000000 → auxiliaire 411HABI00) fait apparaître la ligne sur le tiers (recalcul des soldes), prête à lettrer.
 
 **Où / comment :** `clLignesGeneral` expose `idx`/`key` (comme `auxLignes`) ; `clRender` rend les lignes **sélectionnables** (`data-k`, `onclick="clToggleSel"`, classe `cl-sel`) + barre `.cl-letbar` (Σ sélection, état). `yada-addon126` : `clToggleSel`/`clSelVider`/`clLettrerSel`/`clDelettrerSel` (réutilisent **`lzLettrer`/`lzDelettrer`**, contrôle Σdébit=Σcrédit) ; reset de `clSel` à la navigation/ouverture. Le clic droit (→ Journal) reste disponible. Aucune logique comptable modifiée (le lettrage ne touche pas aux montants). Badge → **v232**.

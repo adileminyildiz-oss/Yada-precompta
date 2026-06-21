@@ -6381,7 +6381,7 @@ function balanceDoc(type){
   }
   body+=totalRow('Total Général',TD,TC,TSD,TSC,'tg');
   const res=resultatPer(null);
-  return `<div class="doc-page">
+  return `<div class="doc-page bal-doc">
     <div class="doc-h1"><span class="doc-soc">${db.societe.raison}</span><span>page</span></div>
     <div class="doc-title">${titre}</div>${docEnteteCourte(titre)}
     <table class="doc-t"><thead><tr><th class="l">Compte</th><th class="l">Libellé</th><th>Débit</th><th>Crédit</th><th>Solde débit</th><th>Solde crédit</th></tr></thead>
@@ -10790,7 +10790,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v232 · noir & bleu';
+    b.textContent='YADA · v233 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -16837,6 +16837,31 @@ ${lignes}
     +'body[data-theme="noir"] .cl-letbar .cl-ok{color:#7fe3b4}'
     +'body[data-theme="noir"] .cl-letbar .cl-ko{color:#ffd27a}'
     +'body[data-theme="noir"] .cl-letbar .cl-lethint{color:#9fb6d0}';
+    document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon127">
+/* ============================================================
+   ÉDITION DE LA BALANCE — lisibilité : ÉCRITURES EN NOIR sur FOND BLANC
+   légèrement bleuté (en-têtes / lignes / totaux en bleu clair), quel que soit
+   le thème. 100% CSS additif (cible la classe .bal-doc posée par balanceDoc).
+   ============================================================ */
+(function(){
+  try{ var st=document.createElement('style'); st.id='bal-edit-mod'; st.textContent=
+    '.bal-doc{background:#ffffff !important;border:1px solid #cfe0f5 !important;box-shadow:0 6px 22px rgba(10,100,214,.12) !important}'
+    +'.bal-doc, .bal-doc *{color:#111418 !important;-webkit-text-fill-color:#111418 !important}'
+    +'.bal-doc .doc-h1,.bal-doc .doc-h1 *{color:#0b346e !important;-webkit-text-fill-color:#0b346e !important}'
+    +'.bal-doc .doc-title{color:#0b346e !important;-webkit-text-fill-color:#0b346e !important;border-bottom:2px solid #0a64d6;padding-bottom:4px}'
+    +'.bal-doc table.doc-t th{background:#eaf2fb !important;color:#0b346e !important;-webkit-text-fill-color:#0b346e !important;border-bottom:1px solid #0a64d6 !important}'
+    +'.bal-doc table.doc-t td{border-bottom:1px solid #eef3f9 !important}'
+    +'.bal-doc table.doc-t tbody tr:nth-child(odd) td{background:#f5f9ff !important}'
+    +'.bal-doc table.doc-t tbody tr:nth-child(even) td{background:#ffffff !important}'
+    +'.bal-doc .doc-t tr.sub td{background:#eef5ff !important;border-top:1px solid #9fc2ec !important}'
+    +'.bal-doc .doc-t tr.cls td{background:#e3eefc !important;border-top:1px solid #0a64d6 !important;border-bottom:1px solid #0a64d6 !important}'
+    +'.bal-doc .doc-t tr.tg td{background:#d8e8fb !important;border-top:2px solid #0a64d6 !important;border-bottom:2px solid #0a64d6 !important}'
+    +'.bal-doc .doc-t td.cpt{color:#111418 !important;-webkit-text-fill-color:#111418 !important}'
+    +'.bal-doc .doc-res{color:#0b346e !important;-webkit-text-fill-color:#0b346e !important}'
+    +'.bal-doc .doc-foot{color:#5a6b7b !important;-webkit-text-fill-color:#5a6b7b !important}';
     document.head.appendChild(st); }catch(e){}
 })();
 </script>
