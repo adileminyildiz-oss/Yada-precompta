@@ -36,7 +36,18 @@
 
 ---
 
-## 🟢 Dernière mise à jour — TVA & factures : montants calculés sur TOUTES les écritures + concordance comptable — v242
+## 🟢 Dernière mise à jour — Saisie : TOUS les comptes proposés en autocomplétion (charges classe 6 incluses) — v243
+**Quoi :** dans l'éditeur d'écritures, l'**autocomplétion de compte** (`ecAllAccounts`) propose désormais **tout le Plan Comptable** — **tous les comptes de charges (classe 6)** et **tous les comptes** (classes 1 à 8), plus les tiers auxiliaires du dossier.
+
+**Pourquoi :** `ecAllAccounts` se limitait à **`db.plan`** quand celui-ci était peuplé (au lieu du PCG complet) → des comptes de charges absents de `db.plan` n'étaient **jamais proposés**. De plus `familles()` restreignait aux classes 401/411/44/6/7.
+
+**Ce qu'il fait :** la source des suggestions est désormais **`COMPTES` (= PCG_COMPLET fusionné, ~970 comptes) ∪ `db.plan`** (jamais `db.plan` seul), et `familles()` accepte **toutes les classes 1 à 8**. Filtré par préfixe saisi + 14 résultats max (inchangé).
+
+**Où / comment :** édition chirurgicale de `familles()` et `ecAllAccounts()` (addon85). Validé : `node --check` (118 scripts), filet d'équilibre (d-ama/d-sci42), smoke Playwright (saisie « 606 »/« 615 » → comptes de charges proposés ; « 2 » → immobilisations ; 0 pageerror). Badge → **v243**.
+
+---
+
+## 🟢 MAJ précédente — TVA & factures : montants calculés sur TOUTES les écritures + concordance comptable — v242
 **Quoi :** le **Module TVA (CA3)** calcule désormais la **TVA collectée et déductible sur toutes les écritures** (factures + import FEC + saisies), et les listes de factures **fournisseurs/clients** affichent la **concordance avec la comptabilité** (nombre d'écritures VTE/ACH).
 
 **Pourquoi :** (1) `tvaDuMois` comparait des codes courts (`'44571'`) alors que les écritures stockent des comptes en **9 chiffres** (`445710000`, addon22) → il renvoyait **0** (le suivi annuel TVA était vide). (2) `tvaDetailMois` ne lisait que `db.factures` → les montants **importés du FEC** (présents en écritures sur les comptes de TVA mais sans `db.factures`) étaient **ignorés**.

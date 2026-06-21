@@ -10812,7 +10812,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v242 · noir & bleu';
+    b.textContent='YADA · v243 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -13287,15 +13287,16 @@ ${lignes}
    (tiers auxiliaires au format Sage type 401DIVE, comptes de TVA, charges, produits). */
 (function(){
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];}); }
-  function familles(c){ var t3=c.slice(0,3); return (t3==='401'||t3==='411'||c.slice(0,2)==='44'||c.charAt(0)==='6'||c.charAt(0)==='7'); }
+  function familles(c){ return /^[1-8]/.test(c||''); } /* tous les comptes (classes 1 à 8) sont proposables */
   function ecAllAccounts(){
     var arr=[], seen={};
     /* tiers auxiliaires : code réel (compteAux) + code Sage (401DIVE) + nom */
     (db.tiers||[]).forEach(function(t){ if(t.compteAux){ var code=c9(t.compteAux); var sage=(typeof sageCode==='function')?sageCode(t):code;
       arr.push({code:code, sage:sage, lib:t.nom||''}); seen[code]=1; } });
-    /* plan : comptes de tiers collectifs, TVA (44), charges (6), produits (7) */
-    var src=(db.plan&&db.plan.length)? db.plan.map(function(p){return [c9(p.code), p.lib||COMPTES[p.code]||''];})
-      : Object.keys(COMPTES).map(function(c){return [c9(c), COMPTES[c]];});
+    /* plan COMPLET : tout le PCG (COMPTES = PCG_COMPLET fusionné) + les comptes propres au dossier (db.plan).
+       On ne se limite jamais à db.plan, sinon des comptes de charges (classe 6) manqueraient. */
+    var src=Object.keys(COMPTES).map(function(c){return [c9(c), COMPTES[c]];});
+    if(db.plan&&db.plan.length) db.plan.forEach(function(p){ src.push([c9(p.code), p.lib||COMPTES[p.code]||COMPTES[c9(p.code)]||'']); });
     src.forEach(function(p){ var c=p[0]; if(seen[c])return; if(familles(c)){ arr.push({code:c, sage:'', lib:p[1]||''}); seen[c]=1; } });
     return arr;
   }
