@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Toutes les éditions (Grand-livre, Bilan, Compte de résultat, Journaux…) : écritures en noir sur fond blanc légèrement bleuté — v234
+## 🟢 Dernière mise à jour — Interface FIXE (cartes/modules sans mouvement) + boutons en transparence + « Montants sans facture » repliable (fermé) — v235
+**Quoi :** (1) **tous les modules / sous-modules / cartes sont FIXES** — aucun mouvement ni animation au survol ou à l'entrée (plus de `transform`/`scale`/`translateY`/animation d'apparition), en mode **JOUR comme NUIT** ; (2) **seuls les BOUTONS** gardent un effet de **TRANSPARENCE** (opacité) au survol (`.82`) et au clic (`.62`), sans déplacement ; (3) dans les **Éditions** (Grand-livre), la carte **« Montants sans facture »** devient **repliable** (`<details>`), **FERMÉE par défaut** et **plus compacte** (un simple bandeau « ⚠ … — N ligne(s) · X € · ▸ ouvrir », cliquer pour déplier).
+
+**Où / comment :** `yada-addon129` — `<style id="fixe-ui-mod">` (injecté en dernier) : `transition:none/animation:none` + `transform:none !important` (au survol) sur `.card/.kpi/.cp-k/.cf-org/.kv2/.dossier-card/.figer-card` avec préfixe `body[data-theme]` pour **battre** les règles noir/liquid (spécificité ≥ règles thème) ; boutons `.btn{transition:opacity;transform:none}` + `:hover/:active{opacity}` ; styles `.sf-details/.sf-sum` (marqueur custom `▸/▾`). `blocSansFacture` rend un `<details>` (sans attribut `open`). 100% CSS/markup additif, aucune logique modifiée. Badge → **v235**.
+
+---
+
+## 🟢 MAJ précédente — Toutes les éditions (Grand-livre, Bilan, Compte de résultat, Journaux…) : écritures en noir sur fond blanc légèrement bleuté — v234
 **Quoi :** l'habillage de la Balance (v233) est **généralisé à toutes les éditions imprimables** (`.doc-page`) — **Grand-livre**, **Bilan**, **Compte de résultat**, **Journaux**, **centralisateur**, justificatifs : **écritures en NOIR** sur **fond BLANC légèrement bleuté** (en-têtes / lignes alternées / totaux en bleu clair, titre & filets bleus), **quel que soit le thème**. Les **factures** (`.inv-page`) ne sont pas touchées.
 
 **Où / comment :** `yada-addon128` — `<style id="doc-edit-mod">` reprend les règles de la balance mais sur **`.doc-page`** (toutes les éditions). Pour battre la règle du thème noir `body[data-theme="noir"] .doc *{color:#1b1b1b !important}` (spécificité 0,2,1), les règles texte utilisent **`body[data-theme] .doc-page *`** (même spécificité, injectées en dernier → priorité) → texte `#111418`. 100% CSS additif, aucune donnée/logique modifiée. Badge → **v234**.
