@@ -24,7 +24,25 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Sociétés (portefeuille) : bouton « Accéder à Qonto » — v203
+---
+
+## 🟢 Dernière mise à jour — Charges & Paie : 2 onglets (Paie / Charges) + vérification du bulletin avant génération — v204
+**Quoi :** le module **Charges & Paie** est organisé en **2 onglets — « Paie (bulletins de salaire) » et « Charges (cotisations & organismes) »** — et la modale d'un bulletin affiche un **panneau de Vérification & Validation** avant la génération de l'écriture de paie.
+
+**Pourquoi :** l'utilisateur veut déposer un bulletin (scan/OCR/saisie), voir toutes les informations reprises et **vérifiées** (société employeur, période, salarié, compte 421, cumuls, taux, montants, cotisations), puis valider et générer l'écriture.
+
+**Ce qu'il fait :**
+- **Onglets Paie / Charges** (`cpTabPC`) : « Paie » = bulletins de salaire (`.bp-card` : dépôt → OCR → fiche éditable → génération) ; « Charges » = journal de paie + cotisations patronales / organismes (cartes héritées).
+- **Panneau de vérification** (`bpVerifHTML`, injecté dans `bpVoir`) : 🏢 **Société employeur** (raison, adresse, SIRET), 📅 **Période**, 👤 **Salarié** (nom, n° SS, emploi, statut), 💼 **Compte de personnel 421** (net à payer), 📊 **Cumuls annuels** (brut / net imposable / net à payer / charges patronales, sur les bulletins de l'année), ✅ **Contrôle des calculs** : chaque cotisation (montant = base × taux, parts salariale & patronale) + total cotisations + net à payer, avec ✓/✗ et l'écart attendu. Badge « Calculs cohérents ✓ » global.
+- L'écriture (OD de paie + OD de charges) se génère ensuite via le panneau existant (addon106).
+
+**Où / comment :** `yada-addon109` — réorganise les enfants de `.cp-scroll` en 2 `.cp-pane` + barre `.cp-pc-tabs` (greffe `pageChargesPaie`) ; `bpVerifHTML` réutilise `window.bpCalc` (exposé par addon106) ; greffe sur `bpVoir` pour insérer le panneau avant les « Écritures proposées ». CSS `<style id="cp-pc-mod">`. Badge → **v204**.
+
+**Limites :** l'OCR des bulletins scannés nécessite le réseau (addon52) ; le contrôle vérifie la cohérence base × taux = montant (tolérance 0,02 €) — les taux/bases restent modifiables sur la fiche.
+
+---
+
+## 🟢 MAJ précédente — Sociétés (portefeuille) : bouton « Accéder à Qonto » — v203
 **Quoi :** dans **Sociétés (portefeuille)**, un bouton cliquable **« 🏦 Accéder à Qonto »** ouvre le compte bancaire **Qonto** (application `https://app.qonto.com`) dans un nouvel onglet. Le lien « Accéder à Qonto » de chaque ligne de dossier ouvre désormais réellement Qonto (au lieu d'ouvrir le dossier).
 
 **Où / comment :** `accederQonto(url)` (`window.open(url||'https://app.qonto.com','_blank','noopener,noreferrer')`) ; bouton ajouté dans l'entête de la carte « Portefeuille d'entreprises » (`cabinetApercu`) ; lien par ligne (`cabinetTable`) → `accederQonto(d.qontoUrl||'')` (URL Qonto propre au dossier si renseignée, sinon l'app générique). Badge → **v203**.
