@@ -6335,8 +6335,11 @@ function balanceLignes(type){
   // renvoie [{code9, lib, debit, credit}] selon le type
   if(type==='fournisseurs'||type==='clients'){
     const wantType=type==='clients'?'client':'fournisseur';
-    return db.tiers.filter(t=>t.type===wantType).map(t=>{const m=auxMvt(t,null);
-      return {code9:sageCode(t), lib:t.nom, debit:m.debit, credit:m.credit};}).sort((a,b)=>a.code9<b.code9?-1:1);
+    // ÉCRITURES (FEC + manuel) : on somme les lignes du compte de tiers via auxLignes
+    return db.tiers.filter(t=>t.type===wantType).map(t=>{
+      let deb=0,cre=0; (auxLignes(t)||[]).forEach(l=>{ deb+=(+l.debit||0); cre+=(+l.credit||0); });
+      return {code9:sageCode(t), lib:t.nom, debit:r2(deb), credit:r2(cre)};
+    }).filter(a=>Math.abs(a.debit)>=0.005||Math.abs(a.credit)>=0.005).sort((a,b)=>a.code9<b.code9?-1:1);
   }
   // général : tous les comptes mouvementés
   const g=sgGeneraux(null).map(a=>({code9:a.code9, lib:a.lib, debit:a.debit, credit:a.credit}));
@@ -10792,7 +10795,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v235 · noir & bleu';
+    b.textContent='YADA · v236 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }

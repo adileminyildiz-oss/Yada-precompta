@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Interface FIXE (cartes/modules sans mouvement) + boutons en transparence + « Montants sans facture » repliable (fermé) — v235
+## 🟢 Dernière mise à jour — Éditions : balances fournisseurs/clients calculées sur les ÉCRITURES (FEC + manuel) — v236
+**Quoi :** toutes les **Éditions** sont générées à partir de **tous les montants** — qu'ils proviennent de l'**import FEC** ou d'une **saisie manuelle**. La **balance générale**, le **grand-livre**, les **journaux**, le **bilan** et le **compte de résultat** itéraient déjà `db.ecritures` (FEC + manuel). Les **balances fournisseurs / clients** s'appuyaient en revanche sur `auxMvt(t)` (qui lit `db.factures`/`db.banque`) → elles **ignoraient les montants FEC** (présents en écritures mais sans `db.factures`). Désormais elles somment les **lignes d'écriture du compte de tiers** via `auxLignes(t)` → **FEC + manuel inclus**.
+
+**Où / comment :** `balanceLignes(type)` — pour `fournisseurs`/`clients`, remplacement de `auxMvt(t,null)` par la somme `débit/crédit` de `auxLignes(t)` (lignes sur le compte auxiliaire + collectif rattaché), avec filtre des comptes non mouvementés. Aucune logique comptable modifiée (calcul d'affichage uniquement). Badge → **v236**.
+
+---
+
+## 🟢 MAJ précédente — Interface FIXE (cartes/modules sans mouvement) + boutons en transparence + « Montants sans facture » repliable (fermé) — v235
 **Quoi :** (1) **tous les modules / sous-modules / cartes sont FIXES** — aucun mouvement ni animation au survol ou à l'entrée (plus de `transform`/`scale`/`translateY`/animation d'apparition), en mode **JOUR comme NUIT** ; (2) **seuls les BOUTONS** gardent un effet de **TRANSPARENCE** (opacité) au survol (`.82`) et au clic (`.62`), sans déplacement ; (3) dans les **Éditions** (Grand-livre), la carte **« Montants sans facture »** devient **repliable** (`<details>`), **FERMÉE par défaut** et **plus compacte** (un simple bandeau « ⚠ … — N ligne(s) · X € · ▸ ouvrir », cliquer pour déplier).
 
 **Où / comment :** `yada-addon129` — `<style id="fixe-ui-mod">` (injecté en dernier) : `transition:none/animation:none` + `transform:none !important` (au survol) sur `.card/.kpi/.cp-k/.cf-org/.kv2/.dossier-card/.figer-card` avec préfixe `body[data-theme]` pour **battre** les règles noir/liquid (spécificité ≥ règles thème) ; boutons `.btn{transition:opacity;transform:none}` + `:hover/:active{opacity}` ; styles `.sf-details/.sf-sum` (marqueur custom `▸/▾`). `blocSansFacture` rend un `<details>` (sans attribut `open`). 100% CSS/markup additif, aucune logique modifiée. Badge → **v235**.
