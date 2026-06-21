@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Tiers : détection de doublons par MOTS (pluriel + mots de liaison ignorés) — ex. « Résidence(s) Picardie » — v229
+## 🟢 Dernière mise à jour — Module Client : carte « 🔁 Récurrence » (prestations de service facturées en plusieurs fois) — v230
+**Quoi :** dans le **Module Client (Facturation)**, une carte **« 🔁 Récurrence — prestation de service »** crée une **prestation facturée en plusieurs fois** (ex. **Tenue Comptable** sur **12 mois**) : une **facture de prestation** est générée **pour chaque mois** (statut « à générer »), retrouvable dans **« Mes factures de vente »**. Champs : client, désignation (déf. « Tenue Comptable »), montant HT/mois, TVA, nombre de mois (déf. 12), date de 1ʳᵉ facture, conditions de paiement.
+
+**Où / comment :** `yada-addon124` — `faRecCard()` (greffé en tête de la colonne « Créer / Déposer » de `pageFacturationClient`) ; `faRecGenerer()` boucle sur N mois (`addMonthsISO`), crée des `db.docs` (type facture, **ligne `nature:'prestation'`**, `qte:1`, `pu`=montant/mois), `numero` via `nextNumUnique('FAC')`, échéance via `faEcheanceFromCond`, libellé « <prestation> — <mois> », `recurrence:{groupe,index,total,designation}`, statut `valide` non comptabilisé. Les écritures se génèrent ensuite normalement (une par mois, VTE équilibrée). Aucune logique comptable modifiée. Badge → **v230**.
+
+---
+
+## 🟢 MAJ précédente — Tiers : détection de doublons par MOTS (pluriel + mots de liaison ignorés) — ex. « Résidence(s) Picardie » — v229
 **Quoi :** la détection des doublons de tiers (v228) compare désormais aussi les **mots significatifs** : on **ignore les mots de liaison** (de, des, la, le, et…) et on **ramène au singulier** (RÉSIDENCES → RÉSIDENCE), de sorte que « **Résidences Picardie** », « Résidence Picardie », « Résidence DE Picardie », « SCI Résidence Picardie » sont reconnus comme **le même tiers** (surlignés jaune + fusionnables), **sans** confondre des entités distinctes qui partagent un mot (« Résidence Amiens » ≠ « Résidence Picardie »).
 
 **Où / comment :** `yada-addon123` — `similaire(n1,n2)` enrichi : `tokens()` (majuscules, sans accents, sans formes juridiques ni mots STOP, singulier) + `tokenKey()` ; vrai si **mêmes mots significatifs** (token-set égal), sinon inclusion, sinon **Jaccard de tokens ≥ 0,6**, sinon Dice ≥ 0,80. Aucune logique comptable modifiée. Badge → **v229**.

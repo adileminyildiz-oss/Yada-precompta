@@ -10781,7 +10781,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v229 · noir & bleu';
+    b.textContent='YADA · v230 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -16663,6 +16663,82 @@ ${lignes}
   try{ var st=document.createElement('style'); st.id='dup-fuzzy-mod'; st.textContent=
     'tr.dup-tiers td{background:rgba(232,196,40,.20) !important}'
     +'.dup-tag{display:inline-block;background:#e8c428;color:#3a2c00;font-size:10px;font-weight:800;padding:1px 7px;border-radius:10px;margin-left:6px;letter-spacing:.04em}';
+    document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon124">
+/* ============================================================
+   MODULE CLIENT — Carte « 🔁 Récurrence » (factures de PRESTATION DE SERVICE en
+   plusieurs fois, ex. Tenue Comptable sur 12 mois). Génère une facture par mois
+   (prestation, statut « à générer »), retrouvable dans « Mes factures de vente ».
+   100% additif (greffe pageFacturationClient) ; les factures sont créées comme
+   les autres (db.docs, prestation) ; l'écriture se génère ensuite normalement.
+   ============================================================ */
+(function(){
+  function addMonthsISO(iso,n){ var p=String(iso||'').split('-'); var y=+p[0]||1970, m=(+p[1]||1)-1, d=+p[2]||1;
+    var dt=new Date(y, m+n, 1); var last=new Date(dt.getFullYear(), dt.getMonth()+1, 0).getDate(); dt.setDate(Math.min(d,last));
+    return dt.getFullYear()+'-'+('0'+(dt.getMonth()+1)).slice(-2)+'-'+('0'+dt.getDate()).slice(-2); }
+
+  window.faRecGenerer=function(){
+    var g=function(x){return document.getElementById(x);};
+    var clientId=((g('frec-client')||{}).value)||'';
+    var t=(db.tiers||[]).find(function(x){return x.id===clientId;});
+    if(!t) return toast('Choisissez un client.');
+    var desc=(((g('frec-desc')||{}).value)||'').trim()||'Tenue Comptable';
+    var pu=r2(parseFloat((((g('frec-montant')||{}).value)||'0').replace(',','.'))||0);
+    if(pu<=0) return toast('Indiquez le montant HT par échéance.');
+    var taux=parseFloat(((g('frec-taux')||{}).value)||'20')||0;
+    var n=parseInt(((g('frec-n')||{}).value)||'12',10)||12; n=Math.max(1, Math.min(60, n));
+    var start=((g('frec-start')||{}).value)||todayStr();
+    var condEl=g('frec-cond'); var cond=condEl?condEl.value:'';
+    var grp='REC'+Date.now(); var first='', lastN='';
+    for(var i=0;i<n;i++){
+      var date=addMonthsISO(start, i);
+      var ech=(typeof faEcheanceFromCond==='function')?faEcheanceFromCond(date, cond):date;
+      var moisLbl=(typeof moisLabel==='function' && typeof ym==='function')?moisLabel(ym(date)):date.slice(0,7);
+      var lib=desc+' — '+moisLbl;
+      var ht=r2(pu), tva=r2(pu*taux/100), ttc=r2(ht+tva);
+      var numero=(typeof nextNumUnique==='function'?nextNumUnique('FAC'):('FAC'+(i+1)));
+      var doc={ id:uid(), type:'facture', clientId:t.id, date:date, echeance:ech, numero:numero, conditions:cond,
+        lignes:[{desc:lib, nature:'prestation', qte:1, pu:pu, taux:taux, unite:''}],
+        ht:ht, tva:tva, ttc:ttc, statut:'valide', envoye:false, ecritureId:null, devisId:null, transformeEn:null,
+        recurrence:{groupe:grp, index:i+1, total:n, designation:desc} };
+      db.docs.push(doc); if(!first)first=numero; lastN=numero;
+    }
+    if(typeof save==='function')save(); if(typeof render==='function')render();
+    toast(n+' facture(s) de prestation « '+desc+' » créée(s) ('+first+' → '+lastN+') — générez leurs écritures dans « Mes factures de vente ».');
+  };
+
+  window.faRecCard=function(){
+    var clients=(db.tiers||[]).filter(function(t){return t.type==='client';});
+    var opts=clients.map(function(c){return '<option value="'+c.id+'">'+String(c.nom||'').replace(/</g,'&lt;')+'</option>';}).join('');
+    var taux=[20,10,5.5,0].map(function(x){return '<option value="'+x+'"'+(x===20?' selected':'')+'>'+x+'%</option>';}).join('');
+    var cond=(typeof faCondOptions==='function')?faCondOptions():'<option value="30">30 jours</option>';
+    return '<div class="card frec-card"><h2>🔁 Récurrence — prestation de service</h2>'
+      +'<div class="sub">Facturez une <b>prestation de service en plusieurs fois</b> (ex. <b>Tenue Comptable</b> sur <b>12 mois</b>) : une facture est créée pour chaque mois.</div>'
+      +(clients.length?('<div class="row g3">'
+        +'<div class="field"><label>Client</label><select id="frec-client">'+opts+'</select></div>'
+        +'<div class="field"><label>Prestation</label><input id="frec-desc" value="Tenue Comptable" placeholder="Désignation de la prestation"></div>'
+        +'<div class="field"><label>Montant HT / mois</label><input id="frec-montant" type="number" step="0.01" placeholder="0,00"></div>'
+        +'</div>'
+        +'<div class="row g3">'
+        +'<div class="field"><label>TVA</label><select id="frec-taux">'+taux+'</select></div>'
+        +'<div class="field"><label>Nombre de mois</label><input id="frec-n" type="number" min="1" max="60" value="12"></div>'
+        +'<div class="field"><label>1ʳᵉ facture (mois)</label><input id="frec-start" type="date" value="'+todayStr()+'"></div>'
+        +'</div>'
+        +'<div class="row g3"><div class="field"><label>Conditions de paiement</label><select id="frec-cond">'+cond+'</select></div><div></div><div></div></div>'
+        +'<div class="right"><button class="btn btn-pri" onclick="faRecGenerer()">🔁 Créer la récurrence</button></div>'
+        +'<div class="hint">Chaque mois donne une facture (statut « À générer ») dans <b>« Mes factures de vente »</b> ; vous générez ensuite les écritures (une par mois).</div>')
+        :'<div class="empty">Créez d\'abord un client pour mettre en place une récurrence.</div>')
+      +'</div>';
+  };
+  if(typeof window.pageFacturationClient==='function'){ var _p=window.pageFacturationClient; window.pageFacturationClient=function(){
+    var h=_p.apply(this,arguments);
+    try{ if(h.indexOf('frec-card')<0) h=h.replace('<div class="cli-col-h">Créer / Déposer</div>', '<div class="cli-col-h">Créer / Déposer</div>'+window.faRecCard()); }catch(e){}
+    return h; }; }
+  try{ var st=document.createElement('style'); st.id='frec-mod'; st.textContent=
+    '.frec-card{border-left:4px solid #1e90ff}'
+    +'.frec-card h2{display:flex;align-items:center;gap:8px}';
     document.head.appendChild(st); }catch(e){}
 })();
 </script>
