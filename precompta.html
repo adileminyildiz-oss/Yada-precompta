@@ -10755,7 +10755,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v214 · noir & bleu';
+    b.textContent='YADA · v215 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -13946,9 +13946,10 @@ ${lignes}
   window.pjCard=pjCard;
 
   var _cp=window.pageChargesPaie;
-  window.pageChargesPaie=function(){ var h=_cp.apply(this,arguments);
-    try{ h=h.replace('<div class="cp-scroll">','<div class="cp-scroll">'+pjCard()); }catch(e){}
-    return h; };
+  /* La SAISIE MANUELLE du Journal de paie (carte pjCard) est retirée de l'onglet Charges :
+     la génération des OD de paie / OD de charges se fait via les Bulletins de paie (onglet Paie).
+     pjCard / pjGenerer restent définis (non affichés) pour compatibilité. */
+  window.pageChargesPaie=function(){ return _cp.apply(this,arguments); };
 
   try{ var st=document.createElement('style'); st.id='pj-mod'; st.textContent=
     '.pj-card{margin:0 0 18px}'
