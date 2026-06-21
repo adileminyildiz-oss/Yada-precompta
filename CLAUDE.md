@@ -26,7 +26,23 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Charges & Paie : 2 onglets (Paie / Charges) + vérification du bulletin avant génération — v204
+---
+
+## 🟢 Dernière mise à jour — Import FEC : écritures classées par libellé (OD PAIE / OD CHARGES / OD TVA / OD) + ligne bleue entre écritures — v205
+**Quoi :** à l'import FEC, chaque écriture d'O.D. est placée dans le **bon journal d'après son libellé** : « OD PAIE » → **OD PAIE (ODP)**, charges (CHARGE/COTISATION/URSSAF/PATRONAL) → **OD CHARGES (ODC, nouveau journal)**, TVA → **OD TVA (ODTVA)**, le reste → **OD (Opérations diverses)**. Les écritures de charges générées par la paie vont aussi en **ODC**. Une **ligne bleue** sépare chaque écriture dans le Journal comptable.
+
+**Où / comment :**
+- Nouveau journal **`ODC` (OD CHARGES)** dans `journauxDefaut`.
+- `fecJournalMoteur(code, jlib, ecrLib)` classe les O.D. par libellé (TVA → ODTVA ; CHARGE/COTISATION/URSSAF/PATRONAL → ODC ; PAIE/SALAIRE/BULLETIN → ODP ; sinon OD) ; `integrerFEC` transmet le libellé d'écriture.
+- Paie : `posterPaieMois` et `bpGenererODMois` postent l'**OD CHARGES en journal ODC** ; idempotence (`paieDejaPostee`, `bpODFaite`/`bpSupprOD`) gère ODP **et** ODC.
+- Affichage : `ODC` ajouté à `sgJournaux`, `sgJournalGrid`, `journauxDoc`, `centralisateurDoc`, filtre éditeur.
+- `yada-addon110` : ligne bleue (`border-top:2px #1e90ff`) entre chaque `.ecr` de la page Journal comptable (le grand-livre/Consultation ont déjà `sgj-ecr-sep`). Badge → **v205**.
+
+**Limites :** la classification se base sur des mots-clés du libellé/journal FEC (tolérante mais heuristique).
+
+---
+
+## 🟢 MAJ précédente — Charges & Paie : 2 onglets (Paie / Charges) + vérification du bulletin avant génération — v204
 **Quoi :** le module **Charges & Paie** est organisé en **2 onglets — « Paie (bulletins de salaire) » et « Charges (cotisations & organismes) »** — et la modale d'un bulletin affiche un **panneau de Vérification & Validation** avant la génération de l'écriture de paie.
 
 **Pourquoi :** l'utilisateur veut déposer un bulletin (scan/OCR/saisie), voir toutes les informations reprises et **vérifiées** (société employeur, période, salarié, compte 421, cumuls, taux, montants, cotisations), puis valider et générer l'écriture.
