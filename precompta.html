@@ -10700,7 +10700,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v203 · noir & bleu';
+    b.textContent='YADA · v204 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -15354,6 +15354,8 @@ ${lignes}
       +'</div>';
   }
   window.bpCard=bpCard;
+  /* exposés pour le module de vérification (addon109) */
+  window.bpCalc=bpCalc; window.bpFichesMois=bpFichesMois; window.bpGet=bpGet; window.bpR2=R2;
 
   var _cp=window.pageChargesPaie;
   window.pageChargesPaie=function(){ var h=_cp.apply(this,arguments);
@@ -15502,6 +15504,137 @@ ${lignes}
     try{ if(typeof nfState!=='undefined' && nfState){ nfState.conditions=cond; } }catch(e){}
     try{ if(typeof nfUpdate==='function') nfUpdate(); }catch(e){}
   };
+})();
+</script>
+<script id="yada-addon109">
+/* addon109 — Charges & Paie : 2 onglets (Paie / Charges) + panneau de
+   VÉRIFICATION & VALIDATION du bulletin (société employeur, période, salarié,
+   compte 421, cumuls annuels, contrôle des taux/montants/cotisations) avant
+   génération de l'écriture de paie. 100% additif (réutilise addon106). */
+(function(){
+  if(typeof window.pageChargesPaie!=='function') return;
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];}); }
+  var R2=window.bpR2||function(v){ var n=parseFloat(String(v==null?0:v).replace(',','.'))||0; return Math.round((n+Number.EPSILON)*100)/100; };
+
+  /* ---------- Onglets Paie / Charges ---------- */
+  window.cpTabPC = window.cpTabPC || 'paie';
+  window.cpSetTabPC = function(t){ window.cpTabPC=t; if(typeof render==='function') render(); };
+  var _cp=window.pageChargesPaie;
+  window.pageChargesPaie=function(){
+    var html=_cp.apply(this,arguments);
+    try{
+      var wrap=document.createElement('div'); wrap.innerHTML=html;
+      var scroll=wrap.querySelector('.cp-scroll'); if(!scroll) return html;
+      var tab=window.cpTabPC||'paie';
+      var paie=document.createElement('div'); paie.className='cp-pane';
+      var charge=document.createElement('div'); charge.className='cp-pane';
+      Array.prototype.slice.call(scroll.children).forEach(function(el){
+        var cls=String(el.className||'');
+        if(/\bbp-card\b/.test(cls)) paie.appendChild(el); else charge.appendChild(el);
+      });
+      paie.style.display = (tab==='paie')?'':'none';
+      charge.style.display = (tab==='charge')?'':'none';
+      scroll.innerHTML='';
+      var bar=document.createElement('div'); bar.className='cp-pc-tabs';
+      bar.innerHTML='<button class="cp-pc-tab '+(tab==='paie'?'on':'')+'" onclick="cpSetTabPC(\'paie\')">🧾 Paie (bulletins de salaire)</button>'
+        +'<button class="cp-pc-tab '+(tab==='charge'?'on':'')+'" onclick="cpSetTabPC(\'charge\')">🏛️ Charges (cotisations & organismes)</button>';
+      scroll.appendChild(bar); scroll.appendChild(paie); scroll.appendChild(charge);
+      return wrap.innerHTML;
+    }catch(e){ return html; }
+  };
+
+  /* ---------- Panneau de vérification & validation d'un bulletin ---------- */
+  function ligneCheck(ok,label,val,attendu){
+    return '<tr><td>'+(ok?'<span class="vf-ok">✓</span>':'<span class="vf-ko">✗</span>')+'</td><td>'+esc(label)+'</td>'
+      +'<td class="r">'+val+'</td><td class="r vf-exp">'+(ok?'':('attendu '+attendu))+'</td></tr>';
+  }
+  function bpVerifHTML(f){
+    if(typeof window.bpCalc!=='function') return '';
+    var c=window.bpCalc(f); var s=db.societe||{};
+    /* cumuls annuels du salarié (jusqu'à ce mois inclus) */
+    var fiches=(db.parametres&&db.parametres.bulletins&&db.parametres.bulletins.fiches)||[];
+    var an=String(f.mois).slice(0,4);
+    var ytd={brut:0,netImpo:0,net:0,pat:0,n:0};
+    fiches.filter(function(x){ return (x.nom||'')===(f.nom||'') && String(x.mois).slice(0,4)===an && String(x.mois)<=String(f.mois); })
+      .forEach(function(x){ var cc=window.bpCalc(x); ytd.brut=R2(ytd.brut+cc.brut); ytd.netImpo=R2(ytd.netImpo+cc.netImpo); ytd.net=R2(ytd.net+cc.netAPayer); ytd.pat=R2(ytd.pat+cc.totPat); ytd.n++; });
+    /* contrôle des cotisations : montant = base × taux */
+    var rows=(f.cotis||[]).map(function(x){
+      var base=R2(x.baseVal||0);
+      var expS=R2(base*(parseFloat(x.txS)||0)/100), okS=Math.abs(expS-R2(x.mS||0))<0.02;
+      var expP=R2(base*(parseFloat(x.txP)||0)/100), okP=Math.abs(expP-R2(x.mP||0))<0.02;
+      return ligneCheck(okS,esc(x.lib)+' — part salariale ('+(parseFloat(x.txS)||0)+'% × '+eur(base)+')', eur(x.mS||0), eur(expS))
+        + (parseFloat(x.txP)||x.mP? ligneCheck(okP,esc(x.lib)+' — part patronale ('+(parseFloat(x.txP)||0)+'% × '+eur(base)+')', eur(x.mP||0), eur(expP)) : '');
+    }).join('');
+    /* contrôle des totaux */
+    var totSal=R2((f.cotis||[]).reduce(function(a,x){return a+R2(x.mS||0);},0));
+    var okTotSal=Math.abs(totSal-c.totSal)<0.02;
+    var netCalc=R2(c.brut - c.totSal - c.pas + R2(c.panier) + R2(c.navigo));
+    var okNet=Math.abs(netCalc-c.netAPayer)<0.02;
+    var allOk=(f.cotis||[]).every(function(x){ var base=R2(x.baseVal||0);
+      return Math.abs(R2(base*(parseFloat(x.txS)||0)/100)-R2(x.mS||0))<0.02 && Math.abs(R2(base*(parseFloat(x.txP)||0)/100)-R2(x.mP||0))<0.02; }) && okTotSal && okNet;
+    return '<div class="bp-verif">'
+      +'<div class="vf-head">🔎 Vérification & validation — '+esc(f.nom||'Salarié')+' · '+esc(moisLabel(f.mois))+' <span class="'+(allOk?'vf-badge-ok':'vf-badge-ko')+'">'+(allOk?'Calculs cohérents ✓':'À vérifier')+'</span></div>'
+      +'<div class="vf-grid">'
+        +'<div class="vf-box"><div class="vf-t">🏢 Société employeur</div><div>'+esc(s.raison||'—')+'</div><div class="vf-sub">'+esc(s.adresse||'')+' '+esc((s.cp||'')+' '+(s.ville||''))+'</div><div class="vf-sub">SIRET '+esc(s.siret||s.siren||'—')+'</div></div>'
+        +'<div class="vf-box"><div class="vf-t">📅 Période de paie</div><div>'+esc(moisLabel(f.mois))+'</div><div class="vf-sub">Paie du mois</div></div>'
+        +'<div class="vf-box"><div class="vf-t">👤 Salarié</div><div>'+esc(f.nom||'—')+'</div><div class="vf-sub">'+esc(f.emploi||'')+(f.statut?(' · '+esc(f.statut)):'')+'</div><div class="vf-sub">N° SS '+esc(f.numSS||'—')+'</div></div>'
+        +'<div class="vf-box"><div class="vf-t">💼 Compte de personnel</div><div class="vf-acc">421000000</div><div class="vf-sub">Net à payer : <b>'+eur(c.netAPayer)+'</b></div></div>'
+      +'</div>'
+      +'<div class="vf-t" style="margin-top:12px">📊 Cumuls '+esc(an)+' (sur '+ytd.n+' bulletin'+(ytd.n>1?'s':'')+')</div>'
+      +'<div class="vf-cumuls"><span>Brut <b>'+eur(ytd.brut)+'</b></span><span>Net imposable <b>'+eur(ytd.netImpo)+'</b></span><span>Net à payer <b>'+eur(ytd.net)+'</b></span><span>Charges patronales <b>'+eur(ytd.pat)+'</b></span></div>'
+      +'<div class="vf-t" style="margin-top:12px">✅ Contrôle des taux & montants calculés</div>'
+      +'<table class="vf-tbl"><thead><tr><th></th><th class="l">Cotisation / contrôle</th><th class="r">Montant</th><th class="r">Écart</th></tr></thead><tbody>'
+        +(rows||'')
+        +ligneCheck(okTotSal,'Total cotisations salariales',eur(c.totSal),eur(totSal))
+        +ligneCheck(okNet,'Net à payer = brut − cotisations − PAS + primes',eur(c.netAPayer),eur(netCalc))
+      +'</tbody></table>'
+      +'<div class="vf-foot">'+(allOk
+        ? '<span class="vf-ok">✓ Tous les calculs sont vérifiés et cohérents.</span> Vous pouvez générer l\'écriture de paie ci-dessous.'
+        : '<span class="vf-ko">⚠ Certains montants ne correspondent pas au calcul base × taux.</span> Corrigez la fiche (✎ Éditer) avant de générer.')+'</div>'
+      +'</div>';
+  }
+  window.bpVerifHTML=bpVerifHTML;
+
+  /* injecter le panneau de vérification dans la modale du bulletin (bpVoir) */
+  if(typeof window.bpVoir==='function'){
+    var _bpVoir=window.bpVoir;
+    window.bpVoir=function(id){ _bpVoir(id);
+      try{
+        var f=((db.parametres&&db.parametres.bulletins&&db.parametres.bulletins.fiches)||[]).filter(function(x){return x.id===id;})[0];
+        if(!f) return;
+        var od=document.querySelector('#modal-c .bp-od');
+        var holder=document.createElement('div'); holder.innerHTML=bpVerifHTML(f);
+        var node=holder.firstChild;
+        if(node){ if(od&&od.parentNode){ od.parentNode.insertBefore(node, od); }
+          else { var body=document.querySelector('#modal-c .modal-b'); if(body) body.appendChild(node); } }
+      }catch(e){}
+    };
+  }
+
+  try{ var st=document.createElement('style'); st.id='cp-pc-mod'; st.textContent=
+    '.cp-pc-tabs{display:flex;gap:8px;margin:0 0 16px;border-bottom:1px solid #24405d;padding-bottom:0}'
+    +'.cp-pc-tab{background:none;border:none;border-bottom:3px solid transparent;color:#9fb6d0;font-size:14px;font-weight:600;padding:8px 14px;cursor:pointer}'
+    +'.cp-pc-tab.on{color:#5ab0ff;border-bottom-color:#1e90ff}'
+    +'.bp-verif{margin:14px 0;padding:14px;border:1px solid #24405d;border-radius:12px;background:#0d1722}'
+    +'.vf-head{font-size:13px;font-weight:700;color:#cfe0f5;margin-bottom:10px}'
+    +'.vf-badge-ok{background:rgba(127,227,180,.16);color:#7fe3b4;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px}'
+    +'.vf-badge-ko{background:rgba(255,154,154,.16);color:#ff9a9a;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px}'
+    +'.vf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}'
+    +'.vf-box{background:#0b1320;border:1px solid #24405d;border-radius:9px;padding:9px 11px;font-size:12.5px;color:#eaf2ff}'
+    +'.vf-t{font-size:12px;font-weight:700;color:#9fd0ff;margin-bottom:3px}'
+    +'.vf-sub{font-size:11px;color:#9fb6d0}'
+    +'.vf-acc{font-family:"IBM Plex Mono",monospace;color:#9fd0ff;font-size:13px}'
+    +'.vf-cumuls{display:flex;flex-wrap:wrap;gap:16px;font-size:12.5px;color:#9fb6d0;padding:8px 0}'
+    +'.vf-cumuls b{color:#eaf2ff;margin-left:4px}'
+    +'.vf-tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}'
+    +'.vf-tbl th{text-align:left;color:#9fb6d0;font-weight:600;font-size:11px;padding:5px 8px;border-bottom:1px solid #24405d}'
+    +'.vf-tbl th.r{text-align:right}'
+    +'.vf-tbl td{padding:4px 8px;border-bottom:1px solid #16212e;color:#cfe0f5}'
+    +'.vf-tbl td.r{text-align:right;font-family:"IBM Plex Mono",monospace}'
+    +'.vf-ok{color:#7fe3b4;font-weight:700}.vf-ko{color:#ff9a9a;font-weight:700}.vf-exp{color:#ff9a9a;font-size:11px}'
+    +'.vf-foot{margin-top:10px;font-size:12px;color:#9fb6d0}'
+    +'@media(max-width:820px){.vf-grid{grid-template-columns:1fr 1fr}}';
+    document.head.appendChild(st); }catch(e){}
 })();
 </script>
 </body>
