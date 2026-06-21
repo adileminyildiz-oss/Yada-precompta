@@ -30,7 +30,24 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Tiers : doublons clients/fournisseurs fusionnés en UN seul compte (montants regroupés) + dédoublonnage à la réception — v206
+---
+
+## 🟢 Dernière mise à jour — Tiers : montants réels par ligne + un seul tiers par nom (auto-fusion) + ligne bleue dans la Consultation — v207
+**Quoi :** (1) la liste des Tiers affiche le **vrai total** (CA TTC clients / Dépensé TTC fournisseurs) calculé depuis les **écritures** du compte de tiers ; (2) les doublons de même nom sont **fusionnés automatiquement en un seul compte** (tous les montants regroupés) ; (3) une **ligne bleue** sépare chaque écriture dans la **Consultation des comptes** (grand-livre).
+
+**Pourquoi :** les lignes de tiers affichaient 0 pour les comptes alimentés par le FEC (pas de `db.factures`) ; plusieurs « HABITAT CONCEPT » subsistaient ; et la ligne bleue n'apparaissait pas dans le grand-livre.
+
+**Ce qu'il fait :**
+- **`statsTiers`** : total depuis les écritures sur `c9(compteAux)` — client = Σ débits, fournisseur = Σ crédits (+ TVA estimée) ; repli sur `db.factures`.
+- **`auxLignes` corrigé** : rattache aussi les lignes portées **directement sur le compte auxiliaire** (FEC + factures depuis v201), pas seulement le collectif via facture → le grand-livre montre tous les mouvements du tiers.
+- **Auto-fusion** (`tiersConsoliderDoublons`, appelée au rendu de la page Tiers) : fusionne les groupes de même nom normalisé en **un seul** compte (déplace les lignes `c9(compteAux)` des doublons vers le maître, rattache factures/docs/banque/règlements) ; **sécurité** : ne fusionne pas si SIRET différents (alerte + fusion manuelle). Bouton « Fusionner » manuel conservé.
+- **Ligne bleue** entre écritures (`lx-ecr-sep`) dans le grand-livre auxiliaire (`auxLignes`) **et** la consultation lecture seule (`#cl-overlay`).
+
+**Où / comment :** `statsTiers`, `auxLignes`, `_fusionGroupeTiers`/`tiersConsoliderDoublons` + greffe `pageTiers`, CSS `lx-ecr-sep` (addon110). Badge → **v207**.
+
+---
+
+## 🟢 MAJ précédente — Tiers : doublons clients/fournisseurs fusionnés en UN seul compte (montants regroupés) + dédoublonnage à la réception — v206
 **Quoi :** quand un client (ex. **HABITAT CONCEPT**) apparaît plusieurs fois dans les tiers, la **fusion** ne garde **qu'une fiche** et **regroupe tous les montants saisis** sur **ce compte tiers** (les lignes d'écriture du compte auxiliaire des doublons sont déplacées vers celui de la fiche conservée). La **réception** des factures clients ne crée plus de doublon (réutilisation du tiers existant).
 
 **Pourquoi :** les factures clients reçues créaient un nouveau client à chaque fois (plusieurs « HABITAT CONCEPT ») ; l'utilisateur veut une alerte de doublon, une seule fiche par client et tous les montants regroupés sur ce compte.
