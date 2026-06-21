@@ -6477,16 +6477,18 @@ function sfDemander(type,k){
 }
 function blocSansFacture(type){
   const list=montantsSansFacture(type);
-  if(!list.length) return `<div class="doc-gl-h" style="margin-top:14px">MONTANTS SANS FACTURE À LETTRER — aucun (tout est justifié)</div>`;
+  /* Carte repliable, FERMÉE par défaut, compacte (cliquer le titre pour l'ouvrir). */
+  if(!list.length) return `<details class="sf-details"><summary class="sf-sum sf-ok">Montants sans facture à lettrer — aucun (tout est justifié)</summary></details>`;
   const total=r2(list.reduce((a,x)=>a+x.montant,0));
   const rows=list.map((x,i)=>`<tr>
     <td class="l">${frDate(x.date)}</td><td class="l">${x.tiers}</td><td class="l">${x.libelle}</td>
     <td class="l">${x.sens==='C'?'Encaissement':'Décaissement'}</td><td>${sageNum(x.montant)}</td>
     <td class="l">${x.email||'—'}</td></tr>`).join('');
-  return `<div class="doc-gl-h" style="margin-top:14px;background:#9c3024">MONTANTS SANS FACTURE À LETTRER — ${list.length} ligne(s) · ${sageNum(total)} € à justifier</div>
-    <table class="doc-t"><thead><tr><th class="l">Date</th><th class="l">Tiers</th><th class="l">Libellé</th><th class="l">Sens</th><th>Montant</th><th class="l">E-mail tiers</th></tr></thead>
+  return `<details class="sf-details">
+    <summary class="sf-sum sf-warn">⚠ Montants sans facture à lettrer — ${list.length} ligne(s) · ${sageNum(total)} € à justifier <span class="sf-toggle">▸ ouvrir</span></summary>
+    <table class="doc-t" style="margin-top:8px"><thead><tr><th class="l">Date</th><th class="l">Tiers</th><th class="l">Libellé</th><th class="l">Sens</th><th>Montant</th><th class="l">E-mail tiers</th></tr></thead>
     <tbody>${rows}</tbody></table>
-    <div class="hint" style="margin:6px 0 0">Ces montants n'ont aucune facture rattachée : à vérifier par l'utilisateur, puis demande des pièces manquantes au tiers (mail ou dépôt sur son accès au logiciel).</div>`;
+    <div class="hint" style="margin:6px 0 0">Ces montants n'ont aucune facture rattachée : à vérifier par l'utilisateur, puis demande des pièces manquantes au tiers (mail ou dépôt sur son accès au logiciel).</div></details>`;
 }
 function grandLivreDoc(type){
   type=type||'general';
@@ -10790,7 +10792,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v234 · noir & bleu';
+    b.textContent='YADA · v235 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -16893,6 +16895,40 @@ ${lignes}
     +'.doc-page .doc-t td.cpt{color:#111418 !important;-webkit-text-fill-color:#111418 !important}'
     +'.doc-page .doc-res{color:#0b346e !important;-webkit-text-fill-color:#0b346e !important}'
     +'.doc-page .doc-foot{color:#5a6b7b !important;-webkit-text-fill-color:#5a6b7b !important}';
+    document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon129">
+/* ============================================================
+   INTERFACE FIXE — tous les modules / sous-modules / CARTES sont FIXES (aucun
+   mouvement ni animation au survol ou à l'entrée), en mode JOUR comme NUIT.
+   Seuls les BOUTONS gardent un effet de TRANSPARENCE (opacité) au survol/clic.
+   + carte « Montants sans facture » (Éditions / Grand-livre) repliable, FERMÉE
+   par défaut et plus compacte. 100% CSS additif (injecté en dernier).
+   ============================================================ */
+(function(){
+  try{ var st=document.createElement('style'); st.id='fixe-ui-mod'; st.textContent=
+    /* CARTES & blocs : pas de transform, pas d'animation (survol + entrée), tous thèmes */
+    '.card,.kpi,.cp-k,.cf-org,.kv2,.dossier-card,.figer-card,'
+    +'body[data-theme] .card,body[data-theme] .kpi,body[data-theme] .cp-k,body[data-theme] .cf-org,body[data-theme] .kv2,body[data-theme] .dossier-card{transition:none !important;animation:none !important}'
+    +'.card:hover,.kpi:hover,.cp-k:hover,.cf-org:hover,.kv2:hover,.dossier-card:hover,.figer-card:hover,'
+    +'body[data-theme] .card:hover,body[data-theme] .kpi:hover,body[data-theme] .cp-k:hover,body[data-theme] .cf-org:hover,body[data-theme] .kv2:hover,body[data-theme] .dossier-card:hover{transform:none !important}'
+    +'main:not(.fullbleed) .card,body[data-theme] main:not(.fullbleed) .card,body[data-theme^="liquid"] main:not(.fullbleed) .card{animation:none !important}'
+    /* BOUTONS : transparence seule (aucun déplacement), jour & nuit */
+    +'.btn,body[data-theme] .btn{transition:opacity .15s ease !important;transform:none !important}'
+    +'.btn:hover,body[data-theme] .btn:hover{transform:none !important;opacity:.82 !important}'
+    +'.btn:active,body[data-theme] .btn:active{transform:none !important;opacity:.62 !important}'
+    +'.btn:hover::before,body[data-theme] .btn:hover::before{animation:none !important}'
+    /* carte « Montants sans facture » : repliable, fermée, compacte */
+    +'.sf-details{margin-top:12px;border:1px solid #e4b9b1;border-radius:9px;overflow:hidden}'
+    +'.sf-details>.sf-sum{cursor:pointer;list-style:none;padding:7px 12px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:8px;user-select:none}'
+    +'.sf-details>.sf-sum::-webkit-details-marker{display:none}'
+    +'.doc-page .sf-details>.sf-sum.sf-warn{background:#fbeae6 !important;color:#9c3024 !important;-webkit-text-fill-color:#9c3024 !important}'
+    +'.doc-page .sf-details>.sf-sum.sf-ok{background:#e8f3ec !important;color:#1f6b4f !important;-webkit-text-fill-color:#1f6b4f !important;border:0}'
+    +'.sf-details>.sf-sum.sf-ok{border:0}.sf-details:has(>.sf-sum.sf-ok){border-color:#bfe0cd}'
+    +'.sf-details .sf-toggle{margin-left:auto;font-style:normal;font-size:0}'
+    +'.doc-page .sf-details .sf-toggle::after{content:"▸ ouvrir";font-size:10.5px;font-weight:700;color:inherit;-webkit-text-fill-color:currentColor}'
+    +'.doc-page .sf-details[open] .sf-toggle::after{content:"▾ fermer"}';
     document.head.appendChild(st); }catch(e){}
 })();
 </script>
