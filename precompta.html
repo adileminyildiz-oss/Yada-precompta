@@ -3449,7 +3449,7 @@ tr.fa-sel-row td{ background:rgba(30,144,255,.14) !important; box-shadow:inset 3
       <button onclick="document.getElementById('imp').click()">Importer</button>
       <input type="file" id="imp" accept="application/json" hidden onchange="importJSON(event)">
       <button class="sf-discard" onclick="yadaAnnulerModifs()">↩️ Ne pas enregistrer (annuler mes modifs)</button>
-      <button onclick="if(confirm('Réinitialiser avec les données de démonstration ?')){seed();save();connecte=false;render();}">↺ Réinitialiser (démo)</button>
+      <button onclick="yadaConfirm('Réinitialiser avec les données de démonstration ?',function(){seed();save();connecte=false;render();})">↺ Réinitialiser (démo)</button>
     </div>
   </aside>
   <main id="main"></main>
@@ -4154,7 +4154,7 @@ function ecranSelectionDossier(){
     <div class="login-actions">
       <button class="btn btn-gold" onclick="ouvrirCreationDossier()">Créer un dossier</button>
       <button class="btn btn-ghost" onclick="document.getElementById('imp').click()">Importer des données (JSON)</button>
-      <button class="btn btn-ghost" onclick="if(confirm('Réinitialiser avec les données de démonstration ?')){seed();save();connecte=false;render();}">↺ Réinitialiser (démo)</button>
+      <button class="btn btn-ghost" onclick="yadaConfirm('Réinitialiser avec les données de démonstration ?',function(){seed();save();connecte=false;render();})">↺ Réinitialiser (démo)</button>
     </div>
   </div>`;
 }
@@ -5245,18 +5245,19 @@ function rapCtxBar(e){ const m=document.getElementById('rb-ctx'); if(!m)return; 
 function rapCloseCtx(){ const m=document.getElementById('rb-ctx'); if(m)m.classList.remove('open'); }
 function rapModifierDate(){ rapCloseCtx(); const rel=releveDe(rapCompte,rapMois); if(!rel)return;
   if(rel.verrouille) return toast('Relevé verrouillé');
-  const d=prompt('Date de fin du relevé (AAAA-MM-JJ) :', rel.dateFin); if(!d)return;
-  rel.dateFin=d; save(); render(); toast('Date du relevé modifiée'); }
+  yadaPrompt('Date de fin du relevé (AAAA-MM-JJ) :', rel.dateFin, function(d){ if(!d)return;
+    rel.dateFin=d; save(); render(); toast('Date du relevé modifiée'); }); }
 function releveSuivantExiste(rel){ // un rapprochement postérieur existe-t-il sur ce compte ?
   return (db.releves||[]).some(r=>c9(r.compte)===c9(rel.compte)&&r.mois>rel.mois); }
 function rapSupprimerReleve(){ rapCloseCtx(); const rel=releveDe(rapCompte,rapMois); if(!rel)return;
   if(releveSuivantExiste(rel)) return toast('Impossible : supprimez d\'abord les rapprochements postérieurs');
-  if(!confirm('Supprimer le relevé de rapprochement au '+frDate(rel.dateFin)+' ?')) return;
-  db.releves=db.releves.filter(r=>r.id!==rel.id); save(); render(); toast('Relevé supprimé'); }
+  yadaConfirm('Supprimer le relevé de rapprochement au '+frDate(rel.dateFin)+' ?',function(){
+    db.releves=db.releves.filter(r=>r.id!==rel.id); save(); render(); toast('Relevé supprimé'); },{danger:true}); }
 function rapVerrouiller(){ rapCloseCtx(); const rel=releveDe(rapCompte,rapMois); if(!rel)return;
   const st=rapStats(rel);
-  if(Math.abs(st.ecartAJustifier)>=0.005 && !confirm('Le rapprochement n\'est pas soldé (écart '+eur(st.ecartAJustifier)+'). Verrouiller quand même ?')) return;
-  rel.verrouille=true; save(); render(); toast('Rapprochement verrouillé'); }
+  const _fin=function(){ rel.verrouille=true; save(); render(); toast('Rapprochement verrouillé'); };
+  if(Math.abs(st.ecartAJustifier)>=0.005){ yadaConfirm('Le rapprochement n\'est pas soldé (écart '+eur(st.ecartAJustifier)+'). Verrouiller quand même ?', _fin); }
+  else _fin(); }
 function rapMenuFichier(){ const rel=releveDe(rapCompte,rapMois);
   if(rel){ save(); toast('Modifications du relevé enregistrées'); } else toast('Aucun relevé à enregistrer'); }
 function quitterRappro(){ const rel=releveDe(rapCompte,rapMois); if(rel){ const st=rapStats(rel);
@@ -5470,15 +5471,15 @@ function toggleMenu(id){ const want=document.getElementById(id); const wasOpen=w
 document.addEventListener('click',()=>{ closeFichier(); auxCloseMenus(); });
 function fileEnregistrer(){ closeFichier(); snapshotDB(); save(); toast('Écritures enregistrées'); }
 function fileExportFEC(avecAN){ closeFichier(); ecrireFEC(avecAN?fecRowsAvecAN():fecRows(), 'txt', avecAN?'_AN':''); }
-function fileExporter(){ closeFichier(); const f=prompt('Format d\'export — tapez TXT, XML ou FEC :','TXT'); if(f===null)return;
-  const fmt=/xml/i.test(f)?'xml':'txt'; ecrireFEC(fecRows(), fmt); }
+function fileExporter(){ closeFichier(); yadaPrompt('Format d\'export — tapez TXT, XML ou FEC :','TXT', function(f){
+  const fmt=/xml/i.test(f)?'xml':'txt'; ecrireFEC(fecRows(), fmt); }); }
 function fileImporter(){ closeFichier(); current='fec'; render(); toast('Choisissez le format puis le fichier FEC à importer'); }
 function fileFermer(){ closeFichier();
-  if(confirm('Fermer le logiciel ? Les écritures sont enregistrées avant la fermeture.')){ snapshotDB(); save(); ecranFerme('Logiciel fermé. Les données ont été enregistrées.'); } }
+  yadaConfirm('Fermer le logiciel ? Les écritures sont enregistrées avant la fermeture.', function(){ snapshotDB(); save(); ecranFerme('Logiciel fermé. Les données ont été enregistrées.'); }); }
 function fileFermerSansSauver(){ closeFichier();
-  if(confirm('Fermer SANS sauvegarder ? Les écritures saisies depuis la dernière connexion seront perdues.')){
+  yadaConfirm('Fermer SANS sauvegarder ? Les écritures saisies depuis la dernière connexion seront perdues.', function(){
     if(dbSnapshot){ try{ db=JSON.parse(dbSnapshot); }catch{} }
-    ecranFerme('Logiciel fermé sans sauvegarde. Les saisies de la dernière session ont été annulées.'); } }
+    ecranFerme('Logiciel fermé sans sauvegarde. Les saisies de la dernière session ont été annulées.'); }, {danger:true}); }
 function ecranFerme(msg){
   document.body.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100vh;
     background:#1c2a33;color:#f6f2e9;font-family:'IBM Plex Sans',system-ui,sans-serif;text-align:center;padding:30px">
@@ -5492,25 +5493,27 @@ function ecranFerme(msg){
 function toggleExercice(){ toggleMenu('sg-exercice'); }
 function addAnnees(iso,n){ const d=new Date(iso+'T00:00:00'); d.setFullYear(d.getFullYear()+n); return d.toISOString().slice(0,10); }
 function exPeriode(){ closeFichier(); const s=db.societe;
-  const d=prompt('Début d\'exercice (AAAA-MM-JJ) — dates de début et de fin de traitement du dossier :', s.exoDebut); if(d===null)return;
-  const f=prompt('Fin d\'exercice (AAAA-MM-JJ) :', s.exoFin); if(f===null)return;
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||!/^\d{4}-\d{2}-\d{2}$/.test(f)) return toast('Format de date invalide');
-  s.exoDebut=d; s.exoFin=f; const key=d+'|'+f; if(!s.exercices.includes(key)) s.exercices.push(key); s.exercices.sort();
-  sgPer=null; save(); render(); toast('Période d\'exercice : '+frDate(d)+' → '+frDate(f)); }
+  yadaPrompt('Début d\'exercice (AAAA-MM-JJ) — dates de début et de fin de traitement du dossier :', s.exoDebut, function(d){
+   yadaPrompt('Fin d\'exercice (AAAA-MM-JJ) :', s.exoFin, function(f){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||!/^\d{4}-\d{2}-\d{2}$/.test(f)) return toast('Format de date invalide');
+    s.exoDebut=d; s.exoFin=f; const key=d+'|'+f; if(!s.exercices.includes(key)) s.exercices.push(key); s.exercices.sort();
+    sgPer=null; save(); render(); toast('Période d\'exercice : '+frDate(d)+' → '+frDate(f)); }); }); }
 function exRepriseBalance(mode){ closeFichier();
   toast('Reprise d\'une balance en '+mode+' — sélectionnez le fichier (fonction de reprise N-1).'); }
 function exSuivant(){ closeFichier(); const s=db.societe;
   const nd=addAnnees(s.exoDebut,1), nf=addAnnees(s.exoFin,1); const key=nd+'|'+nf;
   const existe=s.exercices.includes(key);
-  if(!existe){ if(!confirm('Créer l\'exercice suivant (N+1) : '+frDate(nd)+' → '+frDate(nf)+' ?')) return; s.exercices.push(key); s.exercices.sort(); }
-  s.exoDebut=nd; s.exoFin=nf; s.exoVerrouille=false; s.moisVerrouilles=[]; s.cloture=false;
-  sgPer=null; save(); render(); toast(existe?'Bascule sur l\'exercice suivant '+nd.slice(0,4):'Exercice suivant '+nd.slice(0,4)+' créé'); }
+  const _go=function(){ s.exoDebut=nd; s.exoFin=nf; s.exoVerrouille=false; s.moisVerrouilles=[]; s.cloture=false;
+    sgPer=null; save(); render(); toast(existe?'Bascule sur l\'exercice suivant '+nd.slice(0,4):'Exercice suivant '+nd.slice(0,4)+' créé'); };
+  if(!existe){ yadaConfirm('Créer l\'exercice suivant (N+1) : '+frDate(nd)+' → '+frDate(nf)+' ?', function(){ s.exercices.push(key); s.exercices.sort(); _go(); }); }
+  else _go(); }
 function exPrecedent(){ closeFichier(); const s=db.societe;
   const pd=addAnnees(s.exoDebut,-1), pf=addAnnees(s.exoFin,-1); const key=pd+'|'+pf;
   const existe=s.exercices.includes(key);
-  if(!existe){ if(!confirm('L\'exercice précédent (N-1) n\'existe pas. Le créer : '+frDate(pd)+' → '+frDate(pf)+' ?')) return; s.exercices.push(key); s.exercices.sort(); }
-  s.exoDebut=pd; s.exoFin=pf;
-  sgPer=null; save(); render(); toast(existe?'Retour sur l\'exercice précédent '+pd.slice(0,4):'Exercice précédent '+pd.slice(0,4)+' créé'); }
+  const _go=function(){ s.exoDebut=pd; s.exoFin=pf;
+    sgPer=null; save(); render(); toast(existe?'Retour sur l\'exercice précédent '+pd.slice(0,4):'Exercice précédent '+pd.slice(0,4)+' créé'); };
+  if(!existe){ yadaConfirm('L\'exercice précédent (N-1) n\'existe pas. Le créer : '+frDate(pd)+' → '+frDate(pf)+' ?', function(){ s.exercices.push(key); s.exercices.sort(); _go(); }); }
+  else _go(); }
 function exVerrouillerMois(){ closeFichier(); const s=db.societe;
   if(!sgPer) return toast('Sélectionnez d\'abord un mois dans la colonne Périodes');
   if(!s.moisVerrouilles.includes(sgPer)) s.moisVerrouilles.push(sgPer);
@@ -5520,12 +5523,12 @@ function exDeverrouiller(){ closeFichier(); const s=db.societe;
   if(s.cloture) return toast('Exercice clôturé définitivement — déverrouillage impossible');
   s.exoVerrouille=false; s.moisVerrouilles=[]; save(); render(); toast('Exercice déverrouillé '); }
 function exClotureMois(){ closeFichier(); if(!sgPer) return toast('Sélectionnez un mois');
-  if(!confirm('Clôture DÉFINITIVE du mois '+sgPer+' ? Cette opération est irréversible.')) return;
-  if(!db.societe.moisVerrouilles.includes(sgPer)) db.societe.moisVerrouilles.push(sgPer);
-  save(); render(); toast('Mois '+sgPer+' clôturé définitivement'); }
+  yadaConfirm('Clôture DÉFINITIVE du mois '+sgPer+' ? Cette opération est irréversible.', function(){
+    if(!db.societe.moisVerrouilles.includes(sgPer)) db.societe.moisVerrouilles.push(sgPer);
+    save(); render(); toast('Mois '+sgPer+' clôturé définitivement'); }, {danger:true}); }
 function exClotureExo(){ closeFichier();
-  if(!confirm('Clôture DÉFINITIVE et archivage légal de l\'exercice ? Irréversible.')) return;
-  db.societe.cloture=true; db.societe.exoVerrouille=true; save(); render(); toast('Exercice clôturé et archivé légalement'); }
+  yadaConfirm('Clôture DÉFINITIVE et archivage légal de l\'exercice ? Irréversible.', function(){
+    db.societe.cloture=true; db.societe.exoVerrouille=true; save(); render(); toast('Exercice clôturé et archivé légalement'); }, {danger:true}); }
 function exAttestationFEC(){ closeFichier();
   document.getElementById('print-area').innerHTML='<div class="doc"><div class="doc-page">'+
     '<div class="doc-title">ATTESTATION DE CONFORMITÉ FEC</div>'+
@@ -5811,8 +5814,8 @@ function auxAnnee(sens){ // change l'exercice (année précédente/suivante)
   if(fn){ auxMenuOuvert=null; fn(); } else toast('Changement d\'exercice indisponible'); }
 function auxSetAffichage(v){ auxAffichage=v; auxMenuOuvert=null; render(); toast('Affichage : '+({toutes:'toutes les lignes',nonlettrees:'lignes non lettrées',centralisees:'lignes centralisées'})[v]); }
 function auxCommentaire(){ const t=db.tiers.find(x=>x.id===auxTiersId); if(!t)return;
-  const v=prompt('Commentaire sur le compte '+sageCode(t)+' ('+t.nom+') :', t.commentaire||''); if(v===null)return;
-  t.commentaire=v; auxMenuOuvert=null; save(); render(); toast('Commentaire enregistré'); }
+  yadaPrompt('Commentaire sur le compte '+sageCode(t)+' ('+t.nom+') :', t.commentaire||'', function(v){
+    t.commentaire=v; auxMenuOuvert=null; save(); render(); toast('Commentaire enregistré'); }); }
 function auxCopierPressePapier(){ const t=db.tiers.find(x=>x.id===auxTiersId); if(!t)return; const L=auxLignes(t);
   const txt=['Date\tJournal\tPièce\tLibellé\tDébit\tCrédit\tLettre'].concat(
     L.map(l=>[frDate(l.date),l.journal,l.piece,l.lib,l.debit||'',l.credit||'',l.lettre||''].join('\t'))).join('\n');
@@ -5826,9 +5829,9 @@ function auxSolderCompte(){ const t=db.tiers.find(x=>x.id===auxTiersId); if(!t)r
   const lettre=prochaineLettre(t); L.forEach(l=>{ const o=ligneObj(l.key); if(o)o.lettre=lettre; });
   auxMenuOuvert=null; save(); render(); toast('Compte soldé — lettrage '+lettre); }
 function auxToutLettrerSansControle(){ const t=db.tiers.find(x=>x.id===auxTiersId); if(!t)return;
-  if(!confirm('Tout lettrer sans contrôle d\'équilibre ? (à utiliser avec prudence)')) return;
-  const L=auxLignes(t).filter(l=>!l.lettre); const lettre=prochaineLettre(t);
-  L.forEach(l=>{ const o=ligneObj(l.key); if(o)o.lettre=lettre; }); auxMenuOuvert=null; save(); render(); toast('Lettrage forcé '+lettre); }
+  yadaConfirm('Tout lettrer sans contrôle d\'équilibre ? (à utiliser avec prudence)', function(){
+    const L=auxLignes(t).filter(l=>!l.lettre); const lettre=prochaineLettre(t);
+    L.forEach(l=>{ const o=ligneObj(l.key); if(o)o.lettre=lettre; }); auxMenuOuvert=null; save(); render(); toast('Lettrage forcé '+lettre); }); }
 function auxDelettrerDesequilibres(){ const t=db.tiers.find(x=>x.id===auxTiersId); if(!t)return;
   const parLettre={}; auxLignes(t).forEach(l=>{ if(l.lettre){ const p=parLettre[l.lettre]||(parLettre[l.lettre]={d:0,c:0,keys:[]}); p.d+=l.debit;p.c+=l.credit;p.keys.push(l.key); } });
   let n=0; Object.values(parLettre).forEach(p=>{ if(Math.abs(r2(p.d-p.c))>=0.005){ p.keys.forEach(k=>{const o=ligneObj(k);if(o)o.lettre='';}); n+=p.keys.length; } });
@@ -6100,17 +6103,19 @@ function cpValider(){
     '  Autres organismes (437500) : '+eur(c.org437500)+'\n'+
     '  Total charges patronales : '+eur(c.totalPat)+'\n\n'+
     'Écritures au '+frDate(dernierJourMoisISO(cpMois))+'. Déployer la saisie ?';
-  if(!confirm(msg)) return;
-  posterPaieMois(cpMois); save(); render();
-  toast('OD PAIE et OD CHARGES '+pieceMois(cpMois)+' déployées');
+  yadaConfirm(msg, function(){
+    posterPaieMois(cpMois); save(); render();
+    toast('OD PAIE et OD CHARGES '+pieceMois(cpMois)+' déployées');
+  });
 }
 function cpSupprimerMois(){ const piece=pieceMois(cpMois);
-  if(!confirm('Supprimer les écritures OD PAIE et OD CHARGES '+piece+' ?')) return;
+  yadaConfirm('Supprimer les écritures OD PAIE et OD CHARGES '+piece+' ?', function(){
   const libs=['OD PAIE '+piece,'OD CHARGES '+piece];
   const ids=db.ecritures.filter(e=>libs.some(l=>(e.libelle||'').includes(l))).map(e=>e.id);
   db.ecritures=db.ecritures.filter(e=>!ids.includes(e.id));
   db.odiv=(db.odiv||[]).filter(o=>!libs.some(l=>(o.libelle||'').includes(l)));
   save(); render(); toast('Saisie du mois supprimée');
+  }, {danger:true});
 }
 
 function pageCompta(){
@@ -6459,11 +6464,12 @@ function sfDemander(type,k){
   const msg='DEMANDE DE PIÈCE JUSTIFICATIVE\n\nTiers : '+x.tiers+'\nOpération : '+x.libelle+' du '+frDate(x.date)+'\nMontant : '+eur(x.montant)+'\n\n'+
     'Ce mouvement bancaire n\'a aucune facture rattachée. Merci de nous transmettre la facture correspondante '+
     (x.email?('par e-mail à votre interlocuteur, ou'):'')+' via votre accès au logiciel.\n\nCanal : '+canal+'\n\nEnvoyer la demande ?';
-  if(!confirm(msg)) return;
+  yadaConfirm(msg, function(){
   db.demandesFactures=db.demandesFactures||[];
   db.demandesFactures.push({ id:uid(), cle:k, tiersId:x.tiersId, tiers:x.tiers, libelle:x.libelle, date:x.date,
     montant:x.montant, canal, dateDemande:horodatage().dateFr, statut:'attente' });
   save(); render(); toast('Demande de facture enregistrée et adressée à '+x.tiers+' ('+canal+')');
+  });
 }
 function blocSansFacture(type){
   const list=montantsSansFacture(type);
@@ -7022,13 +7028,13 @@ function pcRenameTiers(id,val){ const t=(db.tiers||[]).find(x=>x.id===id); if(!t
   t.nom=(val||'').trim()||t.nom; if(t.compteAux) COMPTES[c9(t.compteAux)]=t.nom; save(); toast('Compte tiers renommé'); }
 function pcDelTiers(id){ const t=(db.tiers||[]).find(x=>x.id===id); if(!t)return;
   if(pcTiersUsed(t)) return toast('Tiers mouvementé : suppression impossible');
-  if(!confirm('Supprimer le compte tiers « '+t.nom+' » ?'))return; db.tiers=db.tiers.filter(x=>x.id!==id); save(); render(); toast('Compte tiers supprimé'); }
+  yadaConfirm('Supprimer le compte tiers « '+t.nom+' » ?',function(){ db.tiers=db.tiers.filter(x=>x.id!==id); save(); render(); toast('Compte tiers supprimé'); },{danger:true}); }
 function pcRenameSal(id,val){ const sal=(((db.paie||{}).salaries)||[]).find(x=>x.id===id); if(!sal)return;
   if(pcSalUsed(sal)){ toast('Salarié mouvementé : modification impossible'); render(); return; }
   sal.nom=(val||'').trim()||sal.nom; save(); toast('Compte salarié renommé'); }
 function pcDelSal(id){ const sal=(((db.paie||{}).salaries)||[]).find(x=>x.id===id); if(!sal)return;
   if(pcSalUsed(sal)) return toast('Salarié mouvementé : suppression impossible');
-  if(!confirm('Supprimer le compte salarié « '+sal.nom+' » ?'))return; db.paie.salaries=db.paie.salaries.filter(x=>x.id!==id); save(); render(); toast('Compte salarié supprimé'); }
+  yadaConfirm('Supprimer le compte salarié « '+sal.nom+' » ?',function(){ db.paie.salaries=db.paie.salaries.filter(x=>x.id!==id); save(); render(); toast('Compte salarié supprimé'); },{danger:true}); }
 /* --- accord TVA automatique --- */
 function pcRateDed(l){ l=l||''; if(/5[.,]5/.test(l))return'445662000'; if(/10\s*%|[^0-9]10[^0-9]/.test(l))return'445666000'; if(/2[.,]1/.test(l))return'445661000'; if(/[^0-9]8\s*%/.test(l))return'445663000'; return'445667000'; }
 function pcRateColl(l){ l=l||''; if(/5[.,]5/.test(l))return'445712000'; if(/10\s*%|[^0-9]10[^0-9]/.test(l))return'445716000'; if(/2[.,]1/.test(l))return'445711000'; if(/[^0-9]8\s*%/.test(l))return'445713000'; return'445717000'; }
@@ -7106,9 +7112,9 @@ function ajoutCompte(){ const code=document.getElementById('pc-num').value.trim(
 function majLibCompte(code,lib){ if(db.ecritures.some(e=>e.lignes.some(l=>c9(l.compte)===c9(code)))){ toast('Compte mouvementé : modification impossible'); render(); return; } COMPTES[code]=lib; const e=db.plan.find(c=>c.code===code); if(e)e.lib=lib; else db.plan.push({code,lib,tva:''}); save(); toast('Libellé mis à jour'); }
 function sousCompte(code){ if(/^(401|411|421)/.test(c9(code))) return toast('Comptes de tiers : pas de sous-compte (format 401-411 + 4 lettres uniquement).');
   const racine=code.replace(/0+$/,''); const sug=racine+'1';
-  const num=prompt('Numéro du sous-compte :', sug.length>code.length?sug:code+'1'); if(!num)return;
-  const lib=prompt('Libellé du sous-compte :', COMPTES[code]||''); if(lib===null)return;
-  COMPTES[num]=lib; db.plan.push({code:num,lib,tva:''}); save(); render(); toast('Sous-compte '+c9(num)+' créé'); }
+  yadaPrompt('Numéro du sous-compte :', sug.length>code.length?sug:code+'1', function(num){ if(!num)return;
+   yadaPrompt('Libellé du sous-compte :', COMPTES[code]||'', function(lib){ if(lib===null)return;
+    COMPTES[num]=lib; db.plan.push({code:num,lib,tva:''}); save(); render(); toast('Sous-compte '+c9(num)+' créé'); }); }); }
 function suppCompte(code){ const used=db.ecritures.some(e=>e.lignes.some(l=>l.compte===code));
   if(used)return toast('Compte mouvementé : suppression impossible'); db.plan=db.plan.filter(c=>c.code!==code); delete COMPTES[code]; save(); render(); toast('Compte retiré'); }
 function enregistrerParam(){ const g=id=>document.getElementById(id).value; const p=db.parametres;
@@ -7144,9 +7150,9 @@ function pageReglements(){
 function marquerRegle(id){const r=db.reglements.find(x=>x.id===id);const f=db.factures.find(x=>x.id===r.factureId);
   r.statut='regle';r.regle=f.ttc;r.restant=0;r.echelonne=false;r.notes.push('Paiement validé le '+todayStr()); save();render();toast('Notification : paiement validé ✓');}
 function ecart(id){const r=db.reglements.find(x=>x.id===id);const f=db.factures.find(x=>x.id===r.factureId);
-  const part=prompt('Montant déjà réglé (paiement partiel / échelonné) :',r2(f.ttc/2)); if(part===null)return;
+  yadaPrompt('Montant déjà réglé (paiement partiel / échelonné) :',r2(f.ttc/2), function(part){ if(part===null)return;
   r.echelonne=true;r.statut='partiel';r.regle=r2(+part);r.restant=r2(f.ttc-(+part));
-  r.notes.push('Réglé partiellement ('+eur(+part)+') — solde à échéance, signalé via appli mobile.'); save();render();toast('Modalité « à écart » enregistrée');}
+  r.notes.push('Réglé partiellement ('+eur(+part)+') — solde à échéance, signalé via appli mobile.'); save();render();toast('Modalité « à écart » enregistrée');});}
 
 function todayStr(){return new Date().toISOString().slice(0,10);}
 
@@ -7386,11 +7392,11 @@ function imSave(){
     dureeMois:+g('im-duree').value||12, type:g('im-mode').value, sortie:null };
   db.immos=db.immos||[]; db.immos.push(im); imSelId=im.id; save(); closeModal(); render(); toast('Immobilisation « '+num+' » créée');
 }
-function imDel(id){ if(!confirm('Supprimer cette immobilisation ?'))return; db.immos=(db.immos||[]).filter(x=>x.id!==id); imSelId=null; save(); render(); toast('Immobilisation supprimée'); }
+function imDel(id){ yadaConfirm('Supprimer cette immobilisation ?',function(){ db.immos=(db.immos||[]).filter(x=>x.id!==id); imSelId=null; save(); render(); toast('Immobilisation supprimée'); },{danger:true}); }
 function imCeder(id){ const im=(db.immos||[]).find(x=>x.id===id); if(!im)return;
-  const d=prompt('Date de cession (AAAA-MM-JJ) :', imYear()+'-12-31'); if(!d)return;
-  const prix=prompt('Prix de cession HT (€) :','0'); if(prix===null)return;
-  im.sortie={date:d, prix:r2(+prix||0)}; save(); render(); toast('Cession enregistrée — pensez à comptabiliser la VNC (675) et le produit (775)'); }
+  yadaPrompt('Date de cession (AAAA-MM-JJ) :', imYear()+'-12-31', function(d){ if(!d)return;
+   yadaPrompt('Prix de cession HT (€) :','0', function(prix){ if(prix===null)return;
+    im.sortie={date:d, prix:r2(+prix||0)}; save(); render(); toast('Cession enregistrée — pensez à comptabiliser la VNC (675) et le produit (775)'); }); }); }
 
 /* ---------- comptabilisation des dotations (OD) ---------- */
 function imComptabiliserDotations(){
@@ -7771,10 +7777,10 @@ function tvsCalc(){ const co2=+document.getElementById('tvs-co2').value||0; cons
     <tr class="totrow"><td>Total TVS annuelle</td><td class="r num">${eur(tco2+tpoll)}</td></tr></tbody></table></div>`;
 }
 function tvsAdd(){ const g=id=>document.getElementById(id); const co2=+g('tvs-co2').value||0;
-  const immat=prompt('Immatriculation du véhicule :','AA-123-BB'); if(immat===null)return;
-  const modele=prompt('Modèle :','Peugeot 308'); if(modele===null)return;
-  db.vehicules=db.vehicules||[]; db.vehicules.push({id:uid(),immat,modele,co2,carburant:g('tvs-carb').value,dateMiseCirc:(g('tvs-an').value||'2022')+'-01-01',affectationPrivee:0});
-  save(); render(); toast('Véhicule ajouté au parc'); }
+  yadaPrompt('Immatriculation du véhicule :','AA-123-BB', function(immat){ if(immat===null)return;
+   yadaPrompt('Modèle :','Peugeot 308', function(modele){ if(modele===null)return;
+    db.vehicules=db.vehicules||[]; db.vehicules.push({id:uid(),immat,modele,co2,carburant:g('tvs-carb').value,dateMiseCirc:(g('tvs-an').value||'2022')+'-01-01',affectationPrivee:0});
+    save(); render(); toast('Véhicule ajouté au parc'); }); }); }
 
 /* INIT */
 (function(){ let charge=false;
@@ -8042,10 +8048,10 @@ function blocDoublonsFEC(){
       </div>`;}).join('')}</div>`;
 }
 function dupEcrSupprimer(id){ const e=(db.ecritures||[]).find(x=>x.id===id); if(!e)return;
-  if(!confirm('Supprimer définitivement cette écriture en double ?'))return;
+  yadaConfirm('Supprimer définitivement cette écriture en double ?', function(){
   db.ecritures=db.ecritures.filter(x=>x.id!==id);
   db.banque=(db.banque||[]).filter(b=>b.ecritureId!==id);
-  save(); scanDoublonsEcritures(); render(); toast('Écriture en double supprimée'); }
+  save(); scanDoublonsEcritures(); render(); toast('Écriture en double supprimée'); }, {danger:true}); }
 function dupEcrIgnorer(k){ db.societe.dupEcrResolu=db.societe.dupEcrResolu||{}; db.societe.dupEcrResolu[k]=true; save(); scanDoublonsEcritures(); render(); toast('Doublon conservé (notification levée)'); }
 
 /* ---------- E) Doublons fournisseurs / clients ---------- */
@@ -8091,9 +8097,9 @@ function _fusionGroupeTiers(grp){
   return {master, nLignes};
 }
 function tiersFusionner(key){ scanDoublonsTiers(); const grp=(window.dupTiersGroups||{})[key]; if(!grp||grp.length<2)return;
-  if(!confirm('Fusionner '+grp.length+' fiches « '+grp[0].nom+' » en une seule ?\n\nTous les montants saisis et mouvements seront regroupés sur un seul compte tiers.'))return;
+  yadaConfirm('Fusionner '+grp.length+' fiches « '+grp[0].nom+' » en une seule ?\n\nTous les montants saisis et mouvements seront regroupés sur un seul compte tiers.', function(){
   const r=_fusionGroupeTiers(grp); if(!r)return;
-  save(); scanDoublonsTiers(); render(); toast('Fusion : 1 fiche « '+r.master.nom+' » conservée'+(r.nLignes?(' · '+r.nLignes+' ligne(s) regroupée(s) sur '+c9(r.master.compteAux)):'')); }
+  save(); scanDoublonsTiers(); render(); toast('Fusion : 1 fiche « '+r.master.nom+' » conservée'+(r.nLignes?(' · '+r.nLignes+' ligne(s) regroupée(s) sur '+c9(r.master.compteAux)):'')); }); }
 /* Auto-consolidation : fusionne automatiquement les groupes de doublons (sauf ceux « laissés »
    et sauf si SIRET différents non vides → entités potentiellement distinctes, fusion manuelle). */
 function tiersConsoliderDoublons(){ scanDoublonsTiers(); const g=window.dupTiersGroups||{}; let nGrp=0;
@@ -8106,8 +8112,8 @@ function tiersConsoliderDoublons(){ scanDoublonsTiers(); const g=window.dupTiers
 function tiersFusionnerTous(){ const n=tiersConsoliderDoublons(); render(); toast(n?('Doublons fusionnés : '+n+' groupe(s) regroupé(s) en un seul compte chacun.'):'Aucun doublon à fusionner.'); }
 function tiersSupprimerDup(id){ const t=(db.tiers||[]).find(x=>x.id===id); if(!t)return;
   const nb=((db.ecritures||[]).filter(e=>e.tiersId===id).length)+((db.factures||[]).filter(f=>f.tiersId===id).length);
-  if(!confirm('Supprimer la fiche « '+t.nom+' » ?'+(nb?(' '+nb+' mouvement(s) lié(s) deviendront orphelins.'):'')))return;
-  db.tiers=db.tiers.filter(x=>x.id!==id); save(); scanDoublonsTiers(); render(); toast('Fiche supprimée'); }
+  yadaConfirm('Supprimer la fiche « '+t.nom+' » ?'+(nb?(' '+nb+' mouvement(s) lié(s) deviendront orphelins.'):''), function(){
+  db.tiers=db.tiers.filter(x=>x.id!==id); save(); scanDoublonsTiers(); render(); toast('Fiche supprimée'); }, {danger:true}); }
 function tiersLaisser(key){ db.societe.dupTiersResolu=db.societe.dupTiersResolu||{}; db.societe.dupTiersResolu[key]=true; save(); scanDoublonsTiers(); render(); toast('Doublon laissé (notification levée)'); }
 
 /* ---------- Greffes : panneaux doublons dans FEC, Tiers ; scan au Journal ---------- */
@@ -8305,11 +8311,12 @@ function genererEcritureDoc(id){ const d=db.docs.find(x=>x.id===id); if(!d)retur
   if(d.ecritureId) return toast('Écriture déjà générée pour '+d.numero);
   if(d.type==='devis') return toast('Un devis ne génère pas d\'écriture — transformez-le en facture');
   const t=db.tiers.find(x=>x.id===d.clientId); if(!t)return toast('Client introuvable');
-  if(!confirm('Générer l\'écriture comptable de la facture '+d.numero+' ?\n\nUne écriture de vente sera enregistrée (TVA collectée incluse) et transmise au module TVA. La numérotation '+d.numero+' est définitive.')) return;
+  yadaConfirm('Générer l\'écriture comptable de la facture '+d.numero+' ?\n\nUne écriture de vente sera enregistrée (TVA collectée incluse) et transmise au module TVA. La numérotation '+d.numero+' est définitive.', function(){
   const taux=Math.abs(d.ht)>0?r2(Math.abs(d.tva)/Math.abs(d.ht)*100):20;
   const f=posterFacture({type:'vente',tiersId:t.id,date:d.date,base:Math.abs(d.ht)*(d.ttc<0?-1:1),baseEst:'HT',taux,compteContre:t.compteContre,compteTVA:'44571',numero:d.numero,echeance:d.echeance});
   d.ecritureId=f.ecritureId; d.statut='valide'; save(); render();
   toast('Écriture générée pour '+d.numero+' — TVA collectée transmise au module TVA');
+  });
 }
 
 /* ----- Greffes ----- */
@@ -9266,7 +9273,7 @@ function envoyerLot(){
 /* Suppression : seul moyen de retirer une pièce (retire aussi écriture + facture + règlement) */
 function supprimerDoc(id){
   const d=db.docs.find(x=>x.id===id); if(!d)return;
-  if(!confirm('Supprimer définitivement '+d.numero+' ?\n\nLa pièce, son écriture comptable et son suivi de règlement seront retirés.')) return;
+  yadaConfirm('Supprimer définitivement '+d.numero+' ?\n\nLa pièce, son écriture comptable et son suivi de règlement seront retirés.', function(){
   if(d.ecritureId){
     const ec=db.ecritures.find(e=>e.id===d.ecritureId);
     const facId=ec?ec.factureId:null;
@@ -9277,6 +9284,7 @@ function supprimerDoc(id){
   if(d.transformeEn){ const fac=db.docs.find(x=>x.id===d.transformeEn); if(fac) fac.devisId=null; }
   db.docs=db.docs.filter(x=>x.id!==id); delete docSel[id];
   save(); render(); toast(d.numero+' supprimé');
+  }, {danger:true});
 }
 
 function docToggle(id,ch){ docSel[id]=ch; }
@@ -9711,7 +9719,7 @@ function ouvrirDossierDepuisGestion(id){ if(typeof choisirDossier==='function') 
 function supprimerDossier(id){
   const d=(db.cabinet&&db.cabinet.dossiers)?db.cabinet.dossiers.find(x=>x.id===id):null;
   const nom=d?d.nom:((db.dossiersData&&db.dossiersData[id]&&db.dossiersData[id].societe&&db.dossiersData[id].societe.dossierNom)||id);
-  if(!confirm("Supprimer définitivement le dossier « "+nom+" » ?\n\nToutes ses données (écritures, factures, tiers, banque…) seront perdues. Cette action est irréversible.")) return;
+  yadaConfirm("Supprimer définitivement le dossier « "+nom+" » ?\n\nToutes ses données (écritures, factures, tiers, banque…) seront perdues. Cette action est irréversible.", function(){
   const etaitActif = (db.activeId===id);
   if(db.cabinet&&db.cabinet.dossiers) db.cabinet.dossiers = db.cabinet.dossiers.filter(x=>x.id!==id);
   if(db.dossiersData) delete db.dossiersData[id];
@@ -9721,6 +9729,7 @@ function supprimerDossier(id){
     return;
   }
   save(); render(); toast('Dossier « '+nom+' » supprimé');
+  }, {danger:true});
 }
 
 /* Greffe : ajoute la carte de gestion en bas de la page Société & création du dossier */
@@ -10110,12 +10119,13 @@ ${lignes}
     save(); render(); toast('À-nouveaux '+anStart().slice(0,4)+' reportés ('+eur(A.td)+')');
   };
   window.t1SupprimerCloture=function(){
-    if(!confirm("Supprimer l'OD de résultat et les à-nouveaux générés pour cet exercice ?")) return;
+    yadaConfirm("Supprimer l'OD de résultat et les à-nouveaux générés pour cet exercice ?", function(){
     const libs=[libResultat(), libAN()];
     const ids=(db.ecritures||[]).filter(e=>libs.some(l=>(e.libelle||'').indexOf(l)>=0)).map(e=>e.id);
     db.ecritures=db.ecritures.filter(e=>ids.indexOf(e.id)<0);
     db.odiv=(db.odiv||[]).filter(o=>!libs.some(l=>(o.libelle||'').indexOf(l)>=0));
     save(); render(); toast('Clôture annulée — écritures retirées');
+    }, {danger:true});
   };
 
   window.t1Card=function(){
@@ -10383,12 +10393,13 @@ ${lignes}
   };
   window.ecart=function(id){
     const r=(db.reglements||[]).find(x=>x.id===id); if(!r) return; const {f}=regInfo(r); if(!f) return;
-    const part=prompt('Montant déjà réglé (paiement partiel / échelonné) :', r2((r.restant||f.ttc)/2)); if(part===null) return;
+    yadaPrompt('Montant déjà réglé (paiement partiel / échelonné) :', r2((r.restant||f.ttc)/2), function(part){ if(part===null) return;
     let m=r2(+part||0); if(m<=0) return toast('Montant invalide'); if(m>r.restant+0.005) m=r.restant;
     passerBanqueReglement(r, m, r.sens==='a_encaisser'?'ACOMPTE REÇU ':'ACOMPTE VERSÉ ');
     if(!(typeof lettrer==='function')){ r.echelonne=true; r.statut='partiel'; r.regle=r2(r.regle+m); r.restant=r2(f.ttc-r.regle); }
     r.notes=r.notes||[]; r.notes.push('Réglé partiellement ('+eur(m)+') le '+todayStr()+' — écriture banque générée');
     save(); render(); toast('Règlement partiel + écriture de banque générée');
+    });
   };
   /* note informative en tête de la page Règlements */
   if(typeof pageReglements==='function'){ const _p=pageReglements;
@@ -10432,11 +10443,12 @@ ${lignes}
   window.imCeder=function(id){
     const im=(db.immos||[]).find(x=>x.id===id); if(!im) return;
     if((db.ecritures||[]).some(e=>(e.libelle||'').indexOf(cessionLib(im))>=0)) return toast('Cession déjà comptabilisée pour '+im.numero);
-    const d=prompt('Date de cession (AAAA-MM-JJ) :', (typeof imYear==='function'?imYear():'2026')+'-12-31'); if(!d) return;
-    const prixS=prompt('Prix de cession HT (€) :','0'); if(prixS===null) return;
+    yadaPrompt('Date de cession (AAAA-MM-JJ) :', (typeof imYear==='function'?imYear():'2026')+'-12-31', function(d){ if(!d) return;
+     yadaPrompt('Prix de cession HT (€) :','0', function(prixS){ if(prixS===null) return;
     const r=imCederComptabilise(im, d, prixS);
     im.sortie={date:d, prix:r.prix}; save(); render();
     toast('Cession comptabilisée — VNC '+eur(r.vnc)+' / produit '+eur(r.prix)+' ('+(r.plusValue>=0?'+ value ':'- value ')+eur(Math.abs(r.plusValue))+')');
+     }); });
   };
 })();
 </script>
@@ -10534,7 +10546,7 @@ ${lignes}
     }).catch(function(e){ toast('Échec : '+(e&&e.message||'service indisponible')+' (accès réseau requis).'); }); };
   window.tiersSupprimer=function(id){ const t=(db.tiers||[]).find(x=>x.id===id); if(!t)return;
     if(tiersMouvemente(t)) return toast('Tiers mouvementé : suppression impossible');
-    if(!confirm('Supprimer la fiche « '+t.nom+' » ?'))return; db.tiers=db.tiers.filter(x=>x.id!==id); save(); closeModal(); render(); toast('Fiche supprimée'); };
+    yadaConfirm('Supprimer la fiche « '+t.nom+' » ?',function(){ db.tiers=db.tiers.filter(x=>x.id!==id); save(); closeModal(); render(); toast('Fiche supprimée'); },{danger:true}); };
   /* rendre les noms de tiers éditables : ajoute un bouton ✎ via greffe de openTiers (la fiche consultation garde un accès édition) */
   if(typeof openTiers==='function'){ const _o=openTiers; openTiers=function(id){ _o(id);
     try{ const mb=document.querySelector('#modal-c .modal-h'); if(mb && !document.getElementById('te-edit-btn')){
@@ -10599,7 +10611,7 @@ ${lignes}
   window.gedFile=function(ev){ const fs=ev.target.files; if(fs&&fs.length)addList(fs); };
   window.gedVoir=function(id){ const p=store().find(x=>x.id===id); if(!p)return; const w=window.open(); if(w)w.document.write('<iframe src="'+p.data+'" style="border:0;position:fixed;inset:0;width:100%;height:100%"></iframe>'); };
   window.gedDl=function(id){ const p=store().find(x=>x.id===id); if(!p)return; const a=document.createElement('a'); a.href=p.data; a.download=p.nom||'piece'; document.body.appendChild(a); a.click(); a.remove(); };
-  window.gedDel=function(id){ const s=store(); const i=s.findIndex(x=>x.id===id); if(i<0)return; if(!confirm('Supprimer « '+s[i].nom+' » ?'))return; s.splice(i,1); save(); render(); };
+  window.gedDel=function(id){ const s=store(); const i=s.findIndex(x=>x.id===id); if(i<0)return; yadaConfirm('Supprimer « '+s[i].nom+' » ?',function(){ s.splice(i,1); save(); render(); },{danger:true}); };
   function ico(p){ const n=(p.nom||'').toLowerCase(); if((p.mime||'').includes('pdf')||n.endsWith('.pdf'))return ''; if((p.mime||'').includes('image')||/\.(jpe?g|png|gif|webp)$/.test(n))return ''; return ''; }
   window.gedCard=function(){ const s=store();
     const liste=s.length?s.slice().reverse().map(p=>'<div class="ged-it"><span>'+ico(p)+'</span><span class="ged-nm" title="'+String(p.nom||'').replace(/"/g,'&quot;')+'">'+(p.nom||'pièce')+'</span><span class="ged-mt">'+frDate(p.date)+(p.taille?' · '+sz(p.taille):'')+'</span><span><button class="btn btn-ghost btn-xs" onclick="gedVoir(\''+p.id+'\')">Ouvrir</button> <button class="btn btn-ghost btn-xs" onclick="gedDl(\''+p.id+'\')">⤓</button> <button class="btn btn-ghost btn-xs" onclick="gedDel(\''+p.id+'\')">✕</button></span></div>').join(''):'<div class="hint">Aucune pièce déposée.</div>';
@@ -10673,7 +10685,7 @@ ${lignes}
 /* FEC inverse — bouton « Ouvrir l'exercice précédent (N-1) » pour saisir les à-nouveaux. */
 (function(){
   if(typeof pageFEC!=='function' || typeof exPrecedent!=='function') return;
-  window.fecOuvrirPrecedent=function(){ if(confirm("Ouvrir l'exercice précédent (N-1) ? Vous pourrez y saisir les à-nouveaux / la reprise de balance, puis revenir via « Exercice suivant ».")) exPrecedent(); };
+  window.fecOuvrirPrecedent=function(){ yadaConfirm("Ouvrir l'exercice précédent (N-1) ? Vous pourrez y saisir les à-nouveaux / la reprise de balance, puis revenir via « Exercice suivant ».",function(){ exPrecedent(); }); };
   const _p=pageFEC; pageFEC=function(){ return _p()
     +'<div class="card"><h2>Reprise antérieure (FEC inverse)</h2><div class="sub">Si le FEC importé démarre en N mais que vous devez reprendre les soldes de N-1, ouvrez l\'exercice précédent pour saisir les à-nouveaux, puis générez le report depuis Éditions → Clôture.</div>'
     +'<div class="right"><button class="btn btn-gold" onclick="fecOuvrirPrecedent()">↩ Ouvrir l\'exercice précédent (N-1)</button></div></div>'; };
@@ -10770,7 +10782,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v222 · noir & bleu';
+    b.textContent='YADA · v223 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -11297,7 +11309,7 @@ ${lignes}
 
   /* Actions cabinet */
   window.depotRecevoir=function(id){ var d=dstore().find(function(x){return x.id===id;}); if(!d)return; if(d.statut!=='deposee')return; d.statut='recue'; markNotifLu(id); save(); toast('Réception validée — comptabilisez la facture.'); render(); };
-  window.depotRefuser=function(id){ var d=dstore().find(function(x){return x.id===id;}); if(!d)return; if(d.statut==='comptabilisee')return toast('Déjà comptabilisée.'); if(!confirm('Refuser ce dépôt ?'))return; d.statut='refusee'; markNotifLu(id); save(); toast('Dépôt refusé.'); render(); };
+  window.depotRefuser=function(id){ var d=dstore().find(function(x){return x.id===id;}); if(!d)return; if(d.statut==='comptabilisee')return toast('Déjà comptabilisée.'); yadaConfirm('Refuser ce dépôt ?',function(){ d.statut='refusee'; markNotifLu(id); save(); toast('Dépôt refusé.'); render(); },{danger:true}); };
   window.depotComptabiliser=function(id){ var d=dstore().find(function(x){return x.id===id;}); if(!d)return;
     if(d.statut==='comptabilisee')return toast('Déjà comptabilisée.');
     if(d.statut!=='recue')return toast('Validez d\'abord la réception.');
@@ -11319,9 +11331,9 @@ ${lignes}
   /* Action client */
   window.depotSupprimer=function(id){ var s=dstore(); var i=s.findIndex(function(x){return x.id===id;}); if(i<0)return;
     if(s[i].statut!=='deposee')return toast('Déjà traitée par le cabinet — non supprimable.');
-    if(!confirm('Retirer ce dépôt ?'))return;
+    yadaConfirm('Retirer ce dépôt ?', function(){
     var fid=s[i].fichierId; if(fid){ var gp=gstore(); var j=gp.findIndex(function(p){return p.id===fid;}); if(j>=0)gp.splice(j,1); }
-    markNotifLu(id); s.splice(i,1); save(); render(); };
+    markNotifLu(id); s.splice(i,1); save(); render(); }, {danger:true}); };
 
   /* Carte de dépôt côté CLIENT (zone glisser-déposer + liste colorée) */
   window.depotFacturesCard=function(cat,titre,sub){
@@ -11659,8 +11671,9 @@ ${lignes}
     if(ttc<=0)return toast('Indiquez les montants HT / TVA de la facture');
     var fOld=factureDoublon(d.cat,tiersId,numero,date,ttc,null);
     if(fOld){ window._depotComptaPending={depId:id,tiersId:tiersId,numero:numero,date:date,ht:ht,tva:tva,ttc:ttc,taux:taux,oldId:fOld.id}; compareModal(window._depotComptaPending,fOld); return; }
-    if(d.doublon && !confirm('Ce dépôt est marqué comme doublon (même fichier). Comptabiliser quand même ?')) return;
-    faireComptabilisation(d,tiersId,numero,date,ht,tva,taux);
+    var _go=function(){ faireComptabilisation(d,tiersId,numero,date,ht,tva,taux); };
+    if(d.doublon){ yadaConfirm('Ce dépôt est marqué comme doublon (même fichier). Comptabiliser quand même ?', _go); }
+    else _go();
   };
   window.depotComptaGarderLesDeux=function(){ var p=window._depotComptaPending; if(!p)return; var d=dstore().find(function(x){return x.id===p.depId;});
     if(typeof closeModal==='function')closeModal(); if(d) faireComptabilisation(d,p.tiersId,p.numero,p.date,p.ht,p.tva,p.taux); window._depotComptaPending=null; };
@@ -12681,10 +12694,10 @@ ${lignes}
   window.purgeFEC=function(){
     var nom=nomSociete();
     var nEcr=(db.ecritures||[]).filter(function(e){return e.importeFEC;}).length;
-    if(!confirm('Supprimer les données IMPORTÉES DU FEC de « '+nom+' » ?\n\n'
+    yadaConfirm('Supprimer les données IMPORTÉES DU FEC de « '+nom+' » ?\n\n'
       +'Seront effacés : les écritures importées du FEC ('+nEcr+'), les mouvements bancaires reconstruits par le FEC, '
       +'les tiers créés par le FEC et le journal d\'import FEC.\n\n'
-      +'Les saisies manuelles sont conservées. Action irréversible.')) return;
+      +'Les saisies manuelles sont conservées. Action irréversible.', function(){
     try{
       var n=0;
       db.ecritures=(db.ecritures||[]).filter(function(e){ if(e.importeFEC){ n++; return false; } return true; });
@@ -12695,17 +12708,18 @@ ${lignes}
       if(typeof toast==='function') toast(n+' écriture(s) issue(s) du FEC supprimée(s) ✓');
       if(typeof render==='function') render();
     }catch(e){ if(typeof toast==='function') toast('Erreur : '+((e&&e.message)||e)); }
+    }, {danger:true});
   };
 
   /* 2) Tous les tiers (référentiel clients & fournisseurs) + fiches en attente */
   window.purgeTiers=function(){
     var nom=nomSociete();
     var n=(db.tiers||[]).length;
-    if(!confirm('Supprimer TOUS les tiers (clients & fournisseurs) de « '+nom+' » ?\n\n'
+    yadaConfirm('Supprimer TOUS les tiers (clients & fournisseurs) de « '+nom+' » ?\n\n'
       +n+' fiche(s) tiers seront effacées, ainsi que les fiches de nouveaux tiers en attente. '
       +'Les écritures déjà comptabilisées restent sur leurs comptes mais ne seront plus reliées à une fiche tiers.\n\n'
-      +'Action irréversible.')) return;
-    if(!confirm('Confirmer la suppression de l\'ensemble des tiers de « '+nom+' » ?')) return;
+      +'Action irréversible.', function(){
+    yadaConfirm('Confirmer la suppression de l\'ensemble des tiers de « '+nom+' » ?', function(){
     try{
       db.tiers=[];
       if(db.parametres && Array.isArray(db.parametres.fichesTiers)) db.parametres.fichesTiers=[];
@@ -12713,16 +12727,17 @@ ${lignes}
       if(typeof toast==='function') toast(n+' tiers supprimé(s) ✓');
       if(typeof render==='function') render();
     }catch(e){ if(typeof toast==='function') toast('Erreur : '+((e&&e.message)||e)); }
+    }, {danger:true}); }, {danger:true});
   };
 
   /* 3) Banque : mouvements bancaires + relevés de rapprochement */
   window.purgeBanque=function(){
     var nom=nomSociete();
     var n=(db.banque||[]).length;
-    if(!confirm('Supprimer la BANQUE de « '+nom+' » ?\n\n'
+    yadaConfirm('Supprimer la BANQUE de « '+nom+' » ?\n\n'
       +n+' mouvement(s) bancaire(s) et les relevés de rapprochement seront effacés. '
       +'Les écritures comptables restent inchangées.\n\n'
-      +'Action irréversible.')) return;
+      +'Action irréversible.', function(){
     try{
       db.banque=[];
       if(Array.isArray(db.releves)) db.releves=[];
@@ -12730,18 +12745,19 @@ ${lignes}
       if(typeof toast==='function') toast(n+' mouvement(s) bancaire(s) supprimé(s) ✓');
       if(typeof render==='function') render();
     }catch(e){ if(typeof toast==='function') toast('Erreur : '+((e&&e.message)||e)); }
+    }, {danger:true});
   };
 
   /* 4) Toutes les données comptables (réinitialisation complète) */
   window.purgeComptaSociete=function(){
     var nom=nomSociete();
-    if(!confirm('⚠️ Supprimer TOUTES les données comptables de « '+nom+' » ?\n\n'
+    yadaConfirm('⚠️ Supprimer TOUTES les données comptables de « '+nom+' » ?\n\n'
       +'Seront définitivement effacés : écritures, factures, règlements, banque & relevés, '
       +'documents et pièces déposées (GED), immobilisations / emprunts / crédit-bails / locations / véhicules, '
       +'paie, journal d\'import FEC, numérotation, propositions IA et relances.\n\n'
       +'Sont conservés : la société, les tiers, le plan comptable et les journaux.\n\n'
-      +'Cette action est IRRÉVERSIBLE — exportez une sauvegarde JSON avant si besoin.')) return;
-    if(!confirm('Dernière confirmation : effacer définitivement les données comptables de « '+nom+' » ?')) return;
+      +'Cette action est IRRÉVERSIBLE — exportez une sauvegarde JSON avant si besoin.', function(){
+    yadaConfirm('Dernière confirmation : effacer définitivement les données comptables de « '+nom+' » ?', function(){
     try{
       ['ecritures','factures','reglements','banque','odiv','releves','docs','demandesFactures',
        'fecLog','immos','emprunts','creditbails','locations','vehicules'].forEach(function(k){ db[k]=[]; });
@@ -12755,6 +12771,7 @@ ${lignes}
       if(typeof toast==='function') toast('Données comptables de « '+nom+' » supprimées ✓');
       if(typeof render==='function') render();
     }catch(e){ if(typeof toast==='function') toast('Erreur : '+((e&&e.message)||e)); }
+    }, {danger:true}); }, {danger:true});
   };
 
   if(typeof pageParametrage==='function'){
@@ -12828,8 +12845,8 @@ ${lignes}
   window.yadaAnnulerModifs=function(){
     var cp=lget('yada-db-cp');
     if(!cp){ if(typeof toast==='function') toast('Aucun point de restauration pour cette session.'); return; }
-    if(!confirm('Annuler TOUTES les modifications faites depuis l\'ouverture de cette session ?\n\n'
-      +'La base reviendra à son état d\'ouverture ; le travail effectué depuis sera perdu.\n\nContinuer ?')) return;
+    yadaConfirm('Annuler TOUTES les modifications faites depuis l\'ouverture de cette session ?\n\n'
+      +'La base reviendra à son état d\'ouverture ; le travail effectué depuis sera perdu.\n\nContinuer ?', function(){
     /* On remet aussi l'état EN MÉMOIRE au point de restauration : ainsi une éventuelle
        sauvegarde déclenchée par le rechargement (beforeunload/pagehide) réécrit l'état
        d'ouverture et n'annule pas la restauration. */
@@ -12837,6 +12854,7 @@ ${lignes}
     lset('yada-db', cp);
     try{ if(typeof toast==='function') toast('Modifications annulées — retour à l\'état d\'ouverture.'); }catch(e){}
     location.reload();
+    }, {danger:true});
   };
 
   /* Télécharger la base = export JSON, et on en profite pour rafraîchir le point de restauration
@@ -13012,7 +13030,7 @@ ${lignes}
     var d=(db.parametres.depots||[]).find(function(x){return x.id===id;}); if(!d) return;
     var t=tiersOf(d); if(!t){ if(typeof toast==='function') toast('Tiers manquant — réexaminez la facture.'); return; }
     if(!(d.ht>0||d.tva>0)){ if(typeof toast==='function') toast('Montants manquants.'); return; }
-    if(!confirm('Générer les écritures comptables pour cette facture '+(d.cat==='achat'?'fournisseur':'client')+' ?\n\nTiers : '+(t.nom||'')+'\nTTC : '+eur2(d.ttc))) return;
+    yadaConfirm('Générer les écritures comptables pour cette facture '+(d.cat==='achat'?'fournisseur':'client')+' ?\n\nTiers : '+(t.nom||'')+'\nTTC : '+eur2(d.ttc), function(){
     var o={ type:d.cat, tiersId:t.id, date:d.dateEmission||d.dateFacture||(typeof todayStr==='function'?todayStr():''),
       numero:d.numero, taux:d.taux, ht:d.ht, tva:d.tva,
       compteContre:t.compteContre||(d.cat==='achat'?'606400':'706000'), compteTVA:t.compteTVA||(d.cat==='achat'?'44566':'44571'), source:'depot' };
@@ -13025,6 +13043,7 @@ ${lignes}
     if(typeof save==='function') save();
     if(typeof toast==='function') toast('Écritures générées ✓ (journal '+(d.cat==='achat'?'ACH':'VTE')+').');
     if(typeof render==='function') render();
+    });
   };
   window.factVoirEcriture=function(id){
     var d=(db.parametres.depots||[]).find(function(x){return x.id===id;}); if(!d) return;
@@ -13061,12 +13080,13 @@ ${lignes}
   window.fkGenererEcriture=function(id){ var r=cstore().find(function(x){return x.id===id;}); if(!r) return;
     if(r.ecritureId){ if(typeof toast==='function')toast('Écriture déjà générée.'); return; }
     if(!(r.ht>0||r.ttc>0)){ if(typeof toast==='function')toast('Montants manquants — examinez le reçu.'); return; }
-    if(!confirm('Générer l\'écriture comptable du carburant ?\n\nHT '+eur(r.ht)+' (606100000) + TVA '+eur(r.tva)+' (445660000) = TTC '+eur(r.ttc)+' (512000000 — payé).')) return;
+    yadaConfirm('Générer l\'écriture comptable du carburant ?\n\nHT '+eur(r.ht)+' (606100000) + TVA '+eur(r.tva)+' (445660000) = TTC '+eur(r.ttc)+' (512000000 — payé).', function(){
     var lignes=[{compte:'606100000',lib:'Carburant '+(r.fournisseur||''),debit:r.ht,credit:0}];
     if(r.tva>0) lignes.push({compte:'445660000',lib:'TVA déductible carburant',debit:r.tva,credit:0});
     lignes.push({compte:'512000000',lib:'Règlement carburant '+(r.fournisseur||''),debit:0,credit:r.ttc});
     var ecr=posterOD({ date:r.date||todayStr(), libelle:'Carburant '+(r.fournisseur||'')+(r.date?(' du '+frDate(r.date)):''), lignes:lignes, journal:'OD' });
     r.ecritureId=ecr.id; if(typeof save==='function')save(); if(typeof toast==='function')toast('Écriture carburant générée ✓ (journal OD).'); if(typeof render==='function')render();
+    });
   };
 
   window.pageFraisKm=function(){
@@ -13162,7 +13182,7 @@ ${lignes}
     if(typeof save==='function')save(); if(typeof window.factFermerRevue==='function') window.factFermerRevue();
     if(typeof toast==='function')toast('Reçu de gasoil enregistré ✓'); if(typeof render==='function')render();
   };
-  window.fkSuppRecu=function(id){ if(!confirm('Supprimer ce reçu de gasoil ?')) return; var s=cstore(); var i=s.findIndex(function(x){return x.id===id;}); if(i>=0)s.splice(i,1); if(typeof save==='function')save(); if(typeof render==='function')render(); };
+  window.fkSuppRecu=function(id){ yadaConfirm('Supprimer ce reçu de gasoil ?',function(){ var s=cstore(); var i=s.findIndex(function(x){return x.id===id;}); if(i>=0)s.splice(i,1); if(typeof save==='function')save(); if(typeof render==='function')render(); },{danger:true}); };
   window.fkAjouterKm=function(){ var g=function(x){var e=document.getElementById(x);return e?e.value:'';};
     var veh=g('km-veh'); if(!veh){ if(typeof toast==='function')toast('Sélectionnez un véhicule de société.'); return; }
     var kmv=parseFloat(g('km-km'))||0; if(kmv<=0){ if(typeof toast==='function')toast('Saisissez un nombre de kilomètres.'); return; }
@@ -13220,12 +13240,13 @@ ${lignes}
     var sd=r2(L.reduce(function(a,l){return a+(+l.debit||0);},0)), sc=r2(L.reduce(function(a,l){return a+(+l.credit||0);},0)), ec=r2(sd-sc);
     var contre=(document.getElementById('tvam-contre')||{}).value||'471000000';
     var date=(document.getElementById('tvam-date')||{}).value||todayStr();
-    if(!confirm('Générer l\'écriture OD avec ces '+L.length+' ligne(s) de TVA ?'+(Math.abs(ec)>=0.005?('\n\nUn équilibrage de '+eur(Math.abs(ec))+' sera porté sur '+c9(contre)+'.'):''))) return;
+    yadaConfirm('Générer l\'écriture OD avec ces '+L.length+' ligne(s) de TVA ?'+(Math.abs(ec)>=0.005?('\n\nUn équilibrage de '+eur(Math.abs(ec))+' sera porté sur '+c9(contre)+'.'):''), function(){
     var lignes=L.map(function(l){ return {compte:l.compte, lib:l.lib, debit:l.debit, credit:l.credit}; });
     if(Math.abs(ec)>=0.005){ if(ec>0) lignes.push({compte:contre,lib:'Équilibrage TVA',debit:0,credit:ec}); else lignes.push({compte:contre,lib:'Équilibrage TVA',debit:r2(-ec),credit:0}); }
     posterOD({ date:date, libelle:'TVA — régularisation manuelle', lignes:lignes, journal:'OD' });
     db.parametres.tvaManuel=[]; if(typeof save==='function')save();
     if(typeof toast==='function')toast('Écriture de TVA générée ✓ (journal OD).'); if(typeof render==='function')render();
+    });
   };
   var _ptva=window.pageTVA; window.pageTVA=function(){ var h=_ptva.apply(this,arguments); try{ h+=card(); }catch(e){} return h; };
 })();
@@ -13897,23 +13918,29 @@ ${lignes}
   function pjDejaPostee(m){ var lib='JOURNAL PAIE '+pieceMois(m); return db.ecritures.some(function(e){ return e.journal==='ODP' && (e.libelle||'').indexOf(lib)>=0; }); }
 
   window.pjSet=function(m,key,val){ var d=pjData(m); var n=parseFloat(String(val).replace(/\s/g,'').replace(',','.')); d[key]=isNaN(n)?0:r2(n); if(typeof save==='function')save(); if(typeof render==='function')render(); };
-  window.pjReset=function(m){ if(!confirm('Effacer les montants saisis pour '+moisLabel(m)+' ?'))return; pjStore()[m]={}; if(typeof save==='function')save(); if(typeof render==='function')render(); };
-  window.pjSupprDoc=function(m){ if(!confirm('Retirer le document de charges déposé ?'))return; var d=pjData(m); if(d){ delete d.doc; }
+  window.pjReset=function(m){ yadaConfirm('Effacer les montants saisis pour '+moisLabel(m)+' ?', function(){ pjStore()[m]={}; if(typeof save==='function')save(); if(typeof render==='function')render(); }, {danger:true}); };
+  window.pjSupprDoc=function(m){ yadaConfirm('Retirer le document de charges déposé ?', function(){ var d=pjData(m); if(d){ delete d.doc; }
     try{ db.parametres.pieces=(db.parametres.pieces||[]).filter(function(p){return !(p.cat==='paie'&&p.mois===m);}); }catch(e){}
-    if(typeof save==='function')save(); if(typeof toast==='function')toast('Document retiré'); if(typeof render==='function')render(); };
+    if(typeof save==='function')save(); if(typeof toast==='function')toast('Document retiré'); if(typeof render==='function')render(); }, {danger:true}); };
 
   window.pjGenerer=function(m){
     var r=pjLines(m); if(!r.L.length){ if(typeof toast==='function')toast('Saisissez au moins un montant (le journal de paie).'); return; }
-    if(pjDejaPostee(m)){ if(!confirm('Une écriture JOURNAL PAIE existe déjà pour '+moisLabel(m)+'. La remplacer ?')) return; window.pjSupprimer(m,true); }
-    if(Math.abs(r2(r.sd-r.sc))>=0.005){ if(typeof toast==='function')toast('Écriture non équilibrée — vérifiez les montants.'); return; }
-    posterOD({ journal:'ODP', date: dernierJourMoisISO(m), numero: pieceMois(m),
-      libelle:'JOURNAL PAIE '+pieceMois(m), lignes: r.L.map(function(l){ return {compte:l.compte, lib:l.lib, debit:l.debit, credit:l.credit}; }) });
-    if(typeof save==='function')save(); if(typeof toast==='function')toast('Écriture JOURNAL PAIE '+pieceMois(m)+' générée ✓ (OD PAIE).'); if(typeof render==='function')render();
+    var _gen=function(){
+      if(Math.abs(r2(r.sd-r.sc))>=0.005){ if(typeof toast==='function')toast('Écriture non équilibrée — vérifiez les montants.'); return; }
+      posterOD({ journal:'ODP', date: dernierJourMoisISO(m), numero: pieceMois(m),
+        libelle:'JOURNAL PAIE '+pieceMois(m), lignes: r.L.map(function(l){ return {compte:l.compte, lib:l.lib, debit:l.debit, credit:l.credit}; }) });
+      if(typeof save==='function')save(); if(typeof toast==='function')toast('Écriture JOURNAL PAIE '+pieceMois(m)+' générée ✓ (OD PAIE).'); if(typeof render==='function')render();
+    };
+    if(pjDejaPostee(m)){ yadaConfirm('Une écriture JOURNAL PAIE existe déjà pour '+moisLabel(m)+'. La remplacer ?', function(){ window.pjSupprimer(m,true); _gen(); }); }
+    else _gen();
   };
   window.pjSupprimer=function(m,silencieux){ var lib='JOURNAL PAIE '+pieceMois(m);
-    if(!silencieux && !confirm('Supprimer l\'écriture JOURNAL PAIE '+pieceMois(m)+' ?')) return;
-    db.ecritures=db.ecritures.filter(function(e){ return !(e.journal==='ODP' && (e.libelle||'').indexOf(lib)>=0); });
-    if(!silencieux){ if(typeof save==='function')save(); if(typeof toast==='function')toast('Écriture supprimée'); if(typeof render==='function')render(); }
+    var _do=function(){
+      db.ecritures=db.ecritures.filter(function(e){ return !(e.journal==='ODP' && (e.libelle||'').indexOf(lib)>=0); });
+      if(!silencieux){ if(typeof save==='function')save(); if(typeof toast==='function')toast('Écriture supprimée'); if(typeof render==='function')render(); }
+    };
+    if(silencieux){ _do(); }
+    else { yadaConfirm('Supprimer l\'écriture JOURNAL PAIE '+pieceMois(m)+' ?', _do, {danger:true}); }
   };
 
   /* ---- Dépôt + reconnaissance ---- */
@@ -15229,9 +15256,9 @@ ${lignes}
   window.bpCreer=function(){ var f=bpNouvelle(bpMois()); window.bpEditId=f.id; persist(); };
   window.bpEditer=function(id){ window.bpEditId=id; if(typeof render==='function')render(); };
   window.bpFermerEdit=function(){ window.bpEditId=null; if(typeof render==='function')render(); };
-  window.bpSupprimer=function(id){ if(!confirm('Supprimer cette fiche de paie ?'))return;
+  window.bpSupprimer=function(id){ yadaConfirm('Supprimer cette fiche de paie ?', function(){
     var L=bpFiches(); var i=L.findIndex(function(f){return f.id===id;}); if(i>=0)L.splice(i,1);
-    if(window.bpEditId===id)window.bpEditId=null; persist(); };
+    if(window.bpEditId===id)window.bpEditId=null; persist(); }, {danger:true}); };
   window.bpDupliquerMoisSuivant=function(id){ var f=bpGet(id); if(!f)return; var L=moisExoListe();
     var i=L.indexOf(f.mois); var nm=(i>=0 && i<L.length-1)?L[i+1]:f.mois;
     var copie=JSON.parse(JSON.stringify(f)); copie.id=uid(); copie.mois=nm; bpFiches().push(copie);
@@ -15331,7 +15358,7 @@ ${lignes}
     var r=bpAgg(m); if(!r.fs.length){ if(typeof toast==='function')toast('Aucune fiche de paie pour '+moisLabel(m)+'.'); return; }
     if(r.a.brut<=0.005){ if(typeof toast==='function')toast('Saisissez au moins un salaire brut.'); return; }
     var existe=bpODFaite(m,'PAIE')||bpODFaite(m,'CHARGES');
-    if(existe && !confirm('Des écritures OD PAIE / OD CHARGES existent déjà pour '+moisLabel(m)+'. Les remplacer avec toutes les fiches du mois ?')) return;
+    var _gen=function(){
     var Lp=bpLignesPaie(r.a), Lc=bpLignesCharges(r.a);
     if(Math.abs(bpSomme(Lp,'d')-bpSomme(Lp,'c'))>=0.005){ if(typeof toast==='function')toast('OD PAIE non équilibrée — vérifiez les montants.'); return; }
     if(Lc.length && Math.abs(bpSomme(Lc,'d')-bpSomme(Lc,'c'))>=0.005){ if(typeof toast==='function')toast('OD CHARGES non équilibrée — vérifiez les montants.'); return; }
@@ -15342,9 +15369,12 @@ ${lignes}
     if(typeof save==='function')save();
     if(typeof toast==='function')toast('OD PAIE'+(Lc.length?' et OD CHARGES':'')+' '+piece+' générée'+(Lc.length?'s':'')+' ✓ ('+r.fs.length+' fiche'+(r.fs.length>1?'s':'')+').');
     if(typeof render==='function')render();
+    };
+    if(existe){ yadaConfirm('Des écritures OD PAIE / OD CHARGES existent déjà pour '+moisLabel(m)+'. Les remplacer avec toutes les fiches du mois ?', _gen); }
+    else _gen();
   };
-  window.bpSupprimerOD=function(m){ if(!confirm('Supprimer les écritures OD PAIE et OD CHARGES de '+moisLabel(m)+' ?'))return;
-    bpSupprOD(m,'PAIE'); bpSupprOD(m,'CHARGES'); if(typeof save==='function')save(); if(typeof toast==='function')toast('Écritures de paie supprimées'); if(typeof render==='function')render(); };
+  window.bpSupprimerOD=function(m){ yadaConfirm('Supprimer les écritures OD PAIE et OD CHARGES de '+moisLabel(m)+' ?', function(){
+    bpSupprOD(m,'PAIE'); bpSupprOD(m,'CHARGES'); if(typeof save==='function')save(); if(typeof toast==='function')toast('Écritures de paie supprimées'); if(typeof render==='function')render(); }, {danger:true}); };
 
   /* finalisation d'une fiche : on la « génère » (aperçu A4) puis on PROPOSE les OD */
   window.bpFinaliser=function(id){ var f=bpGet(id); if(!f)return; if(typeof save==='function')save(); window.bpVoir(id); };
@@ -15358,9 +15388,9 @@ ${lignes}
     }; rd.readAsDataURL(file); });
   };
   function bpDeposes(m){ try{ return (db.parametres&&db.parametres.pieces||[]).filter(function(p){ return p.cat==='bulletin' && p.mois===m; }); }catch(e){ return []; } }
-  window.bpSupprPiece=function(id){ if(!confirm('Supprimer ce document déposé ?'))return;
+  window.bpSupprPiece=function(id){ yadaConfirm('Supprimer ce document déposé ?', function(){
     try{ db.parametres.pieces=(db.parametres.pieces||[]).filter(function(p){return p.id!==id;}); }catch(e){}
-    if(typeof save==='function')save(); if(typeof toast==='function')toast('Document supprimé'); if(typeof render==='function')render(); };
+    if(typeof save==='function')save(); if(typeof toast==='function')toast('Document supprimé'); if(typeof render==='function')render(); }, {danger:true}); };
   window.bpAnalyserBulletin=function(pieceId){ var p=(db.parametres.pieces||[]).find(function(x){return x.id===pieceId;}); if(!p)return;
     var isImg=/^image\//.test(p.type||'');
     if(!navigator.onLine || typeof window.ocrImage!=='function' || !isImg){ if(typeof toast==='function')toast(navigator.onLine?'Reconnaissance auto : images uniquement (PDF scannés sans texte → créez la fiche manuellement).':'OCR indisponible hors-ligne — créez la fiche manuellement.'); return; }
@@ -16110,6 +16140,67 @@ ${lignes}
     +'.ya-f{display:flex;justify-content:flex-end;padding:0 18px 16px}'
     +'.ya-ok{background:linear-gradient(120deg,#5ab0ff,#0a64d6);border:none;color:#fff;font-weight:700;font-size:13.5px;padding:9px 24px;border-radius:10px;cursor:pointer}'
     +'.ya-ok:hover{filter:brightness(1.08)}.ya-ok:focus{outline:2px solid #cfe0f5;outline-offset:2px}';
+    document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon119">
+/* ============================================================
+   CONFIRMATIONS & SAISIES aux couleurs YADA — remplacent les `confirm()` /
+   `prompt()` / `alert()` natifs (« …github.io indique ») par des modales soignées
+   (bleu nuit + bleu Crystal), cohérentes avec yadaAlert (addon118).
+   • window.yadaConfirm(msg, onYes, opts) — boutons Annuler / Confirmer.
+   • window.yadaPrompt(msg, valeur, onOk, opts) — champ de saisie + OK / Annuler.
+   • window.alert est redirigé vers yadaAlert (les alertes sont terminales).
+   Échap / clic dehors = Annuler ; Entrée = Confirmer / OK. 100% additif.
+   ============================================================ */
+(function(){
+  function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c];}).replace(/\n/g,'<br>'); }
+  function escAttr(s){ return String(s==null?'':s).replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+  function build(opts){
+    var ov=document.createElement('div'); ov.className='ya-ov';
+    var danger=!!opts.danger;
+    ov.innerHTML='<div class="ya-card" role="alertdialog" aria-modal="true">'
+      +'<div class="ya-h"><span class="ya-t">'+esc(opts.title||'YADA')+'</span><span class="ya-brand"><span class="ya-dot"></span>YADA</span></div>'
+      +'<div class="ya-b">'+esc(opts.msg||'')
+        +(opts.input?('<input class="ya-in" type="text" value="'+escAttr(opts.value||'')+'">'):'')
+      +'</div>'
+      +'<div class="ya-f">'
+        +(opts.cancel!==false?'<button class="ya-btn ya-cancel" type="button">'+esc(opts.cancelLabel||'Annuler')+'</button>':'')
+        +'<button class="ya-btn ya-ok'+(danger?' ya-danger':'')+'" type="button">'+esc(opts.okLabel||'Confirmer')+'</button>'
+      +'</div></div>';
+    document.body.appendChild(ov);
+    var input=ov.querySelector('.ya-in');
+    function close(){ try{ ov.remove(); }catch(e){} document.removeEventListener('keydown', onKey, true); }
+    function ok(){ var v=input?input.value:true; close(); if(typeof opts.onOk==='function') opts.onOk(v); }
+    function cancel(){ close(); if(typeof opts.onCancel==='function') opts.onCancel(); }
+    function onKey(e){ if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); cancel(); }
+      else if(e.key==='Enter'){ e.preventDefault(); e.stopPropagation(); ok(); } }
+    var okb=ov.querySelector('.ya-ok'); if(okb) okb.addEventListener('click', ok);
+    var cb=ov.querySelector('.ya-cancel'); if(cb) cb.addEventListener('click', cancel);
+    ov.addEventListener('mousedown', function(e){ if(e.target===ov) cancel(); });
+    document.addEventListener('keydown', onKey, true);
+    setTimeout(function(){ if(input){ input.focus(); input.select(); } else if(okb){ okb.focus(); } }, 20);
+    return close;
+  }
+  window.yadaConfirm=function(msg, onYes, opts){ opts=opts||{};
+    return build({ msg:msg, title:opts.title||'Confirmation', okLabel:opts.okLabel||'Confirmer', cancelLabel:opts.cancelLabel||'Annuler', danger:opts.danger, onOk:function(){ if(typeof onYes==='function') onYes(); }, onCancel:opts.onCancel });
+  };
+  window.yadaPrompt=function(msg, value, onOk, opts){ opts=opts||{};
+    return build({ msg:msg, value:(value==null?'':value), input:true, title:opts.title||'Saisie', okLabel:opts.okLabel||'Valider', cancelLabel:opts.cancelLabel||'Annuler', onOk:function(v){ if(typeof onOk==='function') onOk(v); }, onCancel:opts.onCancel });
+  };
+  /* Les alert() natifs passent par la modale YADA. */
+  try{ window.alert=function(m){ if(window.yadaAlert) window.yadaAlert(String(m==null?'':m),'Information'); }; }catch(e){}
+  /* styles complémentaires (boutons secondaires + champ) */
+  try{ var st=document.createElement('style'); st.id='ya-confirm-mod'; st.textContent=
+    '.ya-f .ya-btn{font-weight:700;font-size:13.5px;padding:9px 20px;border-radius:10px;cursor:pointer;border:1px solid transparent;margin-left:10px}'
+    +'.ya-f .ya-cancel{background:transparent;border:1px solid #2a557e;color:#cfe0f5}'
+    +'.ya-f .ya-cancel:hover{background:rgba(30,144,255,.12)}'
+    +'.ya-f .ya-ok{background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#fff;border:none}'
+    +'.ya-f .ya-ok:hover{filter:brightness(1.08)}'
+    +'.ya-f .ya-ok.ya-danger{background:linear-gradient(120deg,#ff7a6b,#c0392b)}'
+    +'.ya-f .ya-btn:focus{outline:2px solid #cfe0f5;outline-offset:2px}'
+    +'.ya-b .ya-in{display:block;width:100%;margin-top:12px;background:#0b1118;border:1px solid #2a557e;border-radius:9px;color:#eaf2ff;font:14px system-ui,sans-serif;padding:9px 11px}'
+    +'.ya-b .ya-in:focus{outline:none;border-color:#1e90ff;box-shadow:0 0 0 2px rgba(30,144,255,.28)}';
     document.head.appendChild(st); }catch(e){}
 })();
 </script>

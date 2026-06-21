@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Messages d'alerte aux couleurs YADA (fin des `alert()` natifs) — v222
+## 🟢 Dernière mise à jour — Confirmations & saisies aux couleurs YADA (fin des `confirm()` / `prompt()` natifs) — v223
+**Quoi :** toutes les **confirmations de suppression** et **invites de saisie** du logiciel s'affichent désormais dans des **modales soignées aux couleurs YADA (bleu nuit + bleu Crystal)** au lieu des boîtes `confirm()` / `prompt()` natives du navigateur (« …github.io indique »). Boutons **Annuler / Confirmer** (le bouton de suppression est en **rouge danger**), champ de saisie intégré pour les prompts ; **Échap / clic dehors = Annuler**, **Entrée = Confirmer / OK**. `window.alert` est aussi redirigé.
+
+**Où / comment :** `yada-addon119` — `window.yadaConfirm(msg, onYes, opts)` et `window.yadaPrompt(msg, valeur, onOk, opts)` (callback, modale `.ya-ov`/`.ya-card`, réutilise le style de `yadaAlert`/addon118 + `<style id="ya-confirm-mod">`). **~49 confirmations** et **~15 saisies** converties (fire-and-forget → callback ; séquences de prompts imbriquées ; confirmations conditionnelles via fonction `_go`/`_gen`). **2 cas laissés en natif** (garde à retour synchrone) : `quitterRappro` (renvoie `false` pour bloquer la navigation) et la renumérotation de compte tiers dans `tiersEnregistrer` (garde au milieu d'un enregistrement synchrone). Aucune logique comptable modifiée. Badge → **v223**.
+
+---
+
+## 🟢 MAJ précédente — Messages d'alerte aux couleurs YADA (fin des `alert()` natifs) — v222
 **Quoi :** le message « ⚠ Écriture non soldée » (affiché quand on tente de quitter l'éditeur avec une écriture déséquilibrée) — et plus largement les alertes — s'affichent désormais dans une **modale soignée aux couleurs YADA (bleu nuit + bleu Crystal)** au lieu de la **boîte `alert()` native** du navigateur (« …github.io indique »). En-tête avec titre + pastille **YADA**, corps lisible, bouton **OK** ; **Échap / Entrée / clic dehors** ferment. La modale passe **au-dessus** de l'éditeur et des listes (z-index élevé).
 
 **Où / comment :** `yada-addon118` — `window.yadaAlert(msg, titre)` (création d'un overlay `#yada-alert`, `<style id="ya-alert-mod">`). `ecFermer` appelle `yadaAlert(msg,'⚠ Écriture non soldée')` (repli `alert`/`toast` si indisponible). Aucune logique modifiée (le blocage de fermeture v216 reste identique). Badge → **v222**.
