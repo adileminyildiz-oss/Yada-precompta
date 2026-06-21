@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Consultation : libellé déversé par le compte (nom du tiers) + identique partout, et facture = nom + n° + moyen — v231
+## 🟢 Dernière mise à jour — Consultation (grand-livre) : lettrage manuel inter-journaux (solder le tiers : Banque ↔ Vente / Achat) — v232
+**Quoi :** dans la **Consultation des comptes**, en ouvrant le **grand-livre d'un tiers** (clic sur 411HABI00 / 401…, lecture seule), on peut désormais **lettrer manuellement** : **clic gauche** sélectionne les lignes à rapprocher — typiquement la **VENTE** (journal VT, débit) et son **ENCAISSEMENT** (journal BQ, crédit), ou l'**ACHAT** (HA, crédit) et son **PAIEMENT** (BQ, débit). Une **barre de lettrage** indique Σ Débit / Σ Crédit et **« équilibré ✓ »** ; le bouton **« Lettrer la sélection »** n'est actif que si **Débit = Crédit** → le **compte du tiers est soldé**. Boutons **Délettrer** / **Vider la sélection**. Le déplacement d'un compte (collectif 411000000 → auxiliaire 411HABI00) fait apparaître la ligne sur le tiers (recalcul des soldes), prête à lettrer.
+
+**Où / comment :** `clLignesGeneral` expose `idx`/`key` (comme `auxLignes`) ; `clRender` rend les lignes **sélectionnables** (`data-k`, `onclick="clToggleSel"`, classe `cl-sel`) + barre `.cl-letbar` (Σ sélection, état). `yada-addon126` : `clToggleSel`/`clSelVider`/`clLettrerSel`/`clDelettrerSel` (réutilisent **`lzLettrer`/`lzDelettrer`**, contrôle Σdébit=Σcrédit) ; reset de `clSel` à la navigation/ouverture. Le clic droit (→ Journal) reste disponible. Aucune logique comptable modifiée (le lettrage ne touche pas aux montants). Badge → **v232**.
+
+---
+
+## 🟢 MAJ précédente — Consultation : libellé déversé par le compte (nom du tiers) + identique partout, et facture = nom + n° + moyen — v231
 **Quoi :** (1) lors de la **saisie au journal**, quand on saisit un **compte de tiers** (401…/411…, ex. **401ALRC00**), le **libellé se remplit automatiquement** avec le **nom complet** du tiers (ex. **ALR CONSEIL**) ; (2) le libellé reste **identique partout** — même valeur dans la **saisie**, le **journal de base** (Consultation) et le **grand-livre** (toutes les lignes d'une écriture portent le même libellé) ; (3) pour une **facture enregistrée/générée**, le libellé est **« <nom du tiers> — <n° de facture> — <moyen de paiement> »**.
 
 **Où / comment :** `posterFacture` pose le libellé **canonique** (`nom — numéro — modeReglement`) sur **toutes les lignes** + `e.libelle`. `ecSetLibAll` synchronise aussi `e.libelle` (« pièce · libellé ») pour que la Consultation et le grand-livre affichent le même libellé que l'éditeur. `yada-addon125` : `window.ecLibTiers(e,t)` (nom seul si saisie simple ; nom + n° + moyen si facture liée) + **wrap `ecSetLine`** (à la saisie d'un compte résolu en tiers via `ecResolveTiers`, déverse le libellé via `ecSetLibAll`). Aucune logique comptable modifiée. Badge → **v231**.
