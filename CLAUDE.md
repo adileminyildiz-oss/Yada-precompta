@@ -20,7 +20,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Facture fournisseur : écriture ACH avec le compte de tiers complet (401GASO00) — v201
+---
+
+## 🟢 Dernière mise à jour — Facturation : « Conditions de paiement » à la place du délai en jours — v202
+**Quoi :** dans la création de facture (Espace Client **et** fenêtre cabinet), la case **« Délai de paiement (jours) »** est remplacée par une liste **« Conditions de paiement »** (À réception, 8 / 15 / 30 / 45 / 60 jours, 30 / 45 jours fin de mois). La date d'échéance se calcule automatiquement selon la condition choisie ; la condition est imprimée sur la facture.
+
+**Où / comment :** `yada-addon108` — `FA_CONDITIONS`, `faCondDefaut`, `faCondOptions`, `faEcheanceFromCond` (+ `lastDayOfMonthISO` pour « fin de mois ») ; `faEcheanceAuto`/`nfEcheanceAuto` lisent `fa-cond`/`nf-cond`. Champs `fa-cond`/`nf-cond` (selects) à la place de `fa-delai`/`nf-delai` dans `faClientCreer`, `pageFacturation`, `nfFormHTML`. `emettre` enregistre `doc.conditions` (affiché par `docHTML`). Réglage **« Conditions de paiement par défaut »** dans `factParamCard`/`factParamSave` (`db.societe.conditionPaiement`, + `delaiPaiement` dérivé pour compat). Badge → **v202**.
+
+---
+
+## 🟢 MAJ précédente — Facture fournisseur : écriture ACH avec le compte de tiers complet (401GASO00) — v201
 **Quoi :** l'**écriture d'achat** (journal ACH), en aperçu **et** générée, utilise désormais le **compte de tiers complet (auxiliaire)** — ex. **401GASO00** — au lieu du collectif 401000000, et l'aperçu affiche les comptes en **codes 9 chiffres** dans l'ordre **401 (tiers) / 445xxx (TVA) / 606xxx (charge)**.
 
 **Pourquoi :** l'utilisateur veut voir, dans « l'écriture qui sera générée », le compte de tiers réel (401GASO00) puis la TVA déductible puis le compte de charge.
