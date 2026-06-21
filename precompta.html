@@ -10795,7 +10795,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v236 · noir & bleu';
+    b.textContent='YADA · v237 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -14864,7 +14864,17 @@ ${lignes}
   }
   function applyRemote(dataStr, ts){
     try{ var parsed=JSON.parse(dataStr); if(!parsed||typeof parsed!=='object') return false;
-      cloudApplying=true; db=parsed; localStorage.setItem('yada-db', dataStr); localStorage.setItem(TSK, String(ts||Date.now()));
+      /* DOSSIERS ADDITIFS : on ne perd jamais un dossier créé localement et pas encore poussé.
+         Le cloud (PC principal) l'emporte pour les dossiers partagés ; les dossiers présents
+         seulement en local sont conservés (puis repoussés → visibles sur tous les appareils). */
+      try{
+        var localDD=(typeof db==='object'&&db&&db.dossiersData)||{}; parsed.dossiersData=parsed.dossiersData||{};
+        Object.keys(localDD).forEach(function(id){ if(!parsed.dossiersData[id]) parsed.dossiersData[id]=localDD[id]; });
+        var lc=(typeof db==='object'&&db&&db.cabinet&&db.cabinet.dossiers)||[];
+        if(parsed.cabinet){ parsed.cabinet.dossiers=parsed.cabinet.dossiers||[];
+          lc.forEach(function(d){ if(d&&d.id && !parsed.cabinet.dossiers.some(function(x){return x&&x.id===d.id;})) parsed.cabinet.dossiers.push(d); }); }
+      }catch(e){}
+      cloudApplying=true; db=parsed; localStorage.setItem('yada-db', JSON.stringify(parsed)); localStorage.setItem(TSK, String(ts||Date.now()));
       cloudApplying=false; if(typeof render==='function') render(); return true;
     }catch(e){ cloudApplying=false; return false; }
   }
@@ -16933,6 +16943,36 @@ ${lignes}
     +'.doc-page .sf-details .sf-toggle::after{content:"▸ ouvrir";font-size:10.5px;font-weight:700;color:inherit;-webkit-text-fill-color:currentColor}'
     +'.doc-page .sf-details[open] .sf-toggle::after{content:"▾ fermer"}';
     document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon130">
+/* ============================================================
+   SYNCHRONISATION AUTOMATIQUE MULTI-APPAREILS — suivi en continu.
+   Le PUSH après chaque save (addon102) envoie déjà tout le db (TOUS les dossiers,
+   tout le travail). Ici on ajoute un PULL AUTOMATIQUE périodique + au retour au
+   premier plan + à la reconnexion, pour que TOUS les appareils récupèrent en
+   continu le dernier enregistrement du PC principal — mêmes dossiers, mêmes
+   écritures, mêmes règles. cloudPull n'applique QUE si le cloud est plus récent
+   (horodatage, dernier gagnant) → aucun écrasement du travail le plus récent.
+   100% additif (s'appuie sur window.cloudPull d'addon102 ; inactif si la
+   synchronisation cloud n'est pas configurée/activée).
+   ============================================================ */
+(function(){
+  var INTERVAL=40000;          /* re-synchronise (réception) toutes les 40 s */
+  function busy(){ /* ne pas rafraîchir l'écran en plein milieu d'une action */
+    try{ var ids=['ec-overlay','cl-overlay','modal']; for(var i=0;i<ids.length;i++){ var el=document.getElementById(ids[i]); if(el && el.classList && el.classList.contains('show')) return true; } }catch(e){}
+    return false;
+  }
+  var running=false;
+  function autoPull(){ if(running) return; if(typeof window.cloudPull!=='function') return; if(busy()) return;
+    running=true; try{ var r=window.cloudPull(true); if(r&&r.then){ r.then(function(){running=false;}, function(){running=false;}); } else { running=false; } }catch(e){ running=false; }
+  }
+  try{ setInterval(autoPull, INTERVAL); }catch(e){}
+  try{ document.addEventListener('visibilitychange', function(){ if(!document.hidden) setTimeout(autoPull, 300); }); }catch(e){}
+  try{ window.addEventListener('online', function(){ setTimeout(autoPull, 500); }); }catch(e){}
+  try{ window.addEventListener('focus', function(){ setTimeout(autoPull, 300); }); }catch(e){}
+  /* premier rattrapage rapide après le chargement (en plus du pullOnLoad d'addon102) */
+  try{ setTimeout(autoPull, 6000); }catch(e){}
 })();
 </script>
 </body>
