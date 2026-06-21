@@ -10755,7 +10755,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v208 · noir & bleu';
+    b.textContent='YADA · v209 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -15723,6 +15723,43 @@ ${lignes}
     +'.lx-app table.lx tbody tr.lx-ecr-sep td{border-top:2px solid #1e90ff !important}'
     +'#cl-overlay table.lx tbody tr.lx-ecr-sep td{border-top:2px solid #1e90ff !important}';
     document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon111">
+/* addon111 — Bandeau « Nouveautés » affiché UNE FOIS sur cette version, pour confirmer
+   visiblement que la mise à jour est bien active et indiquer où trouver chaque ajout. */
+(function(){
+  var VER='209';
+  function seen(){ try{ return localStorage.getItem('yada-whatsnew')===VER; }catch(e){ return false; } }
+  function mark(){ try{ localStorage.setItem('yada-whatsnew',VER); }catch(e){} }
+  function show(){
+    if(seen() || document.getElementById('yada-wn')) return;
+    var d=document.createElement('div'); d.id='yada-wn';
+    d.innerHTML='<div class="wn-card">'
+      +'<div class="wn-h">🎉 YADA v'+VER+' — vos dernières demandes sont actives <button class="wn-x" onclick="(function(){var e=document.getElementById(\'yada-wn\');if(e)e.remove();try{localStorage.setItem(\'yada-whatsnew\',\''+VER+'\');}catch(_){}})()">×</button></div>'
+      +'<ul class="wn-ul">'
+        +'<li><b>Facturation</b> : « Conditions de paiement » (échéance calculée automatiquement) + aperçu A4 en direct</li>'
+        +'<li><b>Sociétés (portefeuille)</b> : bouton <b>« 🏦 Accéder à Qonto »</b></li>'
+        +'<li><b>Charges &amp; Paie</b> : 2 onglets <b>Paie / Charges</b> + panneau de <b>vérification du bulletin</b> avant génération</li>'
+        +'<li><b>Import FEC</b> : écritures classées par libellé en <b>OD PAIE / OD CHARGES / OD TVA / OD</b></li>'
+        +'<li><b>Tiers</b> : doublons (HABITAT CONCEPT) <b>fusionnés en un seul compte</b>, <b>CA TTC réel</b> par ligne, n° de compte 401/411 modifiable</li>'
+        +'<li><b>Consultation des comptes</b> : <b>ligne bleue</b> entre chaque écriture</li>'
+      +'</ul>'
+      +'<div class="wn-foot"><button class="wn-ok" onclick="(function(){var e=document.getElementById(\'yada-wn\');if(e)e.remove();try{localStorage.setItem(\'yada-whatsnew\',\''+VER+'\');}catch(_){}})()">J\'ai compris</button></div>'
+      +'</div>';
+    (document.body||document.documentElement).appendChild(d);
+  }
+  try{ var st=document.createElement('style'); st.id='wn-mod'; st.textContent=
+    '#yada-wn{position:fixed;left:0;right:0;bottom:0;z-index:99999;display:flex;justify-content:center;padding:14px;pointer-events:none}'
+    +'#yada-wn .wn-card{pointer-events:auto;max-width:640px;width:100%;background:linear-gradient(120deg,#0c1a2a,#10243a);border:1px solid #1e90ff;border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.5);color:#eaf2ff;padding:14px 16px;font:13px/1.5 system-ui,sans-serif}'
+    +'#yada-wn .wn-h{font-weight:700;font-size:14px;color:#5ab0ff;display:flex;align-items:center;gap:8px}'
+    +'#yada-wn .wn-x{margin-left:auto;background:none;border:none;color:#9fb6d0;font-size:20px;cursor:pointer;line-height:1}'
+    +'#yada-wn .wn-ul{margin:8px 0 6px;padding-left:18px}#yada-wn .wn-ul li{margin:3px 0}'
+    +'#yada-wn .wn-ul b{color:#fff}'
+    +'#yada-wn .wn-foot{text-align:right;margin-top:6px}'
+    +'#yada-wn .wn-ok{background:#1e90ff;border:none;color:#fff;font-weight:700;padding:8px 16px;border-radius:9px;cursor:pointer}';
+    document.head.appendChild(st); }catch(e){}
+  if(document.body) setTimeout(show,800); else document.addEventListener('DOMContentLoaded',function(){ setTimeout(show,800); });
 })();
 </script>
 </body>
