@@ -8986,6 +8986,18 @@ function ecFermer(){
       return (e.lignes||[]).some(function(l){ return (((+l.debit||0)!==0)||((+l.credit||0)!==0)) && !(l.compte||'').trim(); }); });
     if(manque){ if(typeof toast==='function') toast('Renseignez un compte sur chaque ligne avant de fermer la page de saisie.'); return; }
   }catch(e){}
+  /* Empêcher la fermeture tant qu'une écriture n'est pas SOLDÉE (Débit = Crédit).
+     L'utilisateur doit équilibrer toute écriture modifiée avant de quitter la page. */
+  try{ var nonSoldee=(typeof ecEcritures==='function'?ecEcritures():[]).filter(function(e){
+      var d=0,c=0; (e.lignes||[]).forEach(function(l){ d+=(+l.debit||0); c+=(+l.credit||0); });
+      return Math.abs(r2(d-c))>=0.005; });
+    if(nonSoldee.length){
+      var ec0=nonSoldee[0]; var d=0,c=0; (ec0.lignes||[]).forEach(function(l){ d+=(+l.debit||0); c+=(+l.credit||0); });
+      var msg='⚠ Écriture non soldée — pièce '+ecPiece(ec0)+' : Débit '+eur(r2(d))+' ≠ Crédit '+eur(r2(c))+' (écart '+eur(Math.abs(r2(d-c)))+'). Vous devez SOLDER (équilibrer) toutes les écritures avant de quitter la page.';
+      if(typeof alert==='function') alert(msg); else if(typeof toast==='function') toast(msg);
+      return;
+    }
+  }catch(e){}
   window.ecJournalFiltre=null;   /* sortir du mode « journal du mois » */
   const ov=document.getElementById('ec-overlay'); if(ov) ov.classList.remove('show'); render();
 }
@@ -10755,7 +10767,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v215 · noir & bleu';
+    b.textContent='YADA · v216 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
