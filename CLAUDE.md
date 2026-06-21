@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Consultation des journaux : défilement (molette) pour voir TOUTES les écritures — v220
+## 🟢 Dernière mise à jour — Saisie au journal : clic droit pour saisir, en-têtes répétés par ligne, navigation clavier complète (flèches) — v221
+**Quoi :** refonte de la **saisie au journal** (Consultation + éditeur `.ec-sage`) : (1) **plus de bouton « Éditer le journal du mois »** — on fait désormais **clic droit sur une écriture** du journal → « ✎ Saisir / éditer ce journal » (ouvre l'éditeur) ; (2) dans l'éditeur, le **journal**, la **pièce** et le **libellé** **suivent toutes les lignes** de l'écriture (journal + pièce + libellé affichés sur chaque ligne jusqu'au solde ; le **libellé est identique** sur toutes les lignes — édité sur la 1re ligne, répliqué via `ecSetLibAll`) ; (3) les **comptes de tiers 401000000 / 411000000** apparaissent **avec les comptes auxiliaires fournisseurs / clients** dans l'autocomplétion ; (4) **navigation clavier complète** : **↓/↑** choisissent le compte dans la liste (sinon cellule dessous/dessus), **→/←** passent au champ suivant/précédent (au bord du champ ; toujours sur les montants), **Tab/Maj+Tab** champ suivant/précédent, **Entrée** = « passer à la suite » (valide le compte sélectionné dans la liste puis avance).
+
+**Où / comment :** `ecRender` (journal/pièce/libellé sur chaque ligne, `ec-ro` en lignes suivantes, `ecSetLibAll`) ; `addon85` (`ecSuggMove`/`ecSuggConfirm` + item actif `.act`) ; `addon114` réécrit (gestion Tab/Entrée/flèches + liste de comptes) ; `addon117` (clic droit `#sgj-ctx` sur `.sgj` → `ouvrirJournalEditable` ; styles `ec-ro`/`sgj-hint`) ; `sgJournalGrid` (bouton retiré, `data-jrn`/`data-per`). Aucune logique comptable modifiée. Badge → **v221**.
+
+---
+
+## 🟢 MAJ précédente — Consultation des journaux : défilement (molette) pour voir TOUTES les écritures — v220
 **Quoi :** dans la **Consultation des comptes**, quand on sélectionne un **journal** (ACH, VTE, BQ, ODP, ODC, ODTVA, OD), la grille des écritures **défile désormais à la molette** pour voir **toutes les écritures**, même longues (ex. journal ACHATS de plusieurs centaines de lignes). Avant, le contenu **débordait** sous la fenêtre (rogné par `.sg-app{overflow:hidden}`) au lieu de défiler.
 
 **Pourquoi / cause :** la zone de droite `.sg-right` est une **cellule de grille CSS** ; sans `min-height:0`, un enfant en `overflow:auto` ne peut pas défiler (la cellule grandit au-delà de la piste et déborde). 
