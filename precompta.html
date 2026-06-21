@@ -3473,12 +3473,12 @@ const COMPTES = {
   '44571':'TVA collectée', '44551':'TVA à décaisser', '44567':'Crédit de TVA à reporter',
   '601000':'Achats matières premières', '604000':'Achats prestations', '606100':'Énergie / fournitures',
   '606400':'Fournitures administratives', '607000':'Achats de marchandises',
-  '613200':'Loyers', '626000':'Frais postaux & télécom',
+  '613200':'Loyers', '622600':'Honoraires', '626000':'Frais postaux & télécom',
   '6160':"Primes d'assurances", '627':'Services bancaires', '6251':'Voyages, déplacements & péages', '6257':'Réceptions / restaurant',
   '706000':'Prestations de services', '707000':'Ventes de marchandises', '708000':'Produits annexes',
   '681120':'Dotations amortissements immobilisations', '281830':'Amort. matériel de bureau', '120000':'Résultat de l\'exercice (bénéfice)', '658000':'Charges diverses de gestion courante'
 };
-const COMPTES_CHARGE = ['601000','604000','606100','606400','607000','613200','626000'];
+const COMPTES_CHARGE = ['601000','604000','606100','606400','607000','613200','622600','626000'];
 const COMPTES_PRODUIT = ['706000','707000','708000'];
 const BANK_TIERS = ['401','411','421'];
 const BANK_ORG   = ['431','4373','4375'];
@@ -10812,7 +10812,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v243 · noir & bleu';
+    b.textContent='YADA · v244 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }

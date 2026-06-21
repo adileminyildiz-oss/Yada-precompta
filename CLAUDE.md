@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Saisie : TOUS les comptes proposés en autocomplétion (charges classe 6 incluses) — v243
+## 🟢 Dernière mise à jour — Capture de facture : compte d'Honoraires 622600000 dans le menu des comptes de charges — v244
+**Quoi :** lors de la **capture / comptabilisation d'une facture fournisseur** (et dans la fiche tiers, la saisie d'achat, les dépôts), le menu déroulant **« compte de charge »** propose désormais **« 622600 — Honoraires »**.
+
+**Où / comment :** ajout de `'622600'` à `COMPTES_CHARGE` (liste du menu, utilisée par `optComptes` dans la fiche tiers `ti-contre`, la comptabilisation des dépôts d'achat et la saisie d'achat) + libellé `'622600':'Honoraires'` dans `COMPTES` (clé 6 chiffres). À la génération, `c9('622600')='622600000'`. Validé : `node --check` (118 scripts), filet d'équilibre (d-ama/d-sci42), smoke Playwright (option « 622600 — Honoraires » présente, c9 OK, 0 pageerror). Badge → **v244**.
+
+---
+
+## 🟢 MAJ précédente — Saisie : TOUS les comptes proposés en autocomplétion (charges classe 6 incluses) — v243
 **Quoi :** dans l'éditeur d'écritures, l'**autocomplétion de compte** (`ecAllAccounts`) propose désormais **tout le Plan Comptable** — **tous les comptes de charges (classe 6)** et **tous les comptes** (classes 1 à 8), plus les tiers auxiliaires du dossier.
 
 **Pourquoi :** `ecAllAccounts` se limitait à **`db.plan`** quand celui-ci était peuplé (au lieu du PCG complet) → des comptes de charges absents de `db.plan` n'étaient **jamais proposés**. De plus `familles()` restreignait aux classes 401/411/44/6/7.
