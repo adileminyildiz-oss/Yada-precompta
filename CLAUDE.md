@@ -36,7 +36,23 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Synchro : Pantry seul (méthode Supabase retirée de l'interface) — v241
+## 🟢 Dernière mise à jour — TVA & factures : montants calculés sur TOUTES les écritures + concordance comptable — v242
+**Quoi :** le **Module TVA (CA3)** calcule désormais la **TVA collectée et déductible sur toutes les écritures** (factures + import FEC + saisies), et les listes de factures **fournisseurs/clients** affichent la **concordance avec la comptabilité** (nombre d'écritures VTE/ACH).
+
+**Pourquoi :** (1) `tvaDuMois` comparait des codes courts (`'44571'`) alors que les écritures stockent des comptes en **9 chiffres** (`445710000`, addon22) → il renvoyait **0** (le suivi annuel TVA était vide). (2) `tvaDetailMois` ne lisait que `db.factures` → les montants **importés du FEC** (présents en écritures sur les comptes de TVA mais sans `db.factures`) étaient **ignorés**.
+
+**Ce qu'il fait :**
+- `tvaDuMois(m)` : somme les **crédits sur 44571x** (collectée) et les **débits sur 44566x/44562x** (déductible), comparés en **`c9`** → capte FEC + manuel + factures. Le suivi annuel CA3 est désormais juste.
+- `tvaDetailMois(m)` : **totaux autoritaires depuis les écritures** (`col`/`ded` = `tvaDuMois`), justification **par facture conservée** (ventilation par taux), et **part « autres » (FEC/écritures)** = `col − colFact` / `ded − dedFact`. Le tableau CA3 ajoute une ligne « Autres ventes/achats taxables (import FEC / écritures sur 44571 / 44566-44562) » pour réconcilier le total.
+- **Suivi des factures de vente** : KPI « TVA collectée » + ligne de **concordance** « N écriture(s) VTE — concordance ✓ / G comptabilisée(s) sur N ». **Suivi des factures fournisseurs** : concordance « N écriture(s) ACH ».
+
+**Où / comment :** éditions chirurgicales de `tvaDuMois`, `tvaDetailMois`, du tableau CA3 (`pageTVA`) et des sous-titres de `suiviFacturesVente`/`suiviFacturesAchat`. **Affichage/calcul seulement — aucune écriture modifiée.** Validé : `node --check` (118 scripts), filet d'équilibre (d-ama/d-sci42), smoke Playwright (`tvaDuMois` 2026-05 = col 820 / ded 184 — valait 0 avant ; CA3 rendu, 0 pageerror). Badge → **v242**.
+
+**Reste à faire (signalé) :** lister dans les suivis les factures présentes **uniquement** en écritures (FEC) pour une parité de comptage stricte — la concordance les rend visibles ; la synthèse de lignes depuis les écritures est un chantier suivant.
+
+---
+
+## 🟢 MAJ précédente — Synchro : Pantry seul (méthode Supabase retirée de l'interface) — v241
 **Quoi :** la carte de **Synchronisation** ne propose plus que **Pantry** (`getpantry.cloud`). Les sections **Supabase** (URL/clé/table, aide SQL) et **Serveur YADA** sont **retirées de l'interface** pour une configuration simple et sans confusion. À l'**enregistrement**, l'ancienne config Supabase est **effacée** (les champs absents repassent à vide → `url/key/server/token=''`).
 
 **Ce qu'il fait :**

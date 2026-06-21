@@ -3792,9 +3792,12 @@ function totauxCompte(p){ let d=0,c=0; db.ecritures.forEach(e=>e.lignes.forEach(
 function moisDisponibles(){ return [...new Set(db.ecritures.map(e=>ym(e.date)))].sort().reverse(); }
 function tvaDuMois(m){
   let col=0,ded=0;
+  // TVA depuis les ÉCRITURES (FEC + manuel + factures), comptes comparés en c9 (9 chiffres) :
+  //  collectée = crédits sur 44571x ; déductible = débits sur 44566x (biens/services) et 44562x (immo).
   db.ecritures.filter(e=>ym(e.date)===m && e.journal!=='BQ').forEach(e=>e.lignes.forEach(l=>{
-    if(l.compte==='44571') col+=l.credit;
-    if(l.compte==='44566'||l.compte==='44562') ded+=l.debit;
+    const cc=c9(l.compte);
+    if(cc.indexOf('44571')===0) col+=(+l.credit||0);
+    if(cc.indexOf('44566')===0||cc.indexOf('44562')===0) ded+=(+l.debit||0);
   }));
   col=r2(col); ded=r2(ded); const net=r2(col-ded);
   return {col, ded, net, aDecaisser:net>0?net:0, credit:net<0?-net:0};
@@ -3811,14 +3814,19 @@ function tvaDetailMois(m){
   });
   const sumTva=o=>r2(Object.values(o).reduce((a,b)=>a+b.tva,0));
   const sumBase=o=>r2(Object.values(o).reduce((a,b)=>a+b.base,0));
-  const col=sumTva(collectee), ded=sumTva(deductible);
+  const colFact=sumTva(collectee), dedFact=sumTva(deductible);
+  // Totaux AUTORITAIRES depuis les écritures (tous les montants des comptes de TVA : FEC + manuel + factures).
+  const ecr=tvaDuMois(m); const col=ecr.col, ded=ecr.ded;
+  // Part non justifiée par une facture db.factures (typiquement les montants importés du FEC).
+  const autreCol=r2(col-colFact), autreDed=r2(ded-dedFact);
   // report du crédit du mois précédent (ligne 22)
   const mois=moisDisponibles().slice().sort();
   const idx=mois.indexOf(m); let reportCredit=0;
   if(idx>0){ const prev=tvaDuMois(mois[idx-1]); reportCredit=prev.credit||0; }
   const nette=r2(col-ded-reportCredit);
   return { collectee, deductible, baseCol:sumBase(collectee), baseDed:sumBase(deductible),
-    col, ded, reportCredit, nette, aDecaisser:nette>0?nette:0, credit:nette<0?-nette:0 };
+    col, ded, colFact, dedFact, autreCol:autreCol>0.005?autreCol:0, autreDed:autreDed>0.005?autreDed:0,
+    reportCredit, nette, aDecaisser:nette>0?nette:0, credit:nette<0?-nette:0 };
 }
 /* Écriture OD TVA au dernier jour du mois — style Sage (journal OD TVA, pièce MM/AAAA) */
 function odTvaDejaPostee(m){ const lib='OD TVA CA3 '+pieceMois(m); return db.ecritures.some(e=>e.journal==='ODTVA' && (e.libelle||'').includes(lib)); }
@@ -4495,6 +4503,10 @@ function pageFacturation(){
 /* Suivi de TOUTES les factures de vente créées (avec statut paiement issu du règlement) */
 function suiviFacturesVente(){
   const facs=db.docs.filter(d=>d.type==='facture').slice().sort((a,b)=>a.date<b.date?1:-1);
+  // Concordance avec la comptabilité : nb d'écritures de vente (journal VTE) = nb de factures comptabilisées.
+  const nVTE=(db.ecritures||[]).filter(e=>e.journal==='VTE').length;
+  const nGen=facs.filter(d=>(db.factures||[]).some(f=>f.numero===d.numero)).length;
+  const concord = nVTE===nGen ? `<b style="color:#1a7f4b">concordance ✓</b>` : `${nGen} comptabilisée(s) sur ${nVTE} écriture(s) VTE`;
   let tHT=0,tTVA=0,tTTC=0;
   const rows=facs.map(d=>{ const c=db.tiers.find(x=>x.id===d.clientId);
     tHT+=d.ht; tTVA+=d.tva; tTTC+=d.ttc;
@@ -4509,10 +4521,10 @@ function suiviFacturesVente(){
       <td>${docEtatTag(d)}</td><td>${pay}</td>
       <td class="r"><button class="btn btn-ghost btn-sm" onclick="voirDoc('${d.id}')">Voir</button></td></tr>`;}).join('');
   return `<div class="card"><h2>Suivi des factures de vente</h2>
-    <div class="sub">Toutes les factures de vente créées (${facs.length}) — montants, état d'envoi et statut d'encaissement.</div>
+    <div class="sub">Toutes les factures de vente créées (${facs.length}) — montants, état d'envoi et statut d'encaissement. Comptabilité : ${nVTE} écriture(s) de vente (VTE) — ${concord}.</div>
     <div class="grid g3" style="margin-bottom:14px">
       <div class="kpi green"><div class="lbl">Total HT facturé</div><div class="val cre">${eur(r2(tHT))}</div></div>
-      <div class="kpi"><div class="lbl">Total TVA</div><div class="val">${eur(r2(tTVA))}</div></div>
+      <div class="kpi"><div class="lbl">TVA collectée</div><div class="val cre">${eur(r2(tTVA))}</div></div>
       <div class="kpi blue"><div class="lbl">Total TTC</div><div class="val">${eur(r2(tTTC))}</div></div>
     </div>
     ${listeExportBar('vente')}
@@ -4702,6 +4714,9 @@ function sourceTag(s){
 }
 function suiviFacturesAchat(){
   const facs=db.factures.filter(f=>f.type==='achat').slice().sort((a,b)=>a.date<b.date?1:-1);
+  // Concordance avec la comptabilité : nb d'écritures d'achat (journal ACH) = nb de factures fournisseurs.
+  const nACH=(db.ecritures||[]).filter(e=>e.journal==='ACH').length;
+  const concordA = nACH===facs.length ? `<b style="color:#1a7f4b">concordance ✓</b>` : `${facs.length} facture(s) listée(s) sur ${nACH} écriture(s) ACH`;
   let tHT=0,tTVA=0,tTTC=0,nOCR=0,nScan=0,nMan=0;
   const rows=facs.map(f=>{const t=db.tiers.find(x=>x.id===f.tiersId); const reg=reglementDe(f.id);
     tHT+=f.ht; tTVA+=f.tva; tTTC+=f.ttc;
@@ -4716,7 +4731,7 @@ function suiviFacturesAchat(){
       <td>${pay}</td>
       <td class="r"><button class="btn btn-ghost btn-sm" onclick="voirFactureAchat('${f.id}')">Voir</button></td></tr>`;}).join('');
   return `<div class="card"><h2>Suivi des factures fournisseurs reçues</h2>
-    <div class="sub">Toutes les factures d'achat (${facs.length}) avec leur mode d'entrée et leur statut de paiement. Chaque écriture d'achat est accompagnée de sa facture (« Voir »).</div>
+    <div class="sub">Toutes les factures d'achat (${facs.length}) avec leur mode d'entrée et leur statut de paiement. Comptabilité : ${nACH} écriture(s) d'achat (ACH) — ${concordA}.</div>
     <div class="grid g4" style="margin-bottom:14px">
       <div class="kpi red"><div class="lbl">Total TTC reçu</div><div class="val deb">${eur(r2(tTTC))}</div><div class="meta">HT ${eur(r2(tHT))} · TVA ${eur(r2(tTVA))}</div></div>
       <div class="kpi"><div class="lbl">Saisie manuelle</div><div class="val">${nMan}</div></div>
@@ -4885,7 +4900,7 @@ function pageTVA(){
   };
   const poste=odTvaDejaPostee(m);
   return head('Module TVA — déclaration CA3 (3310-CA3)',
-    'Tableau rempli automatiquement à partir des factures et de la banque. Chaque montant est justifié : cliquez une ligne pour voir les factures.')+
+    'TVA collectée et déductible calculées sur TOUTES les écritures (factures, import FEC, saisies) — comptes 44571 (collectée) et 44566/44562 (déductible). Cliquez une ligne de taux pour voir les factures justificatives.')+
   regimeBar+
   `<div class="card"><h2>Mois de déclaration (CA3) — exercice ${db.societe.exoDebut.slice(0,4)}</h2>
     <div class="cp-monthbar" style="border:none;padding:6px 0">${moisBar}</div>
@@ -4910,10 +4925,12 @@ function pageTVA(){
     <div class="sub">Cliquez une ligne de taux pour afficher les factures justificatives.</div>
     <table><thead><tr><th>Rubrique</th><th class="r">Base HT</th><th class="r">TVA</th><th></th></tr></thead><tbody>
       <tr style="background:#dcefe6"><td colspan=4><b>TVA brute collectée</b></td></tr>
-      ${blocTaux('Ligne 08/9B/09 — Ventes',d.collectee,'col')||'<tr><td colspan=4 class=empty>Aucune vente taxable</td></tr>'}
+      ${blocTaux('Ligne 08/9B/09 — Ventes',d.collectee,'col')||(d.autreCol?'':'<tr><td colspan=4 class=empty>Aucune vente taxable</td></tr>')}
+      ${d.autreCol?`<tr><td>Autres ventes taxables (import FEC / écritures sur 44571)</td><td class="r num">—</td><td class="r num cre">${eur(d.autreCol)}</td><td></td></tr>`:''}
       <tr class="totrow"><td>Total TVA collectée (ligne 16)</td><td class="r num">${eur(d.baseCol)}</td><td class="r num cre">${eur(d.col)}</td><td></td></tr>
       <tr style="background:#f3e3df"><td colspan=4><b>TVA déductible</b></td></tr>
-      ${blocTaux('Ligne 19/20 — Achats',d.deductible,'ded')||'<tr><td colspan=4 class=empty>Aucun achat déductible</td></tr>'}
+      ${blocTaux('Ligne 19/20 — Achats',d.deductible,'ded')||(d.autreDed?'':'<tr><td colspan=4 class=empty>Aucun achat déductible</td></tr>')}
+      ${d.autreDed?`<tr><td>Autres achats déductibles (import FEC / écritures sur 44566/44562)</td><td class="r num">—</td><td class="r num deb">${eur(d.autreDed)}</td><td></td></tr>`:''}
       ${d.reportCredit>0?`<tr><td>Ligne 22 — Report du crédit du mois précédent</td><td></td><td class="r num deb">${eur(d.reportCredit)}</td><td></td></tr>`:''}
       <tr class="totrow"><td>Total TVA déductible (ligne 23)</td><td class="r num">${eur(d.baseDed)}</td><td class="r num deb">${eur(r2(d.ded+d.reportCredit))}</td><td></td></tr>
       <tr class="totrow" style="border-top:2px solid var(--ink)"><td colspan=2><b>${d.aDecaisser?'Ligne 28 — TVA nette à payer':'Ligne 27 — Crédit de TVA à reporter'}</b></td><td class="r num"><b>${eur(d.aDecaisser||d.credit)}</b></td><td></td></tr>
@@ -10795,7 +10812,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v241 · noir & bleu';
+    b.textContent='YADA · v242 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
