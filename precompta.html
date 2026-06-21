@@ -10790,7 +10790,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v231 · noir & bleu';
+    b.textContent='YADA · v232 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -13352,9 +13352,9 @@ ${lignes}
   function clLignesGeneral(code){
     var out=[]; var k=(typeof c9==='function'?c9(code):code);
     (db.ecritures||[]).slice().sort(function(a,b){ return a.date<b.date?-1:(a.date>b.date?1:0); }).forEach(function(e){
-      (e.lignes||[]).forEach(function(l){
+      (e.lignes||[]).forEach(function(l, li){
         if(l.compte!==code && !(typeof c9==='function' && c9(l.compte)===k)) return;
-        out.push({ ecritureId:e.id, date:e.date, journal:e.journal,
+        out.push({ ecritureId:e.id, idx:li, key:e.id+'|'+li, date:e.date, journal:e.journal,
           piece:(e.libelle||'').split(' · ')[0], lib:e.libelle, debit:l.debit||0, credit:l.credit||0, lettre:l.lettre||'' });
       });
     });
@@ -13383,12 +13383,14 @@ ${lignes}
     var code, nom, lignes;
     if(t){ code=sageCode(t); nom=t.nom||''; lignes=(typeof auxLignes==='function')?auxLignes(t):[]; }
     else { code=window.clCode; nom=(COMPTES[code]||COMPTES[String(code).replace(/0+$/,'')]||''); lignes=clLignesGeneral(code); }
-    var solde=0, TD=0, TC=0;
+    var solde=0, TD=0, TC=0, selDeb=0, selCre=0; var SEL=window.clSel||(window.clSel=[]);
     var rows=lignes.map(function(l,_i){
       solde=r2(solde+l.debit-l.credit); TD+=l.debit; TC+=l.credit;
       var jnl=l.journal==='ACH'?'HA':(l.journal==='VTE'?'VT':l.journal);
       var _end=(_i===lignes.length-1 || (lignes[_i+1] && lignes[_i+1].ecritureId!==l.ecritureId))?'lx-ecr-end':'';
-      return '<tr class="'+_end+'" oncontextmenu="return clMenu(event,\''+l.ecritureId+'\')" title="Clic droit : ouvrir dans le journal pour modifier">'
+      var key=l.key||(l.ecritureId+'|'+(l.idx!=null?l.idx:0));
+      var _sel=SEL.indexOf(key)>=0; if(_sel){ selDeb+=l.debit; selCre+=l.credit; }
+      return '<tr class="'+_end+(_sel?' cl-sel':'')+'" data-k="'+key+'" onclick="clToggleSel(\''+key+'\')" oncontextmenu="return clMenu(event,\''+l.ecritureId+'\')" title="Clic gauche : sélectionner pour lettrer · clic droit : ouvrir dans le journal">'
         +'<td class="bang">'+(l.lettre?'':'!')+'</td>'
         +'<td class="l">'+frDate(l.date)+'</td>'
         +'<td class="l">'+jnl+'</td>'
@@ -13400,6 +13402,7 @@ ${lignes}
         +'<td class="solde">'+sageNum(Math.abs(solde))+' '+(solde>=0?'D':'C')+'</td>'
         +'<td class="lettre">'+(l.lettre||'')+'</td></tr>';
     }).join('');
+    var selN=SEL.length; var selEq=(selN>=2 && Math.abs(r2(selDeb-selCre))<0.005);
     var sF=r2(TD-TC); var sens=Math.abs(sF)<0.005?'S':(sF>0?'D':'C');
     var dossier=(db.societe&&db.societe.dossierNom)||'YADA';
     var typeLbl=t?(t.type==='client'?'Client':'Fournisseur'):'Compte';
@@ -13415,8 +13418,15 @@ ${lignes}
         +'<span class="cl-navwrap"><button class="btn btn-ghost btn-sm cl-nav" onclick="clNav(-1)"'+navDis+' title="'+typeLbl+' précédent (↑)">▲</button>'
         +'<button class="btn btn-ghost btn-sm cl-nav" onclick="clNav(1)"'+navDis+' title="'+typeLbl+' suivant (↓)">▼</button>'
         +(navlbl?'<span class="cl-navlbl">'+navlbl+'</span>':'')+'</span>'
-        +'<span class="cl-hint">Lignes en lecture seule — <b>clic droit</b> sur une ligne puis « <b>Journal</b> » pour modifier dans le journal.</span>'
+        +'<span class="cl-hint"><b>Clic gauche</b> = sélectionner pour <b>lettrer</b> (banque ↔ vente/achat) · <b>clic droit</b> = ouvrir dans le journal.</span>'
         +'<span style="margin-left:auto">Solde du compte : <b>'+sageNum(Math.abs(sF))+' '+sens+'</b></span></div>'
+      +'<div class="cl-letbar"><span class="cl-letlbl">Lettrage :</span>'
+        +'<span class="cl-letsum">'+selN+' ligne(s) — Débit <b>'+sageNum(selDeb)+'</b> / Crédit <b>'+sageNum(selCre)+'</b>'
+        +(selN>=2?(selEq?' <span class="cl-ok">équilibré ✓</span>':' <span class="cl-ko">écart '+sageNum(Math.abs(r2(selDeb-selCre)))+'</span>'):'')+'</span>'
+        +'<button class="btn btn-pri btn-sm" onclick="clLettrerSel()"'+(selEq?'':' disabled')+'>Lettrer la sélection</button>'
+        +'<button class="btn btn-ghost btn-sm" onclick="clDelettrerSel()"'+(selN?'':' disabled')+'>Délettrer</button>'
+        +(selN?'<button class="btn btn-ghost btn-sm" onclick="clSelVider()">Vider la sélection</button>':'')
+        +'<span class="cl-lethint">Sélectionnez les lignes du tiers à rapprocher (ex. la <b>vente</b> et son <b>encaissement</b>) ; le lettrage n\'est possible que si Débit = Crédit → le compte est soldé.</span></div>'
       +'<div class="lx-wrap"><table class="lx"><thead><tr>'
         +'<th class="l">!</th><th class="l">Date</th><th class="l">Jnl</th><th class="l">I</th><th class="l">Pièce</th><th class="l">Libellé</th>'
         +'<th>Débit</th><th>Crédit</th><th>Solde</th><th>L</th></tr></thead>'
@@ -16791,6 +16801,43 @@ ${lignes}
       return r;
     };
   }
+})();
+</script>
+<script id="yada-addon126">
+/* ============================================================
+   CONSULTATION — grand-livre (lecture) : LETTRAGE MANUEL inter-journaux.
+   Dans le compte d'un tiers (411HABI00 / 401…), on sélectionne au clic les lignes
+   à rapprocher — typiquement la VENTE (journal VT, débit) et son ENCAISSEMENT
+   (journal BQ, crédit), ou l'ACHAT (HA, crédit) et son PAIEMENT (BQ, débit) — et
+   on LETTRE quand Débit = Crédit : le compte du tiers est alors SOLDÉ.
+   100% additif (clToggleSel/clLettrerSel/clDelettrerSel + lzLettrer existant).
+   Aucune logique comptable modifiée (le lettrage ne touche pas aux montants).
+   ============================================================ */
+(function(){
+  window.clSel = window.clSel || [];
+  window.clToggleSel=function(key){ var i=window.clSel.indexOf(key); if(i>=0) window.clSel.splice(i,1); else window.clSel.push(key); if(typeof clRender==='function') clRender(); };
+  window.clSelVider=function(){ window.clSel=[]; if(typeof clRender==='function') clRender(); };
+  window.clLettrerSel=function(){ var refs=(window.clSel||[]).map(function(k){ var p=k.split('|'); return {e:p[0], i:+p[1]}; });
+    if(typeof lzLettrer==='function' && lzLettrer(refs)){ window.clSel=[]; if(typeof clRender==='function') clRender(); } };
+  window.clDelettrerSel=function(){ var refs=(window.clSel||[]).map(function(k){ var p=k.split('|'); return {e:p[0], i:+p[1]}; });
+    if(typeof lzDelettrer==='function') lzDelettrer(refs); window.clSel=[]; if(typeof clRender==='function') clRender(); };
+  /* changer de compte (navigation / ouverture) vide la sélection */
+  ['clNav','ouvrirCompteLecture'].forEach(function(fn){ if(typeof window[fn]==='function'){ var _o=window[fn]; window[fn]=function(){ window.clSel=[]; return _o.apply(this, arguments); }; } });
+  try{ var st=document.createElement('style'); st.id='cl-lettrage-mod'; st.textContent=
+    '#cl-overlay .lx tbody tr[data-k]{cursor:pointer}'
+    +'#cl-overlay tr.cl-sel td{background:rgba(30,144,255,.20) !important}'
+    +'#cl-overlay tr.cl-sel td:first-child{box-shadow:inset 4px 0 0 #0a64d6}'
+    +'.cl-letbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 12px;border-bottom:1px solid var(--line,#dcdcdc);background:var(--paper-2,#eef4fb);font-size:12.5px}'
+    +'.cl-letbar .cl-letlbl{font-weight:700}'
+    +'.cl-letbar .cl-ok{color:#1f6b4f;font-weight:700}'
+    +'.cl-letbar .cl-ko{color:#9c3024;font-weight:700}'
+    +'.cl-letbar .cl-lethint{color:#7a8696;font-size:11.5px}'
+    +'body[data-theme="noir"] .cl-letbar{background:#0c1a2a;border-color:#16212e;color:#cfe0f5}'
+    +'body[data-theme="noir"] .cl-letbar .cl-letlbl{color:#5ab0ff}'
+    +'body[data-theme="noir"] .cl-letbar .cl-ok{color:#7fe3b4}'
+    +'body[data-theme="noir"] .cl-letbar .cl-ko{color:#ffd27a}'
+    +'body[data-theme="noir"] .cl-letbar .cl-lethint{color:#9fb6d0}';
+    document.head.appendChild(st); }catch(e){}
 })();
 </script>
 </body>
