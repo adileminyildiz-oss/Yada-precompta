@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Éditions : balances fournisseurs/clients calculées sur les ÉCRITURES (FEC + manuel) — v236
+## 🟢 Dernière mise à jour — Synchronisation multi-appareils : suivi continu + dossiers ADDITIFS (le travail du PC principal sur toutes les interfaces) — v237
+**Quoi :** tout le **travail fait sur le PC principal** (dossiers créés, écritures, règles) est **suivi en continu** sur les autres appareils — **mêmes dossiers, mêmes données, mêmes règles**. (1) **PULL automatique** périodique (40 s) + au **retour au premier plan** (`visibilitychange`/`focus`) + à la **reconnexion** (`online`), en plus du push après chaque save (addon102) ; cloudPull n'applique que si le cloud est **plus récent** (horodatage, dernier gagnant). (2) **Dossiers ADDITIFS** : à la réception, le cloud (PC principal) l'emporte pour les dossiers partagés, mais **aucun dossier créé localement n'est perdu** (les dossiers présents seulement en local sont conservés puis repoussés → visibles partout).
+
+**Où / comment :** `yada-addon130` — `setInterval(cloudPull(true), 40s)` + écouteurs `visibilitychange`/`focus`/`online` (garde : pas de pull si un overlay/modale est ouvert). `applyRemote` (addon102) **fusionne** `dossiersData` et `cabinet.dossiers` (union : cloud prioritaire pour l'existant, ajout des dossiers locaux manquants). **Prérequis** : la synchronisation cloud doit être **configurée et activée** (Paramétrage → URL/clé Supabase + clé d'espace) ; sinon inactif. 100% additif, aucune logique comptable modifiée. Badge → **v237**.
+
+---
+
+## 🟢 MAJ précédente — Éditions : balances fournisseurs/clients calculées sur les ÉCRITURES (FEC + manuel) — v236
 **Quoi :** toutes les **Éditions** sont générées à partir de **tous les montants** — qu'ils proviennent de l'**import FEC** ou d'une **saisie manuelle**. La **balance générale**, le **grand-livre**, les **journaux**, le **bilan** et le **compte de résultat** itéraient déjà `db.ecritures` (FEC + manuel). Les **balances fournisseurs / clients** s'appuyaient en revanche sur `auxMvt(t)` (qui lit `db.factures`/`db.banque`) → elles **ignoraient les montants FEC** (présents en écritures mais sans `db.factures`). Désormais elles somment les **lignes d'écriture du compte de tiers** via `auxLignes(t)` → **FEC + manuel inclus**.
 
 **Où / comment :** `balanceLignes(type)` — pour `fournisseurs`/`clients`, remplacement de `auxMvt(t,null)` par la somme `débit/crédit` de `auxLignes(t)` (lignes sur le compte auxiliaire + collectif rattaché), avec filtre des comptes non mouvementés. Aucune logique comptable modifiée (calcul d'affichage uniquement). Badge → **v236**.
