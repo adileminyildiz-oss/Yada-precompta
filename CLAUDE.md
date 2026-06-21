@@ -36,7 +36,19 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Synchro : méthode simple « Pantry » (stockage JSON sans base SQL) — v240
+## 🟢 Dernière mise à jour — Synchro : Pantry seul (méthode Supabase retirée de l'interface) — v241
+**Quoi :** la carte de **Synchronisation** ne propose plus que **Pantry** (`getpantry.cloud`). Les sections **Supabase** (URL/clé/table, aide SQL) et **Serveur YADA** sont **retirées de l'interface** pour une configuration simple et sans confusion. À l'**enregistrement**, l'ancienne config Supabase est **effacée** (les champs absents repassent à vide → `url/key/server/token=''`).
+
+**Ce qu'il fait :**
+- `cloudCard` : titre « (Pantry) », section verte Pantry (identifiant + clé d'espace) + chiffrement + boutons + aide Pantry ; plus aucun champ Supabase/serveur affiché.
+- `cloudSaveCfg` lit toujours les ids `cloud-url/key/table/server/token` mais, ces champs n'existant plus, ils valent `''` → **la méthode Supabase est effacée** au premier « Enregistrer la configuration ».
+- **Le transport Pantry/Supabase/serveur reste inchangé côté code** (repli conservé) ; seule l'UI est simplifiée. Le chiffrement de bout en bout est toujours appliqué.
+
+**Où / comment :** greffes chirurgicales dans `cloudCard` (addon102) — suppression des blocs Supabase avancé, Serveur YADA et aide SQL ; variable `sql` retirée. Validé : `node --check` (118 scripts), filet d'équilibre (d-ama/d-sci42), smoke Playwright (carte Pantry-only, 0 champ Supabase, effacement au save, 0 pageerror). Badge → **v241**.
+
+---
+
+## 🟢 MAJ précédente — Synchro : méthode simple « Pantry » (stockage JSON sans base SQL) — v240
 **Quoi :** ajout d'un **3ᵉ mode de synchronisation, sans base SQL** — **Pantry** (`getpantry.cloud`). Aucune table, aucune RLS, aucun cache de schéma → **les erreurs Supabase de type `PGRST205` (« table introuvable ») sont impossibles**. Onboarding minimal : créer un Pantry (un e-mail), copier l'**identifiant** dans YADA. C'est le **mode recommandé** désormais (mis en avant dans la carte de Paramétrage), Supabase/serveur restant disponibles.
 
 **Ce qu'il fait :**
