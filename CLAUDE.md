@@ -26,7 +26,41 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Charges & Paie : 2 onglets (Paie / Charges) + vérification du bulletin avant génération — v204
+---
+
+---
+
+## 🟢 Dernière mise à jour — Tiers : doublons clients/fournisseurs fusionnés en UN seul compte (montants regroupés) + dédoublonnage à la réception — v206
+**Quoi :** quand un client (ex. **HABITAT CONCEPT**) apparaît plusieurs fois dans les tiers, la **fusion** ne garde **qu'une fiche** et **regroupe tous les montants saisis** sur **ce compte tiers** (les lignes d'écriture du compte auxiliaire des doublons sont déplacées vers celui de la fiche conservée). La **réception** des factures clients ne crée plus de doublon (réutilisation du tiers existant).
+
+**Pourquoi :** les factures clients reçues créaient un nouveau client à chaque fois (plusieurs « HABITAT CONCEPT ») ; l'utilisateur veut une alerte de doublon, une seule fiche par client et tous les montants regroupés sur ce compte.
+
+**Ce qu'il fait :**
+- **Alerte doublon** (déjà existante) : tag **DOUBLON** + carte « Doublons fournisseurs / clients » (`scanDoublonsTiers`/`blocDoublonsTiers`, normalisation du nom).
+- **Fusion corrigée** (`tiersFusionner`) : choisit la fiche maître (la plus active / compte personnalisé), rattache factures/`docs`/écritures/banque/règlements, **et déplace les lignes d'écriture `c9(compteAux)` des doublons vers `c9(compteAux)` du maître** → tous les montants sur un seul compte tiers. `compteAuxCustom=true` sur le maître.
+- **Dédoublonnage à la création** : `integrerFEC`/`trouverOuCreerTiers` (FEC), `ficheValider` (dépôt « client/fournisseur inconnu ») et `faClientEmettre` (nouveau client) **réutilisent** un tiers du même nom (comparaison **normalisée** : majuscules, sans accents ni ponctuation) au lieu d'en recréer un.
+
+**Où / comment :** `tiersFusionner` (consolidation des lignes via `c9`), `trouverOuCreerTiers`/`ficheValider`/`faClientEmettre` (réutilisation par nom normalisé). Badge → **v206**.
+
+**Limites :** le rapprochement se fait sur le **nom normalisé** ; deux entités réellement distinctes au même nom devraient être distinguées manuellement (bouton « Laisser »).
+
+---
+
+## 🟢 MAJ précédente — Import FEC : écritures classées par libellé (OD PAIE / OD CHARGES / OD TVA / OD) + ligne bleue entre écritures — v205
+**Quoi :** à l'import FEC, chaque écriture d'O.D. est placée dans le **bon journal d'après son libellé** : « OD PAIE » → **OD PAIE (ODP)**, charges (CHARGE/COTISATION/URSSAF/PATRONAL) → **OD CHARGES (ODC, nouveau journal)**, TVA → **OD TVA (ODTVA)**, le reste → **OD (Opérations diverses)**. Les écritures de charges générées par la paie vont aussi en **ODC**. Une **ligne bleue** sépare chaque écriture dans le Journal comptable.
+
+**Où / comment :**
+- Nouveau journal **`ODC` (OD CHARGES)** dans `journauxDefaut`.
+- `fecJournalMoteur(code, jlib, ecrLib)` classe les O.D. par libellé (TVA → ODTVA ; CHARGE/COTISATION/URSSAF/PATRONAL → ODC ; PAIE/SALAIRE/BULLETIN → ODP ; sinon OD) ; `integrerFEC` transmet le libellé d'écriture.
+- Paie : `posterPaieMois` et `bpGenererODMois` postent l'**OD CHARGES en journal ODC** ; idempotence (`paieDejaPostee`, `bpODFaite`/`bpSupprOD`) gère ODP **et** ODC.
+- Affichage : `ODC` ajouté à `sgJournaux`, `sgJournalGrid`, `journauxDoc`, `centralisateurDoc`, filtre éditeur.
+- `yada-addon110` : ligne bleue (`border-top:2px #1e90ff`) entre chaque `.ecr` de la page Journal comptable (le grand-livre/Consultation ont déjà `sgj-ecr-sep`). Badge → **v205**.
+
+**Limites :** la classification se base sur des mots-clés du libellé/journal FEC (tolérante mais heuristique).
+
+---
+
+## 🟢 MAJ précédente — Charges & Paie : 2 onglets (Paie / Charges) + vérification du bulletin avant génération — v204
 **Quoi :** le module **Charges & Paie** est organisé en **2 onglets — « Paie (bulletins de salaire) » et « Charges (cotisations & organismes) »** — et la modale d'un bulletin affiche un **panneau de Vérification & Validation** avant la génération de l'écriture de paie.
 
 **Pourquoi :** l'utilisateur veut déposer un bulletin (scan/OCR/saisie), voir toutes les informations reprises et **vérifiées** (société employeur, période, salarié, compte 421, cumuls, taux, montants, cotisations), puis valider et générer l'écriture.

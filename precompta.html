@@ -3688,8 +3688,8 @@ function calcPaie(ym){
     totalPat, org431, org437300, org437500, coutTotal:r2(brut+totalPat) };
 }
 function paieDejaPostee(ym, type){ // type: 'PAIE' | 'CHARGES'
-  const lib='OD '+type+' '+pieceMois(ym);
-  return db.ecritures.some(e=>e.journal==='ODP' && (e.libelle||'').includes(lib));
+  const lib='OD '+type+' '+pieceMois(ym); const jr=(type==='CHARGES')?'ODC':'ODP';
+  return db.ecritures.some(e=>(e.journal===jr||e.journal==='ODP') && (e.libelle||'').includes(lib));
 }
 function posterPaieMois(ym){
   const c=calcPaie(ym); if(c.brut<=0) return false;
@@ -3705,9 +3705,9 @@ function posterPaieMois(ym){
       L.push({compte:s.aux, lib:'Personnel '+s.nom, debit:0, credit:s.net}); });
     posterOD({ journal:'ODP', date, numero:piece, libelle:'OD PAIE '+piece, lignes:L });
   }
-  // ---- OD CHARGES (journal ODP) : charges patronales (D) = organismes à payer (C)
+  // ---- OD CHARGES (journal ODC) : charges patronales (D) = organismes à payer (C)
   if(!paieDejaPostee(ym,'CHARGES')){
-    posterOD({ journal:'ODP', date, numero:piece, libelle:'OD CHARGES '+piece, lignes:[
+    posterOD({ journal:'ODC', date, numero:piece, libelle:'OD CHARGES '+piece, lignes:[
       {compte:'645100000', debit:c.patUrssaf, credit:0},
       {compte:'645300000', debit:c.patRetraite, credit:0},
       {compte:'645400000', debit:c.patChomage, credit:0},
@@ -3913,6 +3913,7 @@ function journauxDefaut(){ return [
   {code:'VT', libelle:'VENTES', type:'Ventes', jrn:'VTE', compte:''},
   {code:'BQ', libelle:'BANQUE', type:'Trésorerie', jrn:'BQ', compte:'512000000'},
   {code:'ODP', libelle:'OD PAIE', type:'O.D.', jrn:'ODP', compte:''},
+  {code:'ODC', libelle:'OD CHARGES', type:'O.D.', jrn:'ODC', compte:''},
   {code:'ODTVA', libelle:'OD TVA', type:'O.D.', jrn:'ODTVA', compte:''},
   {code:'OD', libelle:'OPERATIONS DIVERSES', type:'O.D.', jrn:'OD', compte:''},
 ]; }
@@ -5410,12 +5411,12 @@ function sgComptes(tab, per){
 }
 function sgJournaux(per){
   const cnt={}; ecrituresJusqua(per).forEach(e=>cnt[e.journal]=(cnt[e.journal]||0)+1);
-  return [['A','ACH','HA ACHATS'],['V','VTE','VT VENTES'],['T','BQ','BQ BANQUE'],['O','ODP','ODP OD PAIE'],['O','ODTVA','ODTVA OD TVA'],['O','OD','OD OPERATIONS DIVERSES']]
+  return [['A','ACH','HA ACHATS'],['V','VTE','VT VENTES'],['T','BQ','BQ BANQUE'],['O','ODP','ODP OD PAIE'],['O','ODC','ODC OD CHARGES'],['O','ODTVA','ODTVA OD TVA'],['O','OD','OD OPERATIONS DIVERSES']]
     .map(([L,code,name])=>({L,code,name,n:cnt[code]||0}));
 }
 /* Grille du journal sélectionné dans la Consultation (style "Journal OD PAIE") */
 function sgJournalGrid(code, per){
-  const noms={ACH:'HA ACHATS',VTE:'VT VENTES',BQ:'BQ BANQUE',ODP:'OD PAIE',OD:'OD OPERATIONS DIVERSES'};
+  const noms={ACH:'HA ACHATS',VTE:'VT VENTES',BQ:'BQ BANQUE',ODP:'OD PAIE',ODC:'OD CHARGES',ODTVA:'OD TVA',OD:'OD OPERATIONS DIVERSES'};
   // HA (ACH) et VT (VTE) : cumul du début d'année jusqu'au mois sélectionné.
   // Tous les autres journaux (OD, OD TVA, BQ, OD PAIE…) : UNIQUEMENT le mois sélectionné.
   const cumul=(code==='ACH'||code==='VTE');
@@ -6481,8 +6482,8 @@ function grandLivreDoc(type){
 }
 /* ---- JOURNAUX (détail des écritures par journal) ---- */
 function journauxDoc(filtre){
-  const noms={ACH:'HA - ACHATS',VTE:'VT - VENTES',BQ:'BQ - BANQUE',OD:'OD - OPERATIONS DIVERSES',ODP:'OD - PAIE',ODTVA:'OD - TVA'};
-  const journaux = filtre?[filtre]:['ACH','VTE','BQ','OD'].concat(['ODP','ODTVA'].filter(j=>db.ecritures.some(e=>e.journal===j)));
+  const noms={ACH:'HA - ACHATS',VTE:'VT - VENTES',BQ:'BQ - BANQUE',OD:'OD - OPERATIONS DIVERSES',ODP:'OD - PAIE',ODC:'OD - CHARGES',ODTVA:'OD - TVA'};
+  const journaux = filtre?[filtre]:['ACH','VTE','BQ','OD'].concat(['ODP','ODC','ODTVA'].filter(j=>db.ecritures.some(e=>e.journal===j)));
   const blocs=journaux.map(j=>{
     const ecr=db.ecritures.filter(e=>e.journal===j).sort((a,b)=>a.date<b.date?-1:1);
     let td=0,tc=0; const rows=ecr.map(e=>e.lignes.map((l,i)=>{ td+=l.debit;tc+=l.credit;
@@ -6501,10 +6502,10 @@ function journauxDoc(filtre){
 }
 /* ---- JOURNAL CENTRALISATEUR (totaux par journal et par mois) ---- */
 function centralisateurDoc(){
-  const noms={ACH:'HA - ACHATS',VTE:'VT - VENTES',BQ:'BQ - BANQUE',OD:'OD - OPERATIONS DIVERSES',ODP:'OD - PAIE',ODTVA:'OD - TVA'};
+  const noms={ACH:'HA - ACHATS',VTE:'VT - VENTES',BQ:'BQ - BANQUE',OD:'OD - OPERATIONS DIVERSES',ODP:'OD - PAIE',ODC:'OD - CHARGES',ODTVA:'OD - TVA'};
   const months=monthsExo();
   let body='', GD=0,GC=0;
-  ['ACH','VTE','BQ','OD'].concat(['ODP','ODTVA'].filter(j=>db.ecritures.some(e=>e.journal===j))).forEach(j=>{
+  ['ACH','VTE','BQ','OD'].concat(['ODP','ODC','ODTVA'].filter(j=>db.ecritures.some(e=>e.journal===j))).forEach(j=>{
     let jd=0,jc=0; const ec=db.ecritures.filter(e=>e.journal===j);
     body+=`<tr class="cls"><td class="l">${noms[j]||j}</td><td></td><td></td></tr>`;
     months.forEach(m=>{ let d=0,c=0; ec.filter(e=>ym(e.date)===m).forEach(e=>e.lignes.forEach(l=>{d+=l.debit;c+=l.credit;}));
@@ -6634,9 +6635,15 @@ function exportFEC(){
 }
 function fecParseDate(s){ s=(s||'').replace(/\D/g,''); if(s.length>=8) return s.slice(0,4)+'-'+s.slice(4,6)+'-'+s.slice(6,8); return ''; }
 function fecNum(s){ if(s===undefined||s===null||s==='')return 0; s=String(s).trim().replace(/\s/g,'').replace(',','.'); const n=parseFloat(s); return isNaN(n)?0:n; }
-function fecJournalMoteur(code, lib){ const u=((code||'')+' '+(lib||'')).toUpperCase();
+function fecJournalMoteur(code, lib, ecrLib){ const u=((code||'')+' '+(lib||'')).toUpperCase();
   if(/^HA|ACHAT/.test(u))return 'ACH'; if(/^VT|VENTE/.test(u))return 'VTE';
-  if(/^BQ|^BK|BANQ|TRESOR|CAISSE|^CB/.test(u))return 'BQ'; return 'OD'; }
+  if(/^BQ|^BK|BANQ|TRESOR|CAISSE|^CB/.test(u))return 'BQ';
+  /* OD : classer dans le bon journal d'après le libellé (écriture + journal) */
+  const L=((code||'')+' '+(lib||'')+' '+(ecrLib||'')).toUpperCase();
+  if(/TVA/.test(L)) return 'ODTVA';
+  if(/CHARGE|COTISATION|URSSAF|PATRONAL/.test(L)) return 'ODC';
+  if(/PAIE|SALAIRE|R[EÉ]MUN|BULLETIN/.test(L)) return 'ODP';
+  return 'OD'; }
 /* Parse un FEC (TXT tabulé/;/| ou XML) → tableau d'objets ligne {journal,jcode,num,date,compte,lib,piece,debit,credit,lettre} */
 function fecParse(txt){
   const out=[];
@@ -6722,10 +6729,12 @@ function integrerFEC(data, exoD, exoF){
     const estFourn=String(compte).startsWith('401');
     if(!estClient && !estFourn) return null;
     const cleAux=compaux||(''); const nom=(compauxlib||libEcr||(estClient?'Client':'Fournisseur')).trim();
+    const norm=s=>(s||'').toUpperCase().normalize('NFD').replace(/[^A-Z0-9]/g,'');
     // 1) par compte auxiliaire
     if(cleAux && tiersParAux[cleAux]) return tiersParAux[cleAux];
-    // 2) par nom déjà existant
-    let t=db.tiers.find(x=> x.type===(estClient?'client':'fournisseur') && (x.nom||'').toLowerCase()===nom.toLowerCase());
+    // 2) par nom déjà existant (normalisé : évite les doublons « HABITAT CONCEPT » avec variantes)
+    const nn=norm(nom);
+    let t=db.tiers.find(x=> x.type===(estClient?'client':'fournisseur') && norm(x.nom)===nn);
     if(t){ if(cleAux && !t.compteAux){ t.compteAux=cleAux; tiersParAux[cleAux]=t; } return t; }
     // 3) création
     t={ id:uid(), type:estClient?'client':'fournisseur', categorie:'societe', nom,
@@ -6739,7 +6748,7 @@ function integrerFEC(data, exoD, exoF){
     if(!date || date<exoD || date>exoF){ rejetsDate++; if(datesRejet.length<5&&date) datesRejet.push(frDate(date)); return; }
     const d=r2(grp.reduce((a,l)=>a+l.debit,0)), c=r2(grp.reduce((a,l)=>a+l.credit,0));
     if(Math.abs(d-c)>=0.01){ rejetsEq++; return; }
-    const jrn=fecJournalMoteur(grp[0].jcode, grp[0].jlib);
+    const jrn=fecJournalMoteur(grp[0].jcode, grp[0].jlib, grp[0].lib);
     let tiersEcr=null;
     const lignes=grp.map(l=>{
       // enrichir le plan comptable
@@ -8038,17 +8047,25 @@ function blocDoublonsTiers(){
       </div>`;}).join('')}</div>`;
 }
 function tiersFusionner(key){ scanDoublonsTiers(); const grp=(window.dupTiersGroups||{})[key]; if(!grp||grp.length<2)return;
-  const score=t=>((db.factures||[]).filter(f=>f.tiersId===t.id).length)+((db.ecritures||[]).filter(e=>e.tiersId===t.id).length)+((db.banque||[]).filter(b=>b.tiersId===t.id).length);
+  const score=t=>((db.factures||[]).filter(f=>f.tiersId===t.id).length)+((db.docs||[]).filter(d=>d.clientId===t.id).length)+((db.ecritures||[]).filter(e=>(e.lignes||[]).some(l=>t.compteAux&&c9(l.compte)===c9(t.compteAux))).length)+(t.compteAuxCustom?5:0);
   const master=grp.slice().sort((a,b)=>score(b)-score(a))[0];
-  if(!confirm('Fusionner '+grp.length+' fiches « '+master.nom+' » en une seule ? Les mouvements seront rattachés à la fiche conservée.'))return;
+  if(!confirm('Fusionner '+grp.length+' fiches « '+master.nom+' » en une seule ?\n\nTous les montants saisis et mouvements seront regroupés sur la fiche conservée (compte '+(master.compteAux||'')+').'))return;
+  // compte de tiers cible (auxiliaire) du master
+  if(!master.compteAux) master.compteAux = (typeof genAux==='function'?genAux(master.type, master.nom):(master.type==='client'?'411':'401'));
+  const newC=c9(master.compteAux); let nLignes=0;
   grp.forEach(t=>{ if(t.id===master.id)return;
+    // rattacher les pièces au master
     (db.factures||[]).forEach(f=>{if(f.tiersId===t.id)f.tiersId=master.id;});
+    (db.docs||[]).forEach(d=>{if(d.clientId===t.id)d.clientId=master.id;});
     (db.ecritures||[]).forEach(e=>{if(e.tiersId===t.id)e.tiersId=master.id;});
     (db.banque||[]).forEach(b=>{if(b.tiersId===t.id)b.tiersId=master.id;});
     (db.reglements||[]).forEach(r=>{if(r.tiersId===t.id)r.tiersId=master.id;});
-    if(!master.compteAux && t.compteAux) master.compteAux=t.compteAux;
+    // CONSOLIDER LES MONTANTS : déplacer les lignes d'écriture du compte du doublon vers le compte du master
+    if(t.compteAux){ const oldC=c9(t.compteAux);
+      if(oldC!==newC){ (db.ecritures||[]).forEach(e=>{ (e.lignes||[]).forEach(l=>{ if(c9(l.compte)===oldC){ l.compte=newC; l.lib=(master.type==='client'?'Client ':'Fournisseur ')+master.nom; nLignes++; } }); }); } }
     db.tiers=db.tiers.filter(x=>x.id!==t.id); });
-  save(); scanDoublonsTiers(); render(); toast('Fiches fusionnées sur « '+master.nom+' »'); }
+  master.compteAuxCustom=true; // ne pas régénérer le compte conservé
+  save(); scanDoublonsTiers(); render(); toast('Fusion : 1 fiche « '+master.nom+' » conservée'+(nLignes?(' · '+nLignes+' ligne(s) d\'écriture regroupée(s) sur '+newC):'')); }
 function tiersSupprimerDup(id){ const t=(db.tiers||[]).find(x=>x.id===id); if(!t)return;
   const nb=((db.ecritures||[]).filter(e=>e.tiersId===id).length)+((db.factures||[]).filter(f=>f.tiersId===id).length);
   if(!confirm('Supprimer la fiche « '+t.nom+' » ?'+(nb?(' '+nb+' mouvement(s) lié(s) deviendront orphelins.'):'')))return;
@@ -10700,7 +10717,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v204 · noir & bleu';
+    b.textContent='YADA · v206 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -11015,12 +11032,19 @@ ${lignes}
       var nomEl=document.getElementById('fa-newnom'); var nom=((nomEl||{}).value||'').trim();
       if(!nom) return toast('Indiquez le nom du nouveau client.');
       var siret=((document.getElementById('fa-newsiret')||{}).value||'').replace(/\s/g,'');
-      var t={ id:uid(), type:'client', categorie:'societe', nom:nom, compteContre:'706000', compteTVA:'44571', taux:20,
-        compteAux:null, email:'', tel:'', siret:siret, tvaIntra:(nomEl&&nomEl.dataset?nomEl.dataset.tva||'':''), iban:'',
-        adresse:(nomEl&&nomEl.dataset?nomEl.dataset.adr||'':''), nouveau:true, origine:'client', dateAjout:todayStr() };
-      db.tiers.push(t); try{ t.compteAux=genAux('client',t.nom); }catch(e){}
-      var o=document.createElement('option'); o.value=t.id; o.textContent=t.nom; sel.appendChild(o); sel.value=t.id;
-      toast('Nouveau client « '+nom+' » créé — à compléter par le cabinet.');
+      /* DÉDOUBLONNAGE : réutiliser un client existant du même nom au lieu d'en recréer un */
+      var nrm=function(s){ return (s||'').toUpperCase().normalize('NFD').replace(/[^A-Z0-9]/g,''); };
+      var t=(db.tiers||[]).find(function(x){ return x.type==='client' && nrm(x.nom)===nrm(nom); });
+      if(t){ if(!t.siret&&siret)t.siret=siret; toast('Client « '+t.nom+' » déjà existant — la facture y sera rattachée.'); }
+      else {
+        t={ id:uid(), type:'client', categorie:'societe', nom:nom, compteContre:'706000', compteTVA:'44571', taux:20,
+          compteAux:null, email:'', tel:'', siret:siret, tvaIntra:(nomEl&&nomEl.dataset?nomEl.dataset.tva||'':''), iban:'',
+          adresse:(nomEl&&nomEl.dataset?nomEl.dataset.adr||'':''), nouveau:true, origine:'client', dateAjout:todayStr() };
+        db.tiers.push(t); try{ t.compteAux=genAux('client',t.nom); }catch(e){}
+        toast('Nouveau client « '+nom+' » créé — à compléter par le cabinet.');
+      }
+      var ex=Array.prototype.slice.call(sel.options).filter(function(o){return o.value===t.id;})[0];
+      if(!ex){ var o=document.createElement('option'); o.value=t.id; o.textContent=t.nom; sel.appendChild(o); } sel.value=t.id;
     }
     if(typeof emettre==='function') emettre(valider, true); /* côté client : on crée la facture, l'écriture se génère ensuite depuis la liste */
   };
@@ -11387,16 +11411,26 @@ ${lignes}
     if(f.statut!=='remplie')return toast('La fiche n\'est pas encore remplie par le client.');
     var adr=((f.adresse||'')+((f.cp||f.ville)?(', '+(f.cp||'')+' '+(f.ville||'')):'')).trim();
     var isCli=(f.type==='client');
-    var t={ id:uid(), type:isCli?'client':'fournisseur', categorie:'societe', nom:f.raison,
-      compteContre:isCli?'706000':'606000', compteTVA:isCli?'44571':'44566',
-      taux:20, compteAux:null, email:f.email||'', tel:f.tel||'', siret:f.siret||'', tvaIntra:f.tvaIntra||'', iban:f.iban||'', adresse:adr,
-      nouveau:true, origine:'client', dateAjout:todayStr() };
-    db.tiers.push(t); try{ t.compteAux=genAux(t.type,t.nom); }catch(e){}
+    /* DÉDOUBLONNAGE : si un tiers du même type porte déjà ce nom, on le RÉUTILISE
+       (les factures du client/fournisseur sont rattachées à UN seul compte tiers). */
+    var norm=function(s){ return (s||'').toUpperCase().normalize('NFD').replace(/[^A-Z0-9]/g,''); };
+    var nn=norm(f.raison); var existant=nn && (db.tiers||[]).find(function(x){ return x.type===(isCli?'client':'fournisseur') && norm(x.nom)===nn; });
+    var t, reutilise=false;
+    if(existant){ t=existant; reutilise=true;
+      if(!t.email&&f.email)t.email=f.email; if(!t.tel&&f.tel)t.tel=f.tel; if(!t.siret&&f.siret)t.siret=f.siret;
+      if(!t.tvaIntra&&f.tvaIntra)t.tvaIntra=f.tvaIntra; if(!t.iban&&f.iban)t.iban=f.iban; if(!t.adresse&&adr)t.adresse=adr;
+    } else {
+      t={ id:uid(), type:isCli?'client':'fournisseur', categorie:'societe', nom:f.raison,
+        compteContre:isCli?'706000':'606000', compteTVA:isCli?'44571':'44566',
+        taux:20, compteAux:null, email:f.email||'', tel:f.tel||'', siret:f.siret||'', tvaIntra:f.tvaIntra||'', iban:f.iban||'', adresse:adr,
+        nouveau:true, origine:'client', dateAjout:todayStr() };
+      db.tiers.push(t); try{ t.compteAux=genAux(t.type,t.nom); }catch(e){}
+    }
     f.statut='validee'; f.tiersId=t.id;
     /* rattacher TOUTES les factures liées à cette fiche (un seul nouveau tiers pour plusieurs factures) */
     var ids=Array.isArray(f.depotIds)?f.depotIds.slice():[]; if(f.depotId && ids.indexOf(f.depotId)<0) ids.push(f.depotId);
     var nb=0; ids.forEach(function(did){ var d=dstore().find(function(x){return x.id===did;}); if(d){ d.tiersId=t.id; d.tiersInconnu=false; nb++; } });
-    save(); if(typeof closeModal==='function')closeModal(); toast(''+(isCli?'Client':'Fournisseur')+' « '+t.nom+' » créé'+(nb>1?(' — '+nb+' factures rattachées'):'')+'.'); render();
+    save(); if(typeof closeModal==='function')closeModal(); toast(''+(isCli?'Client':'Fournisseur')+' « '+t.nom+' » '+(reutilise?'déjà existant — factures rattachées au même compte':'créé')+(nb>1?(' ('+nb+' factures)'):'')+'.'); render();
   };
 
   function lblTier(type){ return type==='client'?'client':'fournisseur'; }
@@ -14186,7 +14220,7 @@ ${lignes}
   /* titre de l'éditeur en mode journal */
   if(typeof ecRender==='function'){ var _r=ecRender; ecRender=function(){ var x=_r.apply(this, arguments);
     try{ if(window.ecJournalFiltre){ var sp=document.querySelector('#ec-overlay .ec-sage .ec-titlebar > span');
-      if(sp){ var jf=window.ecJournalFiltre; var noms={ACH:'HA ACHATS',VTE:'VT VENTES',BQ:'BQ BANQUE',ODP:'OD PAIE',ODTVA:'OD TVA',OD:'OD OPERATIONS DIVERSES'};
+      if(sp){ var jf=window.ecJournalFiltre; var noms={ACH:'HA ACHATS',VTE:'VT VENTES',BQ:'BQ BANQUE',ODP:'OD PAIE',ODC:'OD CHARGES',ODTVA:'OD TVA',OD:'OD OPERATIONS DIVERSES'};
         var dossier=(db.societe&&db.societe.dossierNom)||'YADA';
         sp.textContent=dossier+' — Journal '+(noms[jf.journal]||jf.journal)+(jf.mois?(' — '+jf.mois.slice(5)+'/'+jf.mois.slice(0,4)):'')+' (édition)'; } } }catch(e){} return x; }; }
 
@@ -15216,10 +15250,11 @@ ${lignes}
     return L;
   }
   function bpSomme(L,s){ return R2(L.reduce(function(x,l){return x+(s==='d'?l.debit:l.credit);},0)); }
-  function bpODFaite(m,type){ var lib='OD '+type+' '+pieceMois(m); return db.ecritures.some(function(e){ return e.journal==='ODP' && (e.libelle||'').indexOf(lib)>=0; }); }
+  function bpJrn(type){ return type==='CHARGES'?'ODC':'ODP'; }
+  function bpODFaite(m,type){ var lib='OD '+type+' '+pieceMois(m); var jr=bpJrn(type); return db.ecritures.some(function(e){ return (e.journal===jr||e.journal==='ODP') && (e.libelle||'').indexOf(lib)>=0; }); }
   window.bpODStatut=function(m){ return { paie:bpODFaite(m,'PAIE'), charges:bpODFaite(m,'CHARGES') }; };
   function bpSupprOD(m,type){ var lib='OD '+type+' '+pieceMois(m);
-    db.ecritures=db.ecritures.filter(function(e){ return !(e.journal==='ODP' && (e.libelle||'').indexOf(lib)>=0); }); }
+    db.ecritures=db.ecritures.filter(function(e){ return !((e.journal==='ODP'||e.journal==='ODC') && (e.libelle||'').indexOf(lib)>=0); }); }
 
   window.bpGenererODMois=function(m){
     var r=bpAgg(m); if(!r.fs.length){ if(typeof toast==='function')toast('Aucune fiche de paie pour '+moisLabel(m)+'.'); return; }
@@ -15232,7 +15267,7 @@ ${lignes}
     bpSupprOD(m,'PAIE'); bpSupprOD(m,'CHARGES');
     var date=dernierJourMoisISO(m), piece=pieceMois(m);
     posterOD({ journal:'ODP', date:date, numero:piece, libelle:'OD PAIE '+piece, lignes:Lp });
-    if(Lc.length) posterOD({ journal:'ODP', date:date, numero:piece, libelle:'OD CHARGES '+piece, lignes:Lc });
+    if(Lc.length) posterOD({ journal:'ODC', date:date, numero:piece, libelle:'OD CHARGES '+piece, lignes:Lc });
     if(typeof save==='function')save();
     if(typeof toast==='function')toast('OD PAIE'+(Lc.length?' et OD CHARGES':'')+' '+piece+' générée'+(Lc.length?'s':'')+' ✓ ('+r.fs.length+' fiche'+(r.fs.length>1?'s':'')+').');
     if(typeof render==='function')render();
@@ -15634,6 +15669,16 @@ ${lignes}
     +'.vf-ok{color:#7fe3b4;font-weight:700}.vf-ko{color:#ff9a9a;font-weight:700}.vf-exp{color:#ff9a9a;font-size:11px}'
     +'.vf-foot{margin-top:10px;font-size:12px;color:#9fb6d0}'
     +'@media(max-width:820px){.vf-grid{grid-template-columns:1fr 1fr}}';
+    document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon110">
+/* addon110 — Journal comptable : une LIGNE BLEUE entre chaque écriture (séparateur
+   visuel des écritures soldées). Le grand-livre / la Consultation ont déjà leur
+   séparateur (sgj-ecr-sep) ; on l'ajoute à la page Journal comptable. 100% additif. */
+(function(){
+  try{ var st=document.createElement('style'); st.id='journal-bluesep'; st.textContent=
+    'body[data-page="journal"] .card .ecr + .ecr{border-top:2px solid #1e90ff !important;margin-top:16px;padding-top:16px}';
     document.head.appendChild(st); }catch(e){}
 })();
 </script>
