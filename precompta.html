@@ -10795,7 +10795,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v237 · noir & bleu';
+    b.textContent='YADA · v238 · noir & bleu';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -14888,7 +14888,11 @@ ${lignes}
       var body=[{ id:c.espace, data:payload, ts:ts, enc:(c.encrypt?1:0), updated_at:new Date().toISOString() }];
       return cloudFetch('POST', '/rest/v1/'+encodeURIComponent(c.table)+'?on_conflict=id', body, {'Prefer':'resolution=merge-duplicates,return=minimal'})
         .then(function(){ localStorage.setItem(TSK, String(ts)); status(c.encrypt?'🔒 Enregistré (chiffré) dans le cloud':'☁ Enregistré dans le cloud'); return true; }); })
-      .catch(function(e){ status('☁ Échec de l\'envoi'); return false; });
+      .catch(function(e){ var msg=String((e&&e.message)||e||'').slice(0,160);
+        try{ localStorage.setItem('yada-cloud-err', JSON.stringify({t:Date.now(), msg:msg})); }catch(_){}
+        status('☁ Échec de l\'envoi'+(msg?(' : '+msg):''));
+        if(typeof toast==='function') toast('Synchro : envoi échoué — '+(/enc/.test(msg)?'colonne « enc » manquante : ré-exécutez le script SQL (Paramétrage → Aide).':(msg||'vérifiez l\'URL, la clé et la table Supabase.')));
+        return false; });
   };
   window.cloudPull=function(silencieux){
     var c=cfg(); if(!c.enabled||!c.url||!c.key){ return Promise.resolve(false); }
@@ -14900,7 +14904,9 @@ ${lignes}
           var ok=applyRemote(clear, remote.ts); status(ok?(c.encrypt?'🔒 Dernier enregistrement déchiffré ✓':'☁ Dernier enregistrement reçu ✓'):'☁ Réception impossible');
           if(ok&&typeof toast==='function') toast('Dernier enregistrement récupéré depuis le cloud ✓'); return ok;
         }).catch(function(){ status('🔒 Phrase secrète invalide — données protégées non déchiffrées'); if(typeof toast==='function') toast('Phrase secrète invalide : impossible de déchiffrer les données du cloud.'); return false; });
-      }).catch(function(){ if(!silencieux) status('☁ Hors-ligne / non configuré'); return false; });
+      }).catch(function(e){ var msg=String((e&&e.message)||e||'').slice(0,160);
+        if(!silencieux){ status('☁ Réception impossible'+(msg?(' : '+msg):'')); if(typeof toast==='function') toast('Synchro : réception impossible — '+(msg||'vérifiez l\'URL, la clé et la table Supabase, et que la même clé d\'espace est utilisée sur chaque appareil.')); }
+        return false; });
   };
   window.cloudSyncNow=function(){ status('☁ Synchronisation…'); return window.cloudPull(true).then(function(){ return window.cloudPushNow(); }); };
   /* ---- Contrôle d'intégrité : mêmes montants dans TOUS les dossiers (local vs cloud) ---- */
@@ -14969,7 +14975,8 @@ ${lignes}
   };
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
   function cloudCard(){ var c=cfg();
-    var sql='create table if not exists yada_sync ( id text primary key, data text, ts bigint, updated_at timestamptz default now() );\\n'
+    var sql='create table if not exists yada_sync ( id text primary key, data text, ts bigint, enc int default 0, updated_at timestamptz default now() );\\n'
+      +'alter table yada_sync add column if not exists enc int default 0;   -- si la table existe déjà\\n'
       +'alter table yada_sync enable row level security;\\n'
       +'create policy "yada all" on yada_sync for all to anon using (true) with check (true);';
     return '<div class="card cloud-card"><h2>☁ Synchronisation multi-appareils (Supabase)</h2>'
