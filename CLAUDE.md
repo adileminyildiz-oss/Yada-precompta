@@ -34,7 +34,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Charges & Paie : suppression des fiches de paie et des tableaux/documents de charges — v214
+---
+
+## 🟢 Dernière mise à jour — Consultation / journal éditable : pas de quitter une écriture non soldée + ligne bleue seulement après écriture soldée — v216
+**Quoi :** dans l'éditeur de journal/compte (Consultation des comptes), (1) la **ligne bleue de séparation** n'apparaît **qu'après une écriture SOLDÉE** (équilibrée) — déjà le cas (`if(ok)` dans `ecRender`, ligne `ec-redrow`/`ec-soldee`) ; les écritures soldées avant une écriture modifiée gardent leur ligne ; (2) **impossible de fermer la page** tant qu'une écriture n'est pas soldée — un **message d'erreur** s'affiche à chaque tentative de sortie, avec la pièce et l'écart Débit/Crédit. Aucun changement de format/encadrement.
+
+**Où / comment :** `ecFermer` — ajout d'un contrôle : si une écriture a `Σdébit ≠ Σcrédit` (≥ 0,005), `alert(...)` détaillé et `return` (fermeture bloquée). La logique de la ligne bleue (uniquement après écriture équilibrée) était déjà en place. Badge → **v216**.
+
+---
+
+## 🟢 MAJ précédente — Charges & Paie : suppression des fiches de paie et des tableaux/documents de charges — v214
 **Quoi :** boutons **🗑 Supprimer** ajoutés pour retirer une **fiche de paie** (depuis la liste), un **bulletin déposé**, et un **document de charges** déposé (journal de paie). Les écritures de paie/charges restaient déjà supprimables (`pjSupprimer`, `bpSupprimerOD`, `cpSupprimerMois`, `pjReset`).
 
 **Où / comment :** `bpCard` — bouton 🗑 par fiche (`bpSupprimer`) + 🗑 par bulletin déposé (`bpSupprPiece` retire la pièce de `db.parametres.pieces`) ; `pjCard` (addon93) — `pjSupprDoc(m)` retire le document de charges du mois (`d.doc` + pièce `cat:'paie'`). Badge → **v214**.
