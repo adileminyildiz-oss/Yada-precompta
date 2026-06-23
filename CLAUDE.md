@@ -36,7 +36,19 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Journal comptable : clic droit sur une écriture → édition des comptes — v253
+## 🟢 Dernière mise à jour — Journal comptable : facture liée (fournisseur/client) à la suite de la date — v254
+**Quoi :** dans le **module Journal comptable**, la **facture** liée à l'écriture (fournisseur ou client) s'affiche **juste après la date**, **cliquable** (voir) et **téléchargeable** (⤓).
+
+**Comment — `yada-addon136` + 1 insertion dans `pageJournal` :**
+- En-tête `.ecr-h` : après `${e.date}`, insertion de `${jrnFactureLien(e)}`.
+- `window.jrnFactureLien(e)` résout le fichier par priorité : **dépôt** (PDF réel, `db.parametres.depots[].fichierId` → `gedVoir`/`gedDl`) → **doc avec fichier joint** (`gedVoir`/`gedDl`) → **doc** facture générée (`voirDoc`/`telechargerDoc`) → **facture d'achat** sans fichier (`voirFactureAchat`, aperçu seul). Libellé « 📎 Facture fourn./client N° ».
+- Style `<style id="jrn-fac-mod">` (pastille bleue cliquable + bouton ⤓).
+
+**Limites :** lien d'affichage/téléchargement (aucune écriture/montant modifié) ; les écritures sans facture (banque, O.D.) n'affichent rien. Validé : `node --check` (124 scripts). Badge → **v254 · journal facture liée**.
+
+---
+
+## 🟢 MAJ précédente — Journal comptable : clic droit sur une écriture → édition des comptes — v253
 **Quoi :** dans le **module Journal comptable**, un **clic droit** sur une écriture ouvre l'**édition des comptes** (l'éditeur d'écritures façon Sage), positionné sur l'écriture cliquée — même mécanisme que la Consultation.
 
 **Comment — `yada-addon135` + 1 attribut sur `.ecr` :**

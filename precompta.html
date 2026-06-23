@@ -4833,7 +4833,7 @@ function pageJournal(){
   const rows=db.ecritures.slice().sort((a,b)=>a.date<b.date?1:-1).map(e=>{
     const d=r2(e.lignes.reduce((a,l)=>a+l.debit,0)), c=r2(e.lignes.reduce((a,l)=>a+l.credit,0)); const ok=Math.abs(d-c)<0.005;
     return `<div class="ecr" data-ecr="${e.id}" oncontextmenu="return jrnCtx(event,'${e.id}')" title="Clic droit : éditer l'écriture (édition des comptes)"><div class="ecr-h">
-      <span>${jrnTag(e.journal)} &nbsp;<b>${e.libelle}</b> &nbsp;<span class="mini">${e.date}</span>${e.doublon?' <span class="dup-badge" title="Doublon FEC détecté">DOUBLON</span>':''}</span>
+      <span>${jrnTag(e.journal)} &nbsp;<b>${e.libelle}</b> &nbsp;<span class="mini">${e.date}</span>${(typeof jrnFactureLien==='function'?jrnFactureLien(e):'')}${e.doublon?' <span class="dup-badge" title="Doublon FEC détecté">DOUBLON</span>':''}</span>
       <span class="${ok?'balance-ok':'balance-ko'}">${ok?'Équilibrée ✓':'Déséquilibre !'} ${eur(d)}</span></div>
       <table><thead><tr><th>Compte</th><th>Intitulé</th><th class="r">Débit</th><th class="r">Crédit</th></tr></thead><tbody>
       ${e.lignes.map(l=>`<tr><td class="num">${l.compte}</td><td>${l.lib}</td>
@@ -8872,7 +8872,7 @@ pageJournal=function(){
   const rows=list.map(e=>{
     const d=r2(e.lignes.reduce((a,l)=>a+l.debit,0)), c=r2(e.lignes.reduce((a,l)=>a+l.credit,0)); const ok=Math.abs(d-c)<0.005;
     return `<div class="ecr" data-ecr="${e.id}" oncontextmenu="return jrnCtx(event,'${e.id}')" title="Clic droit : éditer l'écriture (édition des comptes)"><div class="ecr-h">
-      <span>${jrnTag(e.journal)} &nbsp;<b>${e.libelle}</b> &nbsp;<span class="mini">${e.date}</span>${e.doublon?' <span class="dup-badge" title="Doublon FEC détecté">DOUBLON</span>':''}</span>
+      <span>${jrnTag(e.journal)} &nbsp;<b>${e.libelle}</b> &nbsp;<span class="mini">${e.date}</span>${(typeof jrnFactureLien==='function'?jrnFactureLien(e):'')}${e.doublon?' <span class="dup-badge" title="Doublon FEC détecté">DOUBLON</span>':''}</span>
       <span class="${ok?'balance-ok':'balance-ko'}">${ok?'Équilibrée ✓':'Déséquilibre !'} ${eur(d)}</span></div>
       <table><thead><tr><th>Compte</th><th>Intitulé</th><th class="r">Débit</th><th class="r">Crédit</th></tr></thead><tbody>
       ${e.lignes.map(l=>`<tr><td class="num">${l.compte}</td><td>${l.lib}</td>
@@ -10850,7 +10850,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v253 · journal clic droit éditer';
+    b.textContent='YADA · v254 · journal facture liée';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -17281,6 +17281,52 @@ ${lignes}
     '#jrn-ctx{position:fixed;z-index:100002;background:#0c1a2a;border:1px solid #1e90ff;border-radius:8px;box-shadow:0 14px 36px rgba(0,0,0,.55);padding:4px;min-width:240px}'
     +'#jrn-ctx button{display:block;width:100%;text-align:left;background:transparent;border:0;color:#eaf2ff;font:13px system-ui,sans-serif;padding:9px 12px;border-radius:6px;cursor:pointer}'
     +'#jrn-ctx button:hover{background:rgba(30,144,255,.18)}';
+    document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon136">
+/* Journal comptable — la FACTURE (fournisseur ou client) liée à l'écriture,
+   affichée À LA SUITE DE LA DATE : cliquable (voir) + téléchargeable.
+   Source du fichier, par priorité :
+     1) dépôt (PDF réel uploadé)  → gedVoir / gedDl (db.parametres.pieces)
+     2) doc avec fichier joint    → gedVoir / gedDl
+     3) doc (facture générée)     → voirDoc / telechargerDoc (PDF rendu)
+     4) facture d'achat sans fichier → voirFactureAchat (aperçu)
+   100% additif : helper window.jrnFactureLien(e) inséré par pageJournal. */
+(function(){
+  function esc(s){ return String(s==null?'':s).replace(/['\\]/g,''); }
+  window.jrnFactureLien=function(e){
+    try{
+      if(!e) return '';
+      var deps=(db.parametres&&Array.isArray(db.parametres.depots))?db.parametres.depots:[];
+      var dep=deps.find(function(x){ return x.ecritureId===e.id && x.fichierId; });
+      var doc=(db.docs||[]).find(function(d){ return d.ecritureId===e.id; });
+      var f=e.factureId?(db.factures||[]).find(function(x){ return x.id===e.factureId; }):null;
+      if(!dep && !doc && !f) return '';
+      var num=(dep&&dep.numero)||(doc&&doc.numero)||(f&&f.numero)||'';
+      var typ=(f&&f.type)||(dep&&dep.cat)||(doc&&doc.type)||'';
+      var sens=(typ==='achat')?'fournisseur':(/vente|facture|devis|avoir/.test(typ))?'client':'';
+      var lbl='📎 '+(sens==='fournisseur'?'Facture fourn.':sens==='client'?'Facture client':'Facture')+(num?(' '+esc(num)):'');
+      var fid = (dep&&dep.fichierId) || (doc&&doc.fichierId) || null;
+      if(fid){
+        return ' <span class="jrn-fac"><a href="#" onclick="gedVoir(\''+fid+'\');return false">'+lbl+'</a>'
+          +' <a href="#" class="jrn-dl" title="Télécharger la facture" onclick="gedDl(\''+fid+'\');return false">⤓</a></span>';
+      }
+      if(doc){
+        return ' <span class="jrn-fac"><a href="#" onclick="voirDoc(\''+doc.id+'\');return false">'+lbl+'</a>'
+          +' <a href="#" class="jrn-dl" title="Télécharger la facture" onclick="telechargerDoc(\''+doc.id+'\');return false">⤓</a></span>';
+      }
+      if(f && f.type==='achat' && typeof voirFactureAchat==='function'){
+        return ' <span class="jrn-fac"><a href="#" onclick="voirFactureAchat(\''+f.id+'\');return false">'+lbl+'</a></span>';
+      }
+      return '';
+    }catch(_){ return ''; }
+  };
+  try{ var st=document.createElement('style'); st.id='jrn-fac-mod'; st.textContent=
+    '.jrn-fac{display:inline-flex;align-items:center;gap:6px;margin-left:8px;font-size:12px;vertical-align:middle}'
+    +'.jrn-fac a{color:#5ab0ff;text-decoration:none;border:1px solid rgba(30,144,255,.45);border-radius:7px;padding:1px 8px;background:rgba(30,144,255,.10);white-space:nowrap}'
+    +'.jrn-fac a:hover{background:rgba(30,144,255,.22);border-color:#1e90ff}'
+    +'.jrn-fac a.jrn-dl{font-weight:700;padding:1px 7px}';
     document.head.appendChild(st); }catch(e){}
 })();
 </script>
