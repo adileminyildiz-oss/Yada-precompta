@@ -10847,7 +10847,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v248 · verrou de version';
+    b.textContent='YADA · v249 · journaux TVA';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -17119,12 +17119,14 @@ ${lignes}
   function cibleJournal(e){
     if(!e) return null;
     var j=e.journal;
-    if(j!=='OD' && j!=='ODP' && j!=='ODC') return null;        // ne touche que les O.D.
+    if(j!=='OD' && j!=='ODP' && j!=='ODC' && j!=='ODTVA') return null;   // ne touche que les O.D.
     var L=String(e.libelle||'').toUpperCase();
-    /* vraies O.D. à ne jamais déplacer */
-    if(/R[EÉ]SULTAT|NOUVEAU|CL[OÔ]TURE|DOTATION|AMORTISS|CESSION|EMPRUNT|INT[EÉ]R[EÊ]T|ICNE|[EÉ]CH[EÉ]ANC|\bTVA\b/.test(L)) return null;
+    /* vraies O.D. à ne jamais déplacer (clôture, à-nouveaux, dotations, cessions, emprunts) */
+    if(/R[EÉ]SULTAT|NOUVEAU|CL[OÔ]TURE|DOTATION|AMORTISS|CESSION|EMPRUNT|INT[EÉ]R[EÊ]T|ICNE|[EÉ]CH[EÉ]ANC/.test(L)) return null;
     var accs=(e.lignes||[]).map(function(l){ return c9(l.compte||''); });
     var has=function(re){ return accs.some(function(a){ return re.test(a); }); };
+    /* TVA : déclaration CA3 / régularisation → ODTVA (libellé TVA ou comptes de TVA 445x) */
+    if(/\bTVA\b/.test(L) || has(/^445/)) return 'ODTVA';
     /* PAIE : salaire brut 641 (classe 6, jamais en à-nouveaux) ou libellé paie */
     if(has(/^641/) || /\bPAIE\b|SALAIRE|BULLETIN|R[EÉ]MUN/.test(L)) return 'ODP';
     /* CHARGES patronales : comptes sociaux de classe 6 (645/648/631) ou libellé charges */
@@ -17139,7 +17141,7 @@ ${lignes}
   }
   function ensureJournaux(d){
     if(!d || !Array.isArray(d.journaux)) return;
-    [['ODP','OD PAIE'],['ODC','OD CHARGES']].forEach(function(p){
+    [['ODP','OD PAIE'],['ODC','OD CHARGES'],['ODTVA','OD TVA']].forEach(function(p){
       if(!d.journaux.some(function(j){ return j && j.code===p[0]; }))
         d.journaux.push({code:p[0], libelle:p[1], type:'O.D.', jrn:p[0], compte:''});
     });

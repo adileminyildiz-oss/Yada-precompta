@@ -36,7 +36,19 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Verrou anti-retour de version (no-downgrade) — v248
+## 🟢 Dernière mise à jour — Reclassement étendu à la TVA : OD de TVA → journal ODTVA — v249
+**Quoi :** le reclassement des journaux (addon132) s'applique désormais aussi à la **TVA** : les écritures de **TVA** (déclaration CA3, régularisation) placées à tort dans le journal **OD** sont reclassées dans le journal **ODTVA (OD TVA)** — comme la paie (→ODP) et les charges (→ODC).
+
+**Comment — extension de `yada-addon132` :**
+- `cibleJournal` : ajout d'une règle **TVA prioritaire** → `ODTVA` si le **libellé contient TVA** ou si une ligne porte un **compte de TVA `445x`** (44551/44562/44566/44567/44571…). Le journal `ODTVA` est ajouté à l'ensemble traité (corrige aussi les écritures mal placées en ODTVA).
+- **Sécurité** : les à-nouveaux (qui reportent des soldes 445x) restent exclus via le libellé `NOUVEAU` ; les écritures **ACH/VTE** (qui contiennent de la TVA) ne sont jamais touchées (seules les O.D. le sont).
+- `ensureJournaux` garantit aussi **ODTVA** dans `db.journaux`.
+
+**Limites :** imputation descriptive (aucun montant/équilibre touché). Validé : `node --check` (121 scripts). Badge → **v249 · journaux TVA**.
+
+---
+
+## 🟢 MAJ précédente — Verrou anti-retour de version (no-downgrade) — v248
 **Quoi :** dès qu'une version a été utilisée **sur l'appareil**, il devient **impossible de revenir sur une version plus ancienne**. Si une version inférieure se charge (cache périmé, onglet obsolète…), elle est **bloquée** par un voile non contournable et l'**enregistrement est désactivé** → toute modification se fait obligatoirement sur la dernière version.
 
 **Pourquoi :** demande utilisateur — interdire le retour en arrière et garantir que les modifications portent toujours sur la nouvelle version.
