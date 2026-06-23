@@ -36,7 +36,19 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Import de données → poussée cloud IMMÉDIATE (données importées toujours à jour partout) — v251
+## 🟢 Dernière mise à jour — Journal comptable : un ONGLET par journal (BQ/HA/VT/OD/ODP/ODC/ODTVA) — v252
+**Quoi :** la page **Journal comptable** affiche désormais une **barre d'onglets** — un onglet par journal (**Tous · BQ · HA · VT · OD · ODP · ODC · ODTVA**, avec compteur d'écritures) — qui **regroupe les écritures du journal sélectionné**. Remplace l'ancien menu déroulant qui mélangeait OD/ODP/ODTVA sous « OD ».
+
+**Comment :**
+- `jrnMatch` : filtrage en **journal exact** (`e.journal!==jrnFiltre`) → `OD` ≠ `ODP`/`ODC`/`ODTVA` (chaque onglet montre uniquement son journal).
+- `pageJournal` (override) : le bloc « Filtrer par journal » (`<select>`) est remplacé par `.jrn-tabs` (boutons `.jrn-tab` avec compteur `.jrn-c`) ; tri par date + recherche conservés ; titre de carte = nom du journal sélectionné.
+- `yada-addon134` : style `<style id="jrn-tabs-mod">` (onglets bleu nuit/Crystal, actif en dégradé, responsive mobile).
+
+**Limites :** affichage/filtre uniquement (aucune écriture/montant modifié). Validé : `node --check` (122 scripts). Badge → **v252 · journal par onglets**.
+
+---
+
+## 🟢 MAJ précédente — Import de données → poussée cloud IMMÉDIATE (données importées toujours à jour partout) — v251
 **Quoi :** après un **import de base** (Paramétrage → Transfert manuel → Importer), les données importées sont **poussées immédiatement vers le cloud** et deviennent la **version courante** sur tous les appareils — au lieu d'attendre le push différé (1,8 s) déclenché par `save()`.
 
 **Pourquoi :** demande utilisateur — « chaque mise à jour de données importée doit toujours être actuelle ». La poussée immédiate supprime la fenêtre de latence et fixe l'horodatage local (`TSK`), donc **aucune ancienne copie cloud ne peut écraser** les données fraîchement importées au prochain pull.
