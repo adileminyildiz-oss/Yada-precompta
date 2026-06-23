@@ -36,7 +36,21 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Reclassement des journaux : OD PAIE / OD CHARGES correctement imputées — v247
+## 🟢 Dernière mise à jour — Verrou anti-retour de version (no-downgrade) — v248
+**Quoi :** dès qu'une version a été utilisée **sur l'appareil**, il devient **impossible de revenir sur une version plus ancienne**. Si une version inférieure se charge (cache périmé, onglet obsolète…), elle est **bloquée** par un voile non contournable et l'**enregistrement est désactivé** → toute modification se fait obligatoirement sur la dernière version.
+
+**Pourquoi :** demande utilisateur — interdire le retour en arrière et garantir que les modifications portent toujours sur la nouvelle version.
+
+**Comment — `yada-addon133` :**
+- « Plancher » de version mémorisé dans `localStorage 'yada-ver-max'` (le plus haut numéro déjà exécuté, lu depuis le badge `#yada-ver`).
+- Au démarrage : si `version courante ≥ plancher` → on relève le plancher ; sinon → **blocage** (overlay `#yada-ver-lock` plein écran + `window.save` neutralisé) avec bouton **« Charger la dernière version »** (`yadaForceUpdate` : `serviceWorker.update()` + reload « réseau d'abord » ; message si hors-ligne, sans vider le cache pour éviter tout blocage).
+- Complète le SW « réseau d'abord » + la mise à jour auto (addon103) qui ramènent déjà la dernière version en ligne. `version.json` aligné sur 248.
+
+**Limites :** le plancher est par **origine/appareil** (localStorage) — un fichier ouvert en `file://` (autre origine) ne partage pas ce plancher. Validé : `node --check` (121 scripts). Badge → **v248 · verrou de version**.
+
+---
+
+## 🟢 MAJ précédente — Reclassement des journaux : OD PAIE / OD CHARGES correctement imputées — v247
 **Quoi :** correction des **erreurs d'imputation** : les écritures de **paie** placées à tort dans le journal **OD** sont reclassées en **ODP (OD PAIE)**, et les écritures de **charges (cotisations patronales)** en **ODC (OD CHARGES)**. Corrige aussi les échanges ODP↔ODC.
 
 **Pourquoi :** d'anciennes écritures (versions antérieures, import FEC, etc.) restaient dans « OD » alors que la génération actuelle (`posterPaieMois`/`bpGenererODMois`) route déjà vers ODP/ODC. Les données existantes n'étaient pas corrigées.
