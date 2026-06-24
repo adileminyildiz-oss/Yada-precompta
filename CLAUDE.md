@@ -36,7 +36,19 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Immobilisations & Financements : zone de travail accordée au thème (bleu nuit, fin du blanc) — v265
+## 🟢 Dernière mise à jour — Modules Client / Fournisseur : factures (saisies + FEC) associées + carte de CORRESPONDANCES — v266
+**Quoi :** dans le **module Client** (Suivi des factures de **vente**) et le **module Fournisseur** (Suivi des factures d'**achat**), une carte **« Correspondances — factures … (écritures VTE/ACH, FEC inclus) »** associe désormais **toutes les factures faites OU importées via le FEC** : reconstituées **depuis les écritures comptables** (journal VTE pour les ventes, ACH pour les achats), avec la **correspondance facture ↔ comptabilité**. Auparavant les suivis ne lisaient que `db.docs`/`db.factures` (saisies dans le logiciel) → **vides** pour un dossier FEC (ex. MBC : « Aucune facture de vente créée » alors que 59 écritures VTE existent).
+
+**Comment — `yada-addon144` (override `suiviFacturesVente`/`suiviFacturesAchat`, 100% additif) :**
+- `window.factDepuisEcritures(sens)` parcourt les écritures du **journal VTE** (vente) ou **ACH** (achat) et reconstitue chaque facture : **TTC** = mouvement du compte de tiers (411 débit / 401 crédit), **HT** = lignes classe 7 (vente) / classe 6 (achat), **TVA** = lignes `445x`. Tiers par **compte auxiliaire** (`c9(t.compteAux)`), sinon via `factureId`/banque, sinon « (tiers non identifié) ».
+- **Correspondance** par facture : **« ✓ liée au logiciel »** si `e.factureId` ou un n° de pièce identique existe dans `db.docs`/`db.factures` ; sinon **« FEC / écriture »**.
+- `window.correspondancesCard(sens)` rend la carte : **KPIs** (nb factures · dont liées / FEC · Total HT/TVA/TTC) + tableau N° de pièce / Tiers / Date / Jnl / HT / TVA / TTC / Correspondance (tri par date décroissante). Greffée sous chaque suivi.
+
+**Limites :** affichage/calcul seulement (aucune écriture modifiée) ; un dossier en comptes **collectifs** sans comptes auxiliaires affiche « (tiers non identifié) » ; le TTC reflète le mouvement du compte de tiers de l'écriture. Validé : `node --check` (132 scripts) + test données réelles (MBC vente 59 fact./HT 113 347 € · MBC achat 214 · ALR vente 2/1 740 €). Badge → **v266 · correspondances factures FEC**.
+
+---
+
+## 🟢 MAJ précédente — Immobilisations & Financements : zone de travail accordée au thème (bleu nuit, fin du blanc) — v265
 **Quoi :** dans le module **Immobilisations & Financements**, l'onglet **Immobilisations** affichait sa **zone de travail (`.im-screen`) en BLANC** (style Sage noir-sur-blanc) — en décalage avec les autres modules en **bleu nuit**. Elle est désormais **accordée au thème** : fond bleu nuit, accents bleu Crystal, textes clairs, **plus aucun blanc** (3 volets Périodes / Immobilisations / Détail, barre d'outils, onglets de détail, sections & lignes de la fiche). Les autres onglets (Emprunts, Crédit-bail, Locations, Taxe véhicules) utilisaient déjà des cartes `.card` au thème → inchangés.
 
 **Comment — `yada-addon143` (100% CSS additif, `<style id="im-navy-mod">`) :**
