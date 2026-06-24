@@ -36,7 +36,19 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Analytique & rentabilité : cartes remplies depuis TOUTES les écritures — v260
+## 🟢 Dernière mise à jour — Éditeur d'écritures : ↓ crée une écriture SEULEMENT si la précédente est soldée — v261
+**Quoi :** dans l'éditeur (Consultation des comptes), la **flèche du bas** ne crée une **nouvelle écriture** que si l'**écriture précédente est soldée** (Débit = Crédit) et **non vide**. Sinon un message s'affiche et le curseur revient sur l'écriture à corriger.
+
+**Comment — verrou ajouté dans `window.ecAjouterEcriture` (addon140) :**
+- Si une écriture mouvementée de la liste n'est **pas équilibrée** (écart ≥ 0,005) → message « Soldez l'écriture précédente… » + focus sur l'écriture concernée ; **création refusée**.
+- Si la **dernière** écriture est **vide** (aucun montant) → message « Saisissez et soldez l'écriture en cours… » + focus ; **création refusée** (évite d'empiler des écritures vides).
+- Sinon → création normale (comportement v259).
+
+**Limites :** réutilise l'éditeur existant (aucune logique comptable ajoutée). Validé : `node --check` (129 scripts). Badge → **v261 · ↓ après solde**.
+
+---
+
+## 🟢 MAJ précédente — Analytique & rentabilité : cartes remplies depuis TOUTES les écritures — v260
 **Quoi :** les cartes du module **Analytique & rentabilité** (Produits par compte, Charges par nature, CA par client, Dépenses par fournisseur, KPIs CA/Charges/Résultat) étaient **vides** pour un dossier alimenté par **FEC / saisies** (car `analytique()` ne lisait que `db.factures`). Elles sont désormais **calculées sur toutes les écritures**.
 
 **Comment — `yada-addon141` (override `window.analytique`, même forme de retour) :**
