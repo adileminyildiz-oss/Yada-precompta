@@ -36,7 +36,18 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Analytique & rentabilité : section avancée sur les ÉCRITURES (KPIs + graphiques + tableaux) — v256
+## 🟢 Dernière mise à jour — Module Banque : relevé présenté PAR MOIS (choisir le mois avant de voir les écritures) — v257
+**Quoi :** dans le **module Banque**, les écritures du relevé sont désormais **présentées par mois** : une barre de **boutons mois** (avec compteur) s'affiche, et il faut **choisir un mois** pour voir ses écritures (sinon un message invite à sélectionner un mois).
+
+**Comment — `pageBanque` (édition chirurgicale) + `yada-addon139` :**
+- `pageBanque` : calcule `moisDispo` (mois distincts des écritures banque, via `ym`), `moisCount` (compteur par mois), et `bsrcMois` (écritures filtrées sur `window.bqMoisSel`). La carte « Relevé bancaire — par mois » rend la barre `.bq-mois-bar` (boutons `.bq-mois` + compteur `.bq-mc`) ; le tableau ne s'affiche **que si un mois est sélectionné**, sinon invite « 👆 Sélectionnez un mois ». Le filtre par compte bancaire (512) est conservé.
+- `addon139` : `window.bqSetMois(m)` (toggle + `render`) + style des boutons mois (bleu nuit/Crystal, responsive).
+
+**Limites :** affichage/filtre uniquement (aucune écriture/montant modifié). Validé : `node --check` (127 scripts). Badge → **v257 · banque par mois**.
+
+---
+
+## 🟢 MAJ précédente — Analytique & rentabilité : section avancée sur les ÉCRITURES (KPIs + graphiques + tableaux) — v256
 **Quoi :** le module **Analytique & rentabilité** gagne une section **« 📊 Analytique avancée (sur écritures) »** calculée sur **toutes les écritures** (`db.ecritures` : factures + FEC + saisies), comme la Consultation — au lieu des seules factures.
 
 **Contenu (`yada-addon138`, 100% additif, sans bibliothèque externe) :**
