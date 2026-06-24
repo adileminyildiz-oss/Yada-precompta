@@ -10865,7 +10865,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v260 · analytique sur écritures';
+    b.textContent='YADA · v261 · ↓ après solde';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -17564,6 +17564,16 @@ ${lignes}
       if(window.ecNewId) return null;                 /* mode « nouvelle opération » : une seule écriture */
       var jf=window.ecJournalFiltre;
       var list=(typeof ecEcritures==='function')?ecEcritures():[];
+      function _sum(e){ var d=0,c=0; (e.lignes||[]).forEach(function(l){ d+=(+l.debit||0); c+=(+l.credit||0); }); return {d:r2(d),c:r2(c),diff:r2(d-c)}; }
+      function _focus(id){ setTimeout(function(){ try{ var w=document.getElementById('ec-win'); if(!w) return; var row=w.querySelector('tr.ec-r[data-eid="'+id+'"][data-li="0"]'); if(!row) return; row.scrollIntoView({block:'center'}); var inp=row.querySelector('input.ec-i'); if(inp){ inp.focus(); if(inp.select) inp.select(); } }catch(_){ } }, 40); }
+      /* VERROU : l'écriture précédente doit être SOLDÉE (Débit = Crédit) avant d'en créer une nouvelle */
+      for(var _i=0;_i<list.length;_i++){ var _t=_sum(list[_i]); if((_t.d>0||_t.c>0) && Math.abs(_t.diff)>=0.005){
+        var _msg='Soldez l\'écriture précédente avant d\'en créer une nouvelle.\nPièce '+(typeof ecPiece==='function'?ecPiece(list[_i]):'')+' : Débit '+eur(_t.d)+' ≠ Crédit '+eur(_t.c)+' (écart '+eur(Math.abs(_t.diff))+').';
+        if(typeof window.yadaAlert==='function') window.yadaAlert(_msg,'⚠ Écriture non soldée'); else if(typeof toast==='function') toast(_msg);
+        _focus(list[_i].id); return null; } }
+      /* l'écriture précédente ne doit pas être VIDE (aucun montant) : on la saisit d'abord */
+      var _prev=list.length?list[list.length-1]:null;
+      if(_prev){ var _tp=_sum(_prev); if(_tp.d<0.005 && _tp.c<0.005){ if(typeof toast==='function') toast('Saisissez et soldez l\'écriture en cours avant d\'en créer une nouvelle.'); _focus(_prev.id); return null; } }
       var lastDate=list.length?list[list.length-1].date:null;
       var e={ id:uid(), libelle:'', lignes:[{compte:'',lib:'',debit:0,credit:0},{compte:'',lib:'',debit:0,credit:0}] };
       if(jf){ e.journal=jf.journal; e.date=lastDate||(jf.mois?(jf.mois+'-15'):todayStr()); }
