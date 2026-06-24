@@ -36,7 +36,19 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Rapprochement bancaire : liste « Rapprochements bancaires effectués » retirée (haut de page) — v263
+## 🟢 Dernière mise à jour — Suivi des règlements : « Factures non réglées » depuis TOUTES les écritures (FEC inclus) — v264
+**Quoi :** le module **Suivi des règlements** gagne une carte **« 📄 Factures non réglées »** (sous le suivi existant, pour l'onglet courant Clients/Fournisseurs) qui liste **toutes les factures saisies OU importées via le FEC** qui **n'ont pas encore été réglées** — y compris les **clients/fournisseurs sans `db.factures`** (dossiers alimentés par FEC). Auparavant le suivi ne lisait que `db.reglements` (créé uniquement par les factures émises dans le logiciel) → la liste était **vide** pour un dossier FEC.
+
+**Comment — `yada-addon142` (override `pageReglements`, 100% additif) :**
+- `window.regOpenGroups(type)` parcourt **toutes les écritures** : retient les **lignes NON LETTRÉES** (`!l.lettre` = non réglé) du **compte de tiers** — côté facture **débit** pour un client (créance), **crédit** pour un fournisseur (dette). Rattachement au tiers par **compte auxiliaire** (`c9(t.compteAux)`), sinon collectif 401/411 via `factureId`/banque, sinon « (tiers non identifié) ». Exclut « OD RÉSULTAT ».
+- `window.regFacturesNonRegleesCard(type)` rend la carte : **KPIs** (Total non réglé · nb factures · tiers concernés) + un **bloc par tiers** (réutilise `.reg-bloc`/`.reg-t`/`.reg-kpis`) listant Date / Jnl / Pièce / Libellé / **Montant non réglé** (tri par montant décroissant, tiers non identifié en dernier).
+- Greffe : `pageReglements = _pr() + regFacturesNonRegleesCard(regOnglet)`.
+
+**Limites :** « non réglé » = ligne **non lettrée** du compte de tiers (le lettrage solde la facture) ; un dossier en comptes **collectifs** sans comptes auxiliaires regroupe sous « (tiers non identifié) ». Affichage/calcul seulement (aucune écriture modifiée). Validé : `node --check` (130 scripts) + test données réelles (MBC clients 18 fact./28 972,40 € · MBC fourn. 15/12 044,15 € · ALR clients 2/1 740 €). Badge → **v264 · factures non réglées**.
+
+---
+
+## 🟢 MAJ précédente — Rapprochement bancaire : liste « Rapprochements bancaires effectués » retirée (haut de page) — v263
 **Quoi :** dans le **Rapprochement bancaire**, la **liste du haut** « Rapprochements bancaires effectués » (récap) est **entièrement retirée** (jugée inutile). Le reste du module (barre des périodes avec badges ✓/🔒/◐, relevé, lignes…) est **inchangé**.
 
 **Comment — `addon121` (1 retrait chirurgical) :** dans l'override `pageRappro`, suppression de l'injection `html.replace('<div class="rb-top">', rapRecapHTML()+…)`. La fonction `rapRecapHTML` reste définie mais n'est plus appelée.
