@@ -36,7 +36,19 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Module Banque : relevé présenté PAR ANNÉE puis PAR MOIS — v257/v258
+## 🟢 Dernière mise à jour — Éditeur d'écritures : FLÈCHE BAS en fin de liste → nouvelle écriture — v259
+**Quoi :** dans l'**éditeur d'écritures** (page d'édition de la Consultation des comptes), appuyer sur **flèche du bas** depuis la **dernière ligne de la dernière écriture** **crée une nouvelle écriture** à saisir (curseur placé sur la saisie du compte). L'écriture doit être **soldée** (Débit = Crédit) pour être valide.
+
+**Comment — `yada-addon140` + 1 édition d'`addon114` :**
+- `addon114` (clavier) : sur `ArrowDown`, si la ligne courante est la **dernière** `tr.ec-r` de la table → `window.ecAjouterEcriture()` (sinon comportement normal `moveRow(1)`).
+- `window.ecAjouterEcriture()` : pousse une nouvelle écriture (journal = filtre courant ou `OD` ; date = dernière écriture ; en mode compte, 1re ligne pré-remplie avec le compte consulté pour qu'elle apparaisse), `ecRender()`, puis focus sur la saisie du compte.
+- **Validation** : `ecFermer` bloque déjà la fermeture tant qu'une écriture n'est pas équilibrée. Les écritures laissées **vides** (aucun montant) sont **purgées à la fermeture** (pas d'écriture fantôme).
+
+**Limites :** réutilise l'éditeur existant (aucune logique comptable ajoutée). Validé : `node --check` (128 scripts). Badge → **v259 · éditeur ↓ nouvelle écriture**.
+
+---
+
+## 🟢 MAJ précédente — Module Banque : relevé présenté PAR ANNÉE puis PAR MOIS — v257/v258
 **Quoi :** dans le **module Banque**, les écritures du relevé sont **présentées par mois**, et si le dossier comporte **plusieurs exercices** (2025, 2026…) une barre de **boutons d'année** apparaît d'abord (avec compteur), puis les **boutons mois** de l'année choisie. Tous les relevés traités restent accessibles (rien n'est masqué) ; il faut **choisir un mois** pour voir ses écritures.
 
 **Année — v258 (`pageBanque` + `bqSetAnnee`) :** `anneesDispo` (années distinctes des écritures banque), barre `.bq-annee-bar` affichée **uniquement si >1 année** (accent or), défaut = année la plus récente ; changer d'année réinitialise le mois (`window.bqMoisSel=''`). `bqMois` n'est valide que si son année = année choisie.
