@@ -10865,7 +10865,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v263 · rappro sans récap';
+    b.textContent='YADA · v264 · factures non réglées';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -17630,6 +17630,103 @@ ${lignes}
     var sum=function(o){ return r2(Object.keys(o).reduce(function(a,k){ return a+o[k]; },0)); };
     return { prod:prod, charge:charge, parClient:parClient, parFourn:parFourn, ca:sum(prod), achats:sum(charge), resultat:r2(sum(prod)-sum(charge)) };
   };
+})();
+</script>
+<script id="yada-addon142">
+/* v264 — Suivi des règlements : factures NON RÉGLÉES depuis TOUTES les écritures (FEC inclus) */
+(function(){
+  if(typeof window==='undefined') return;
+  function escx(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];}); }
+
+  /* groupes de factures non réglées (lignes non lettrées sur le compte de tiers) pour un type client|fournisseur */
+  window.regOpenGroups=function(type){
+    var coll = (type==='fournisseur')?'401':'411';
+    var collC9 = c9(coll);
+    /* map des comptes auxiliaires -> tiers du bon type */
+    var auxMap={};
+    (db.tiers||[]).forEach(function(t){
+      if(t.type!==type) return;
+      if(t.compteAux){ auxMap[c9(t.compteAux)]={ id:t.id, nom:t.nom }; }
+    });
+    var groupes={}; /* clé tiers (id ou nom) -> {nom, lignes[], total} */
+    function pousser(key, nom, ligne){
+      var g=groupes[key]; if(!g){ g=groupes[key]={ nom:nom, lignes:[], total:0 }; }
+      g.lignes.push(ligne); g.total=r2(g.total+ligne.montant);
+    }
+    (db.ecritures||[]).forEach(function(e){
+      if(!e || !e.lignes) return;
+      var lib=(e.libelle||''); if(/OD\s*R[ÉE]SULTAT/i.test(lib)) return;
+      (e.lignes||[]).forEach(function(l){
+        if(l.lettre) return; /* lettré = réglé */
+        var lc=c9(l.compte);
+        /* montant côté facture : client = débit (créance), fournisseur = crédit (dette) */
+        var montant = (type==='fournisseur') ? r2(+l.credit||0) : r2(+l.debit||0);
+        if(montant<0.005) return;
+        var info=null;
+        if(auxMap[lc]){ info={ key:auxMap[lc].id, nom:auxMap[lc].nom }; }
+        else if(lc===collC9 || l.compte===coll){
+          /* collectif : rattacher via la facture/banque si possible */
+          var f=e.factureId?(db.factures||[]).find(function(x){return x.id===e.factureId;}):null;
+          var b=(db.banque||[]).find(function(x){return x.ecritureId===e.id;});
+          var tid = f?f.tiersId : (b?b.tiersId : null);
+          var t=tid?(db.tiers||[]).find(function(x){return x.id===tid;}):null;
+          info = t ? { key:t.id, nom:t.nom } : { key:'__nid', nom:'(tiers non identifié)' };
+        }
+        if(!info) return;
+        pousser(info.key, info.nom, { date:e.date, journal:e.journal||'', piece:lib.split(' · ')[0]||'', lib:lib, montant:montant });
+      });
+    });
+    return groupes;
+  };
+
+  /* carte « factures non réglées » pour le type courant */
+  window.regFacturesNonRegleesCard=function(type){
+    type = (type==='fournisseur')?'fournisseur':'client';
+    var groupes=window.regOpenGroups(type);
+    var cles=Object.keys(groupes);
+    /* tri : tiers non identifié en dernier, sinon par montant décroissant */
+    cles.sort(function(a,b){
+      if(a==='__nid') return 1; if(b==='__nid') return -1;
+      return groupes[b].total-groupes[a].total;
+    });
+    var nbFactures=0, total=0;
+    cles.forEach(function(k){ nbFactures+=groupes[k].lignes.length; total=r2(total+groupes[k].total); });
+    var estClient=(type==='client');
+
+    var blocs=cles.map(function(k){
+      var g=groupes[k];
+      var rows=g.lignes.sort(function(p,q){return (p.date<q.date?-1:(p.date>q.date?1:0));}).map(function(x){
+        return '<tr><td>'+frDate(x.date)+'</td><td>'+escx(x.journal)+'</td><td class="num">'+escx(x.piece)+'</td>'
+          +'<td>'+escx(x.lib)+'</td><td class="r num"><b>'+eur(x.montant)+'</b></td></tr>';
+      }).join('');
+      return '<div class="reg-bloc">'
+        +'<div class="reg-bloc-h"><span class="reg-bloc-nom">'+(estClient?'Client':'Fournisseur')+' · <b>'+escx(g.nom)+'</b></span>'
+          +'<span class="reg-bloc-tot">Non réglé : <b>'+eur(g.total)+'</b> · '+g.lignes.length+' facture(s)</span></div>'
+        +'<table class="reg-t"><thead><tr><th>Date</th><th>Jnl</th><th>Pièce</th><th>Libellé</th><th class="r">Montant non réglé</th></tr></thead><tbody>'+rows+'</tbody></table>'
+        +'</div>';
+    }).join('') || '<div class="empty">Aucune facture non réglée '+(estClient?'à encaisser':'à payer')+' dans les écritures.</div>';
+
+    return '<div class="card reg-card" style="margin-top:18px">'
+      +'<h3 style="margin:0 0 4px">📄 Factures non réglées — '+(estClient?'Clients (à encaisser)':'Fournisseurs (à payer)')+'</h3>'
+      +'<div style="color:#9fb6d0;font-size:12.5px;margin-bottom:14px">Toutes les factures saisies ou importées (FEC) qui n\'ont pas encore été réglées (lignes non lettrées du compte de tiers).</div>'
+      +'<div class="reg-kpis"><div class="reg-k"><div class="l">Total non réglé</div><div class="v">'+eur(total)+'</div></div>'
+        +'<div class="reg-k"><div class="l">Factures non réglées</div><div class="v">'+nbFactures+'</div></div>'
+        +'<div class="reg-k"><div class="l">'+(estClient?'Clients':'Fournisseurs')+' concernés</div><div class="v">'+cles.length+'</div></div></div>'
+      +blocs+'</div>';
+  };
+
+  /* greffe : ajouter la carte sous le suivi des règlements, pour l'onglet courant */
+  if(typeof window.pageReglements==='function'){
+    var _pr=window.pageReglements;
+    window.pageReglements=function(){
+      var h=_pr.apply(this, arguments);
+      try{
+        var type=(window.regOnglet==='fournisseur')?'fournisseur':'client';
+        h+=window.regFacturesNonRegleesCard(type);
+      }catch(e){}
+      return h;
+    };
+  }
 })();
 </script>
 </body>
