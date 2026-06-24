@@ -10865,7 +10865,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v267 · ligne rouge non soldée';
+    b.textContent='YADA · v268 · ↓ ajoute une ligne à solder';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -16194,8 +16194,23 @@ ${lignes}
     }
 
     if(k==='Tab'){ e.preventDefault(); moveField(e.shiftKey?-1:1); return; }
-    if(k==='Enter'){ e.preventDefault(); moveField(1); return; }      /* passer à la suite */
+    if(k==='Enter'){ e.preventDefault();
+      /* sur la DERNIÈRE ligne d'une écriture, depuis un champ Débit/Crédit : descendre
+         = solder. Si l'écriture n'est pas soldée, on ajoute une ligne à CETTE écriture. */
+      var nse=w.querySelector('tr.ec-r[data-eid="'+eid+'"][data-li="'+(li+1)+'"]');
+      if(!nse && (col===6||col===7) && typeof window.ecDescendre==='function'){
+        if(window.ecDescendre(eid)) return;             /* non soldée → ligne ajoutée / focus maintenu */
+        var _re=Array.prototype.slice.call(w.querySelectorAll('tr.ec-r'));
+        if(_re.length && _re.indexOf(tr)===_re.length-1 && typeof window.ecAjouterEcriture==='function'){ window.ecAjouterEcriture(); return; }
+      }
+      moveField(1); return; }      /* passer à la suite */
     if(k==='ArrowDown'){ e.preventDefault();
+      /* dernière ligne de l'écriture courante : descendre = solder.
+         Si l'écriture n'est pas soldée → ajouter une ligne à CETTE écriture. */
+      var nsd=w.querySelector('tr.ec-r[data-eid="'+eid+'"][data-li="'+(li+1)+'"]');
+      if(!nsd && typeof window.ecDescendre==='function'){
+        if(window.ecDescendre(eid)) return;
+      }
       /* tout en bas (dernière ligne de la dernière écriture) → nouvelle écriture à saisir */
       var _rows=Array.prototype.slice.call(w.querySelectorAll('tr.ec-r'));
       if(_rows.length && _rows.indexOf(tr)===_rows.length-1 && typeof window.ecAjouterEcriture==='function'){ window.ecAjouterEcriture(); return; }
@@ -17594,6 +17609,46 @@ ${lignes}
       return _f.apply(this, arguments);
     };
   }
+})();
+</script>
+<script id="yada-addon146">
+/* ============================================================
+   ÉDITEUR D'ÉCRITURES — DESCENDRE sur une écriture NON SOLDÉE = AJOUTER UNE LIGNE.
+   Quand on descend (Entrée depuis Débit/Crédit, ou flèche du bas) depuis la
+   DERNIÈRE ligne d'une écriture qui n'est PAS soldée (Débit ≠ Crédit), on ajoute
+   une ligne À CETTE écriture pour pouvoir la solder — au lieu de quitter / créer
+   une autre écriture. Garde : tant que la dernière ligne ajoutée n'est pas
+   utilisée (compte ou montant), on n'en rajoute pas (on y maintient le curseur).
+   Si l'écriture EST soldée → retourne false (le caller passe à la suite normale).
+   100% additif (appelé par addon114). Aucune logique comptable modifiée.
+   ============================================================ */
+(function(){
+  window.ecDescendre=function(eid){
+    try{
+      var e=(typeof ecGet==='function')?ecGet(eid):null;
+      if(!e || !e.lignes || !e.lignes.length) return false;
+      var d=0,c=0; e.lignes.forEach(function(l){ d+=(+l.debit||0); c+=(+l.credit||0); });
+      var bal=(Math.abs(r2(d-c))<0.005) && (d>0||c>0);
+      if(bal) return false;                              /* soldée → laisser le caller continuer */
+      var last=e.lignes[e.lignes.length-1];
+      var used=last && (String(last.compte||'').trim()!=='' || Math.abs(+last.debit||0)>0.0001 || Math.abs(+last.credit||0)>0.0001);
+      function focusCpt(idx){ setTimeout(function(){ try{
+        var w=document.getElementById('ec-win'); if(!w) return;
+        var row=w.querySelector('tr.ec-r[data-eid="'+eid+'"][data-li="'+idx+'"]'); if(!row) return;
+        row.scrollIntoView({block:'nearest'});
+        var inp=row.querySelector('input.ec-cpt')||row.querySelector('input.ec-i');
+        if(inp){ inp.focus(); if(inp.select) inp.select(); } }catch(_){ } }, 40); }
+      if(used){
+        if(typeof ecAddLine==='function') ecAddLine(eid);   /* ajoute une ligne vide + ecRender */
+        focusCpt(e.lignes.length-1);                        /* curseur sur la nouvelle ligne */
+        if(typeof toast==='function') toast('Ligne ajoutée — soldez l\'écriture (Débit = Crédit).');
+      } else {
+        focusCpt(e.lignes.length-1);                        /* ligne vide déjà là → la remplir */
+        if(typeof toast==='function') toast('Remplissez cette ligne pour solder l\'écriture (Débit = Crédit).');
+      }
+      return true;                                        /* géré : pas de nouvelle écriture / déplacement */
+    }catch(_){ return false; }
+  };
 })();
 </script>
 <script id="yada-addon141">

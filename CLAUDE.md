@@ -36,7 +36,18 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Consultation / éditeur : ligne ROUGE sous une écriture non soldée + bouton « Solder l'écriture » retiré — v267
+## 🟢 Dernière mise à jour — Éditeur : descendre sur une écriture NON soldée → ajoute une ligne à solder — v268
+**Quoi :** dans l'**éditeur d'écritures** (Consultation des comptes), quand on **descend** — **Entrée** depuis un champ Débit/Crédit, ou **flèche du bas** — depuis la **dernière ligne d'une écriture NON soldée** (Débit ≠ Crédit), une **ligne est ajoutée à CETTE écriture** pour pouvoir la solder (au lieu de quitter ou de créer une autre écriture). **Garde :** tant que la dernière ligne ajoutée n'est **pas utilisée** (aucun compte ni montant), aucune autre ligne n'est ajoutée (le curseur y est maintenu) → chaque ligne doit être remplie avant de passer à la suivante. Si l'écriture **est soldée**, le comportement normal reprend (écriture suivante / nouvelle écriture, v259/v261).
+
+**Comment — `yada-addon146` + 2 éditions d'`addon114` :**
+- `window.ecDescendre(eid)` : calcule l'équilibre de l'écriture ; **soldée → `false`** (le caller continue normalement) ; **non soldée → `true`** après avoir, si la **dernière ligne est utilisée**, appelé `ecAddLine(eid)` (ajout d'une ligne + `ecRender`, curseur placé sur le compte de la nouvelle ligne), sinon maintenu le curseur sur la ligne vide (message « Remplissez cette ligne… »).
+- `addon114` : sur **flèche du bas** depuis la dernière ligne d'une écriture → `ecDescendre(eid)` avant tout ; sur **Entrée** depuis un champ **Débit (col 6)/Crédit (col 7)** de la dernière ligne → idem. Sinon, comportement inchangé (navigation champ/ligne, nouvelle écriture en bas de liste si soldée).
+
+**Limites :** réutilise `ecAddLine`/`ecRender` (aucune logique comptable ajoutée) ; la navigation champ par champ (compte/libellé) avec Entrée reste disponible. Validé : `node --check` (134 scripts). Badge → **v268 · ↓ ajoute une ligne à solder**.
+
+---
+
+## 🟢 MAJ précédente — Consultation / éditeur : ligne ROUGE sous une écriture non soldée + bouton « Solder l'écriture » retiré — v267
 **Quoi :** dans l'**éditeur d'écritures** (Consultation des comptes), une **ligne ROUGE** apparaît désormais sous une **écriture NON soldée** (Débit ≠ Crédit) pour **prévenir l'utilisateur qu'il doit la solder avant de fermer ou de traiter une autre écriture**. Le **bouton « Solder l'écriture »** est **retiré** et remplacé par cette ligne rouge (+ un court message d'avertissement). La **ligne bleue** reste sous une écriture **soldée** (séparateur, inchangé). Le blocage de fermeture/creation tant qu'une écriture n'est pas soldée (v216/v261) est conservé.
 
 **Comment — 2 éditions chirurgicales de `ecRender` + `yada-addon145` (CSS) :**
