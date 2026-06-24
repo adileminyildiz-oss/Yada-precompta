@@ -10867,7 +10867,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v272 · débit/crédit sans flèches';
+    b.textContent='YADA · v273 · immo : liste fermée + écritures';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -18059,6 +18059,7 @@ ${lignes}
     var im=(db.immos||[]).find(function(x){return x.id===id;}); if(!im) return;
     if(field==='compte'){ im.compte=value; im.compteAmort=compteAmortDe(value); var dd=imDotDe(value); if(dd) im.compteDot=dd; }
     else if(field==='montantHT'||field==='valResiduelle'){ im[field]=+value||0; }
+    else if(field==='tauxTVA'){ im.tauxTVA=+value||0; }
     else if(field==='dureeMois'){ var n=parseInt(value,10); im.dureeMois=(n>0?n:im.dureeMois); }
     else { im[field]=value; }
     save(); render();
@@ -18080,6 +18081,35 @@ ${lignes}
   window.imAnnulerSortie=function(id){ var im=(db.immos||[]).find(function(x){return x.id===id;}); if(!im||!im.sortie) return;
     yadaConfirm('Annuler la sortie du '+frDate(im.sortie.date)+' (réintégrer l\'immobilisation) ?', function(){ im.sortie=null; save(); render(); toast('Sortie annulée — immobilisation réintégrée.'); }); };
 
+  /* écriture d'ACQUISITION + écriture de DOTATION de l'immobilisation */
+  COMPTES['404000000']=COMPTES['404000000']||"Fournisseurs d'immobilisations";
+  COMPTES['445620000']=COMPTES['445620000']||'TVA déductible sur immobilisations';
+  function acqLib(im){ return 'ACQUISITION IMMO '+im.numero; }
+  function dotLib(im,an){ return 'DOTATION IMMO '+im.numero+' '+an; }
+  window.imAcqFaite=function(im){ return (db.ecritures||[]).some(function(e){ return (e.libelle||'').indexOf(acqLib(im))>=0; }); };
+  window.imDotFaite=function(im,an){ return (db.ecritures||[]).some(function(e){ return (e.libelle||'').indexOf(dotLib(im,an))>=0; }); };
+  window.imGenererAcquisition=function(id){
+    var im=(db.immos||[]).find(function(x){return x.id===id;}); if(!im) return;
+    if(window.imAcqFaite(im)) return toast('Écriture d\'immobilisation déjà générée pour '+im.numero);
+    var ht=r2(im.montantHT||0); if(ht<=0) return toast('Montant H.T. requis');
+    var taux=(im.tauxTVA!=null?+im.tauxTVA:20); var tva=r2(ht*taux/100); var ttc=r2(ht+tva);
+    var lignes=[{compte:c9(im.compte), lib:'Immobilisation '+im.numero, debit:ht, credit:0}];
+    if(tva>0.005) lignes.push({compte:'445620000', lib:'TVA déd. immo '+im.numero, debit:tva, credit:0});
+    lignes.push({compte:'404000000', lib:(im.fournisseur||'Fournisseur')+' — '+im.numero, debit:0, credit:ttc});
+    posterOD({date:(im.dateFacture||im.miseEnService||(imYear()+'-01-01')), libelle:acqLib(im), lignes:lignes, journal:'ACH'});
+    save(); render(); toast('Écriture d\'immobilisation générée — '+eur(ht)+' HT'+(tva>0.005?(' + '+eur(tva)+' TVA'):'')+' (crédit 404 fournisseur d\'immo).');
+  };
+  window.imGenererDotation=function(id){
+    var im=(db.immos||[]).find(function(x){return x.id===id;}); if(!im) return;
+    var an=(typeof imAnnee!=='undefined' && imAnnee)?imAnnee:imYear(); var row=immoRowAnnee(im, an); var dot=r2(row.dotation);
+    if(dot<=0.005) return toast('Aucune dotation à générer pour '+an+' (vérifiez durée / mise en service).');
+    if(window.imDotFaite(im,an)) return toast('Dotation '+an+' déjà générée pour '+im.numero);
+    var lignes=[{compte:c9(im.compteDot||'681120000'), lib:'Dotation '+im.numero, debit:dot, credit:0},
+                {compte:c9(im.compteAmort||compteAmortDe(im.compte)), lib:'Amort. '+im.numero, debit:0, credit:dot}];
+    posterOD({date:an+'-12-31', libelle:dotLib(im,an), lignes:lignes, journal:'OD'});
+    save(); render(); toast('Écriture de dotation '+an+' générée — '+eur(dot)+'.');
+  };
+
   /* 4) Détail ÉDITABLE (Attributs / Comptable / Fiscal) */
   if(typeof window.imDetail==='function' || typeof imDetail==='function'){
     window.imDetail=function(im){
@@ -18095,9 +18125,15 @@ ${lignes}
           +rowT('Nature :','nature', im.nature,'text')
           +rowS('Compte :','compte', c9(im.compte), immoOpts(c9(im.compte)))
           +rowT('Montant H.T. : *','montantHT', im.montantHT,'number','0.01')
+          +rowS('Taux TVA :','tauxTVA', String(im.tauxTVA!=null?im.tauxTVA:20), [['20','20 %'],['10','10 %'],['5.5','5,5 %'],['0','0 %']])
           +rowT('Date de facture :','dateFacture', im.dateFacture,'date')
           +rowT('Nom du fournisseur :','fournisseur', im.fournisseur||'','text')
           +rowT('Mise en service :','miseEnService', im.miseEnService,'date')
+          +'<div class="im-sec">Écritures comptables …</div>'
+          +'<div class="im-row"><label>Écritures :</label><div class="im-acts">'
+            +'<button class="btn '+(window.imAcqFaite(im)?'btn-ghost':'btn-gold')+' btn-sm" onclick="imGenererAcquisition(\''+im.id+'\')">'+(window.imAcqFaite(im)?'Immobilisation ✓':'Générer l\'écriture d\'immobilisation')+'</button> '
+            +'<button class="btn '+(window.imDotFaite(im,(typeof imAnnee!=="undefined"&&imAnnee)?imAnnee:imYear())?'btn-ghost':'btn-gold')+' btn-sm" onclick="imGenererDotation(\''+im.id+'\')">'+(window.imDotFaite(im,(typeof imAnnee!=="undefined"&&imAnnee)?imAnnee:imYear())?('Dotation '+((typeof imAnnee!=="undefined"&&imAnnee)?imAnnee:imYear())+' ✓'):('Générer l\'écriture de dotation '+((typeof imAnnee!=="undefined"&&imAnnee)?imAnnee:imYear())))+'</button>'
+          +'</div></div>'
           +'<div class="im-sec">Reprise et Sortie d\'immobilisation …</div>'
           +imF('Sortie :', im.sortie?(frDate(im.sortie.date)+' — '+eur(im.sortie.prix)):'—')
           +'<div class="im-row"><label>Actions :</label><div class="im-acts">'
@@ -18143,9 +18179,10 @@ ${lignes}
         +'<div class="field"><label>Numéro / désignation</label><input id="im-num" placeholder="Ex : IPHONE 17 PRO MAX" oninput="imAutoCompte()"></div>'
         +'<div class="field"><label>Nature</label><input id="im-nat" placeholder="Nature du bien (ex : téléphone, véhicule…)" oninput="imAutoCompte()"></div>'
       +'</div>'
+      +'<div class="field" style="margin-bottom:12px"><label>Compte d\'immobilisation <span class="mini">(cliquer pour ouvrir la liste)</span></label><select id="im-cpt" class="im-cpt-scroll" onchange="imCptCascade(true)">'+immoOpts('218300000')+'</select></div>'
       +'<div class="row g3">'
-        +'<div class="field"><label>Compte d\'immobilisation <span class="mini">— molette pour défiler</span></label><select id="im-cpt" size="8" class="im-cpt-scroll" onchange="imCptCascade(true)">'+immoOpts('218300000')+'</select></div>'
         +'<div class="field"><label>Montant H.T.</label><input type="number" step="0.01" id="im-ht" value="1635.17"></div>'
+        +'<div class="field"><label>Taux TVA</label><select id="im-tva"><option>20</option><option>10</option><option>5.5</option><option>0</option></select></div>'
         +'<div class="field"><label>Valeur résiduelle</label><input type="number" step="0.01" id="im-vr" value="0"></div>'
       +'</div>'
       +'<div class="row g3">'
@@ -18163,12 +18200,23 @@ ${lignes}
     document.getElementById('modal').classList.add('show');
     setTimeout(function(){ try{ window.imCptCascade(false); }catch(_){ } }, 10);
   };
+  /* enregistrement : capture aussi le taux de TVA (pour l'écriture d'acquisition) */
+  window.imSave=function(){
+    var g=function(id){ return document.getElementById(id); }; var cpt=g('im-cpt').value;
+    var num=(g('im-num').value||'').trim(); if(!num) return toast('Numéro / désignation requis');
+    var im={ id:uid(), numero:num, nature:(g('im-nat').value||num).trim(), compte:cpt,
+      compteAmort:compteAmortDe(cpt), compteDot:(g('im-dot').value||'681120000').trim(),
+      montantHT:+g('im-ht').value||0, valResiduelle:+g('im-vr').value||0, tauxTVA:(g('im-tva')?(+g('im-tva').value||0):20),
+      fournisseur:(g('im-four').value||'').trim(), dateFacture:g('im-df').value, miseEnService:g('im-ms').value,
+      dureeMois:+g('im-duree').value||12, type:g('im-mode').value, sortie:null };
+    db.immos=db.immos||[]; db.immos.push(im); imSelId=im.id; save(); closeModal(); render();
+    toast('Immobilisation « '+num+' » créée — générez l\'écriture d\'immobilisation puis la dotation (onglet Attributs).');
+  };
 
   /* styles : champs éditables du détail + sélecteur à molette */
   try{ var st=document.createElement('style'); st.id='im-edit-mod'; st.textContent=
     '.im-row .im-ev{flex:1;font:inherit;font-size:12.5px;padding:5px 9px;border-radius:5px;border:1px solid var(--line-strong);background:#fffefb;color:var(--ink);min-height:16px}'
     +'.im-acts{flex:1;display:flex;gap:8px;flex-wrap:wrap}'
-    +'.im-cpt-scroll{min-height:150px}'
     +'body[data-theme="noir"] .im-screen .im-ev{background:#0a1726 !important;border-color:#24405d !important;color:#eaf2ff !important}'
     +'body[data-theme="noir"] .im-cpt-scroll option{background:#0c1a2a;color:#eaf2ff}';
     document.head.appendChild(st);

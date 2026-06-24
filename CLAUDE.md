@@ -36,7 +36,20 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Consultation / éditeur : flèches (spinners) des champs Débit/Crédit masquées — v272
+## 🟢 Dernière mise à jour — Immobilisations : liste de comptes FERMÉE (cliquer pour ouvrir) + génération des écritures d'immobilisation & de dotation — v273
+**Quoi :** dans **Immobilisations & Financements** (`yada-addon148`, suite de v271) :
+1. Le **sélecteur de compte d'immobilisation** (modale « Nouvelle immobilisation ») n'est **plus une liste ouverte** (`<select size="8">`) : c'est un **menu déroulant fermé** que l'on **clique pour ouvrir**, puis on voit la sélection. La reconnaissance/auto-dotation reste active.
+2. **Génération des écritures** depuis l'onglet **Attributs** (section « Écritures comptables ») via 2 boutons :
+   - **« Générer l'écriture d'immobilisation »** (`imGenererAcquisition`) → écriture d'acquisition (journal **ACH**) : **débit 2xx** (HT) + **débit 445620000** (TVA déductible/immo, selon le **Taux TVA** ajouté) = **crédit 404000000** (fournisseurs d'immobilisations, TTC). Équilibrée.
+   - **« Générer l'écriture de dotation <année> »** (`imGenererDotation`) → OD : **débit 6811x** (dotation) / **crédit 28xx** (amortissement), montant = dotation de l'exercice (`immoRowAnnee`).
+   - **Idempotent** (libellés « ACQUISITION IMMO <n°> » / « DOTATION IMMO <n°> <an> ») ; les boutons passent à **✓** une fois générés.
+3. Champ **Taux TVA** ajouté (modale + Attributs éditable), comptes `404000000` / `445620000` enregistrés.
+
+**Comment :** édition de l'override `imAdd` (select fermé + champ TVA), nouveau `window.imSave` (capture `tauxTVA`), `imGenererAcquisition`/`imGenererDotation`/`imAcqFaite`/`imDotFaite` (via `posterOD`), boutons greffés dans `imDetail` (Attributs). Validé : `node --check` (137 scripts) + équilibre de l'écriture d'acquisition à 20/10/0 % (Σ débit = Σ crédit). Badge → **v273 · immo : liste fermée + écritures**.
+
+---
+
+## 🟢 MAJ précédente — Consultation / éditeur : flèches (spinners) des champs Débit/Crédit masquées — v272
 **Quoi :** dans la **Consultation des comptes** (saisie / édition), les champs **Débit** et **Crédit** (`<input type="number">`) affichaient les **petites flèches haut/bas** (spinners) pour augmenter/diminuer le montant. Elles sont désormais **masquées**.
 
 **Comment — `yada-addon149` (100% CSS additif, `<style id="ec-nospin-mod">`) :** `::-webkit-outer/inner-spin-button{-webkit-appearance:none}` sur `.ec-num` et `.ec-sage input[type=number]`, + `appearance:textfield` (Firefox). Aucune logique modifiée (saisie au clavier inchangée). Validé : `node --check` (137 scripts). Badge → **v272 · débit/crédit sans flèches**.
