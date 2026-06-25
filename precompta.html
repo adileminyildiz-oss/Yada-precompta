@@ -10875,7 +10875,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v284 · flèche bas valide aussi (pas de 3e ligne)';
+    b.textContent='YADA · v285 · banque : pas de ligne tant que non soldée';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -17710,6 +17710,23 @@ ${lignes}
         row.scrollIntoView({block:'nearest'});
         var inp=row.querySelector('input.ec-cpt')||row.querySelector('input.ec-i');
         if(inp){ inp.focus(); if(inp.select) inp.select(); } }catch(_){ } }, 40); }
+      /* BANQUE : tant que l'écriture n'est pas soldée, NE PAS ajouter de ligne (compte) supplémentaire.
+         L'écriture a déjà sa contrepartie 512 (2 lignes) → on garde le curseur sur la ligne à corriger
+         (compte vide → le compte ; sinon le montant manquant) pour la solder. */
+      if(e.journal==='BQ' && e.lignes.length>=2){
+        var idx=e.lignes.length-1;
+        setTimeout(function(){ try{
+          var w=document.getElementById('ec-win'); if(!w) return;
+          var row=w.querySelector('tr.ec-r[data-eid="'+eid+'"][data-li="'+idx+'"]'); if(!row) return;
+          row.scrollIntoView({block:'nearest'});
+          var inp;
+          if(String(e.lignes[idx].compte||'').trim()===''){ inp=row.querySelector('input.ec-cpt'); }
+          else { var nums=row.querySelectorAll('input.ec-num'); inp=(d>c)?(nums[1]||nums[0]):(nums[0]||nums[1]); }   /* D>C → compléter le crédit, sinon le débit */
+          inp=inp||row.querySelector('input.ec-cpt')||row.querySelector('input.ec-i');
+          if(inp){ inp.focus(); if(inp.select) inp.select(); } }catch(_){ } }, 40);
+        if(typeof toast==='function') toast('Soldez l\'écriture (Débit = Crédit) avant d\'ajouter une ligne.');
+        return true;
+      }
       if(used){
         if(typeof ecAddLine==='function') ecAddLine(eid);   /* ajoute une ligne vide + ecRender */
         focusCpt(e.lignes.length-1);                        /* curseur sur la nouvelle ligne */
