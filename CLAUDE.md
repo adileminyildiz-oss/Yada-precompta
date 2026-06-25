@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Éditeur : nouvelle écriture → curseur sur la DATE (modifiable) puis Entrée continue la ligne — v281
+## 🟢 Dernière mise à jour — Éditeur : en journal de BANQUE, la 2ᵉ ligne génère automatiquement la contrepartie 512000000 — v282
+**Quoi :** dans l'**éditeur d'écritures**, quand on ajoute la **2ᵉ ligne** d'une **écriture de banque** (journal BQ) — en descendant pour la solder, ou via « + Ajouter » — son **compte est automatiquement 512000000** (banque) avec le **montant miroir** (débit↔crédit de la 1ʳᵉ ligne), ce qui **solde** l'écriture. Avant, la 2ᵉ ligne s'ajoutait avec un compte vide (`000000000`). Indépendant du mode « validation automatique » (v277) : c'est désormais le comportement par défaut pour le journal BQ.
+
+**Comment — 1 édition chirurgicale (`ecAddLine`) :** si `e.journal==='BQ'` et qu'on ajoute la **2ᵉ ligne** (`e.lignes.length===1`), la nouvelle ligne reçoit `compte:'512000000'` + montant miroir (`débit l0 → crédit`, `crédit l0 → débit`). Le libellé est déjà repris de la 1ʳᵉ ligne. Les lignes au-delà de la 2ᵉ restent vides (écritures multi-lignes inchangées).
+
+**Limites :** affichage/saisie seulement (montant miroir modifiable) ; ne touche que la 2ᵉ ligne d'une écriture BQ. Validé : `node --check` (141 scripts). Badge → **v282 · banque : 2e ligne = 512 auto**.
+
+---
+
+## 🟢 MAJ précédente — Éditeur : nouvelle écriture → curseur sur la DATE (modifiable) puis Entrée continue la ligne — v281
 **Quoi :** après avoir saisi une écriture, la **nouvelle écriture** proposée place désormais le **curseur sur la DATE** (sélectionnée, donc modifiable tout de suite) **pour toutes les écritures** — plus seulement en mode validation automatique (v279). On peut ajuster la date puis appuyer sur **Entrée** pour **continuer à saisir la ligne** (date → pièce → compte → libellé → montant), champ par champ.
 
 **Comment — 1 édition chirurgicale (`addon140`, `ecAjouterEcriture`) :** le focus de la 1ʳᵉ ligne de la nouvelle écriture cible **inconditionnellement** `input.ec-datetxt` (la date) au lieu du compte (`var inp=row.querySelector('input.ec-datetxt')||…`). La date étant un `input.ec-i`, la navigation clavier d'`addon114` (Entrée → champ suivant) s'applique → Entrée depuis la date passe à la pièce/au compte.

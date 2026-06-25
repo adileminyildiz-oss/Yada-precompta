@@ -9192,7 +9192,15 @@ function ecSetLine(id,i,field,v){ const e=ecGet(id); if(!e||!e.lignes[i])return;
   else { l[field]=v; }
   ecRender();
 }
-function ecAddLine(id){ const e=ecGet(id); if(!e)return; const lib=(e.lignes[0]&&e.lignes[0].lib)||''; e.lignes.push({compte:'', lib:lib, debit:0, credit:0}); ecRender(); }
+function ecAddLine(id){ const e=ecGet(id); if(!e)return; const lib=(e.lignes[0]&&e.lignes[0].lib)||'';
+  const nl={compte:'', lib:lib, debit:0, credit:0};
+  /* Journal de BANQUE : la 2ᵉ ligne reprend automatiquement la contrepartie 512000000 + montant miroir (débit↔crédit). */
+  if(e.journal==='BQ' && e.lignes.length===1){
+    const l0=e.lignes[0]; nl.compte='512000000';
+    const d=+l0.debit||0, c=+l0.credit||0;
+    if(d>0){ nl.credit=r2(d); } else if(c>0){ nl.debit=r2(c); }
+  }
+  e.lignes.push(nl); ecRender(); }
 function ecDelLine(id,i){ const e=ecGet(id); if(!e)return; e.lignes.splice(i,1); if(!e.lignes.length) e.lignes.push({compte:'',lib:'',debit:0,credit:0}); ecRender(); }
 function ecSolder(id){ const e=ecGet(id); if(!e)return;
   /* Une ligne ne peut pas s'enregistrer sans compte (compte de tiers obligatoire si renseigné). */
@@ -10867,7 +10875,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v281 · nouvelle écriture : curseur sur la date';
+    b.textContent='YADA · v282 · banque : 2e ligne = 512 auto';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
