@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Correctif : page de sélection des dossiers écrasée par l'élargissement de la barre latérale — v316
+## 🟢 Dernière mise à jour — Barre latérale encore élargie (272 → 300 px) + entrées de navigation plus aérées — v317
+**Quoi :** à la demande (« élargir la barre latérale »), la **barre latérale est encore élargie** sur les pages applicatives : la colonne de navigation passe de **272 px à 300 px** (desktop), avec un **padding latéral légèrement augmenté** (`aside` 18 → 20 px) et des **entrées de menu plus aérées** (`.nav-btn` police 14 px, padding 9/13 px) pour que les outils respirent mieux. La page de sélection des dossiers (`.layout.solo`) reste en **pleine largeur** (correctif v316 conservé via `.layout:not(.solo)`).
+
+**Comment — 1 retouche dans `yada-addon160` (`<style id="fa-a4-format-mod">`) :** `.layout:not(.solo){grid-template-columns:272px 1fr}` → **`300px 1fr`** ; `aside{padding:22px 20px 16px}` ; ajout `.nav-btn{font-size:14px;padding:9px 13px}`. Mobile (≤820 px) inchangé.
+
+**Limites :** mise en page uniquement (aucune logique modifiée). Validé : `node --check` (151 scripts, 0 erreur) + Playwright (pages applicatives `.layout:not(.solo)` → `300px 1fr` ; page dossiers `.layout.solo` → `1fr` pleine largeur ; 0 pageerror). Badge → **v317**.
+
+---
+
+## 🟢 MAJ précédente — Correctif : page de sélection des dossiers écrasée par l'élargissement de la barre latérale — v316
 **Quoi :** correction d'un **bug introduit en v315**. L'élargissement de la barre latérale utilisait `.layout{grid-template-columns:272px 1fr !important}` ; comme l'`!important` l'emporte sur `.layout.solo{grid-template-columns:1fr}` (sans `!important`), la **page de connexion / sélection des dossiers** (rendue avec `.layout.solo`, sans barre latérale — voir `render()` : `if(!connecte){ layout.classList.add('solo') … }`) se retrouvait forcée en **deux colonnes 272 px / 1fr** → les **cartes de dossier** et le bouton **« Créer un dossier »** étaient **tassés dans une colonne étroite** à gauche.
 
 **Comment — 1 retouche chirurgicale dans `yada-addon160` :** la règle d'élargissement cible désormais **`.layout:not(.solo)`** (au lieu de `.layout`) → la barre latérale reste élargie sur les pages applicatives, et la page de sélection des dossiers (`.layout.solo`) **retrouve sa pleine largeur (1fr)**.
