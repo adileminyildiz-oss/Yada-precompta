@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Fenêtre « Nouvelle facture » : panneau de gauche identique à la barre latérale (dégradé de bleu opaque) — v319
+## 🟢 Dernière mise à jour — Fenêtre « Nouvelle facture » + barre latérale : habillage « navy raffiné » (dégradé subtil + champs soignés) — v320
+**Quoi :** le panneau de gauche de « Nouvelle facture » (jugé « pas élégant » en v319) est **redessiné en navy raffiné** (choix utilisateur) : **dégradé bleu nuit plus profond et subtil** (`168deg,#14365f→#0e2748→#0a1b34`, + léger reflet `inset` en haut), **champs soignés** (arrondis 10 px, fond translucide discret, libellés en **petites capitales bleu-gris**, anneau de focus bleu, plus d'espacement), **fins séparateurs** (totaux/pied/lignes), en-tête `.nf-bar` affiné. Le **même dégradé raffiné est appliqué à la barre latérale** (`aside`) pour rester cohérent (« pareil »).
+
+**Comment — `yada-addon160` (surcharges `#nf-overlay .nf-form …` + gradient partagé `aside`/`.nf-form`) :** gradient v318/v319 `#103a73…` remplacé par `#14365f…` (2 occurrences) ; ajout des règles de champs (`label` petites capitales `#90a8cc`, `input/select/textarea` `background:rgba(255,255,255,.055)`, `border-radius:10px`, focus `#2f8fff` + halo) ; `.nf-form-body` padding 20/22 px ; `.nf-li`/`.nf-tot`/`.nf-foot` séparateurs bleu discret ; indicateur de date inversé (`invert(.85)`).
+
+**Limites :** habillage uniquement. Validé : `node --check` (151 scripts, 0 erreur) + accolades addon160 (66/66) + Playwright (`.nf-form` = dégradé navy raffiné, `input` fond translucide + `border-radius:10px`, `label` `text-transform:uppercase` `#90a8cc`, 0 pageerror ; équilibre ✅). Badge → **v320**.
+
+---
+
+## 🟢 MAJ précédente — Fenêtre « Nouvelle facture » : panneau de gauche identique à la barre latérale (dégradé de bleu opaque) — v319
 **Quoi :** à la demande, le **panneau de gauche de la fenêtre « Nouvelle facture »** (formulaire de la **facturation client** — et cabinet, même fenêtre) reçoit le **même dégradé de bleu opaque que la barre latérale** : **plus aucune transparence** (avant, `.nf-form{background:var(--card)}` valait `rgba(16,26,42,.72)` en Mode Nuit → on voyait le tableau de bord derrière). Le panneau est désormais **plein**, accordé à la barre latérale.
 
 **Comment — `yada-addon160` (1 ajout, surcharge `#nf-overlay .nf-form` injectée en dernier, spécificité id+classe → bat `var(--card)`) :** `#nf-overlay .nf-form{background:linear-gradient(180deg,#103a73,#0b2a52,#071a33) !important;backdrop-filter:none !important;border-right:1px solid rgba(30,144,255,.55)}` (même dégradé que `aside` en v318) ; `.nf-form-body` transparent (laisse voir le dégradé) ; barre de défilement fine bleue. L'en-tête `.nf-bar` était déjà en dégradé bleu.
