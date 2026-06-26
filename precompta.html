@@ -10885,7 +10885,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v303';
+    b.textContent='YADA · v304';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -16032,6 +16032,9 @@ ${lignes}
    ============================================================ */
 (function(){
   var css=''
+    /* DÉGRADÉ GLOBAL (login + logiciel) : posé sur le body (racine, sans marge) → couvre tout l\'écran, sans cadrage, et se transmet à toutes les pages internes */
+    +'body[data-theme="jour"]{background:linear-gradient(158deg,#5e9eff 0%,#86b8ff 20%,#b4d4ff 46%,#dbeaff 73%,#f4f9ff 100%)!important;background-attachment:fixed!important}'
+    +'body[data-theme="jour"] .layout,body[data-theme="jour"] main,body[data-theme="jour"] main.login-bleed,body[data-theme="jour"] main.fullbleed,body[data-theme="jour"] main.fullbleed .mod-wrap,body[data-theme="jour"] main.fullbleed .dash-wrap,body[data-theme="jour"] .login-wrap{background:transparent!important}'
     +'body[data-theme="jour"] .kpi{position:relative;overflow:hidden;background:linear-gradient(180deg,#ffffff,#eef5ff)!important;border:1px solid rgba(10,132,255,.30)!important;box-shadow:0 10px 26px rgba(10,80,200,.12)!important}'
     +'body[data-theme="jour"] .kpi::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#0a84ff,#0050c8)!important}'
     +'body[data-theme="jour"] .kpi .val:not(.deb):not(.cre){color:#0a4fc0!important;font-weight:800!important;letter-spacing:.2px}'
@@ -16046,14 +16049,12 @@ ${lignes}
     +'body[data-theme="jour"] tbody tr:hover td{background:#e6f0ff!important}'
     +'body[data-theme="jour"] .ec-tile,body[data-theme="jour"] .ec-shortcuts a,body[data-theme="jour"] .ec-shortcuts .ec-tile{background:#ffffff!important;border:1px solid rgba(10,132,255,.28)!important;color:#0b346e!important;box-shadow:0 6px 18px rgba(10,70,180,.10)!important}'
     +'body[data-theme="jour"] .ec-tile:hover,body[data-theme="jour"] .ec-shortcuts a:hover{background:#eef5ff!important;border-color:#0a84ff!important}'
-    +'body[data-theme="jour"] #ec-hero,body[data-theme="jour"] #ec-hero.cab-hero{background:linear-gradient(125deg,#0a84ff 0%,#0a5fd6 55%,#0040b0 100%)!important;box-shadow:0 18px 46px rgba(10,70,190,.34)!important;border:1px solid #4da3ff!important}'
-    +'body[data-theme="jour"] #ec-hero.cab-hero::after{content:"\\2728 Une comptabilit\\00e9 claire et ma\\00eetris\\00e9e \\2014 vos chiffres justes, en un coup d\\2019\\0153il.";display:block;margin-top:12px;font-size:13px;font-weight:600;color:#dbeaff!important;letter-spacing:.2px}'
+    +'body[data-theme="jour"] #ec-hero,body[data-theme="jour"] #ec-hero.cab-hero{position:relative!important;overflow:hidden!important;background:linear-gradient(125deg,#0a84ff 0%,#0a5fd6 55%,#0040b0 100%)!important;box-shadow:0 18px 46px rgba(10,70,190,.34)!important;border:1px solid #4da3ff!important}'
+    +'body[data-theme="jour"] #ec-hero.cab-hero::after{content:"\\2728 Une comptabilit\\00e9 claire et ma\\00eetris\\00e9e \\2014 vos chiffres justes, en un coup d\\2019\\0153il.";position:absolute!important;left:24px;right:24px;bottom:14px;margin:0!important;display:block;white-space:normal;text-align:left;font-size:12.5px;font-weight:600;color:#eaf2ff!important;letter-spacing:.2px;text-shadow:0 1px 6px rgba(6,40,110,.4)}'
     +'body[data-theme="jour"] .btn-pri,body[data-theme="jour"] .btn-gold{box-shadow:0 6px 16px rgba(10,80,200,.30)!important}'
     +'body[data-theme="jour"] .seg button.on,body[data-theme="jour"] .cp-mtab.on{box-shadow:0 6px 16px rgba(10,80,200,.28)!important}'
     /* === Écran « Sélectionnez un dossier » (Mode Jour) : logo & textes lisibles, fond bleu→blanc, cartes accordées === */
-    +'body[data-theme="jour"] .login-wrap{min-height:100vh!important;background:linear-gradient(158deg,#3f86ff 0%,#5e9eff 20%,#86b8ff 44%,#b4d4ff 70%,#e3f0ff 90%,#ffffff 100%)!important;background-attachment:fixed!important}'
-    /* le fond du body est masqué par le dégradé pleine page (pas de cadrage) */
-    +'body[data-theme="jour"]:has(.login-wrap){background:#3f86ff!important}'
+    +'body[data-theme="jour"] .login-wrap{min-height:100vh!important;background:transparent!important}'
     /* en-tête sur fond bleu intense → texte blanc lisible (logo, titre, sous-titre, cabinet) */
     +'body[data-theme="jour"] .login-brand svg text{fill:#ffffff!important}'
     +'body[data-theme="jour"] .login-brand,body[data-theme="jour"] .login-title{color:#ffffff!important;text-shadow:0 2px 10px rgba(6,40,110,.35)}'

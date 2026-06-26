@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Écran « Sélectionnez un dossier » (Mode Jour) : dégradé bleu plus INTENSE + en-tête en blanc lisible — v303
+## 🟢 Dernière mise à jour — Mode JOUR : dégradé bleu→blanc GLOBAL (login + logiciel), plein écran sans cadrage — v304
+**Quoi :** le **dégradé bleu→blanc** est désormais posé sur le **`body`** (racine, sans marge) → il **couvre tout l'écran bord à bord (plus de cadrage/frame)** et **se transmet à toutes les pages du logiciel** (tableau de bord, modules…), pas seulement l'écran de sélection des dossiers. Les conteneurs (`.layout`, `main`, `.login-wrap`, `.mod-wrap`, `.dash-wrap`) passent en **transparent** pour laisser voir le dégradé ; les cartes blanches « flottent » dessus.
+
+**Aussi :** la **formule marketing** du hero (`#ec-hero.cab-hero::after`) qui **débordait/était coupée** est repositionnée proprement (`position:absolute` en bas du hero, plein largeur, sans rognage).
+
+**Où / comment :** dans `jour-charme` — `body[data-theme="jour"]{background:linear-gradient(158deg,#5e9eff→#f4f9ff) fixed}` + conteneurs transparents ; `.login-wrap` n'a plus son propre dégradé (transparent). **100% scopé Mode Jour, MODE NUIT inchangé.** Validé : `node --check` (148), équilibre (d-ama/d-sci42), captures (login plein écran sans cadrage + dégradé dans le tableau de bord, 0 pageerror). Badge → **v304**.
+
+---
+
+## 🟢 MAJ précédente — Écran « Sélectionnez un dossier » (Mode Jour) : dégradé bleu plus INTENSE + en-tête en blanc lisible — v303
 **Quoi :** le dégradé pleine page de l'écran de sélection des dossiers (Mode Jour) est rendu **nettement plus intense** (bleu soutenu `#3f86ff` en haut → blanc en bas). Comme le haut devient un bleu vif, l'**en-tête (logo « YADA », titre, sous-titre, nom du cabinet) passe en BLANC** pour rester parfaitement lisible ; les **cartes dossier** restent claires avec texte foncé.
 
 **Où / comment :** dans `jour-charme` — `.login-wrap` : `linear-gradient(158deg,#3f86ff→#5e9eff→#86b8ff→#b4d4ff→#e3f0ff→#ffffff)` (fixed, 100vh) ; `.login-brand svg text/.login-title` → blanc (+ ombre portée légère), `.login-sub/.login-cab/small` → bleu très clair. **100% scopé Mode Jour, MODE NUIT inchangé.** Validé : `node --check` (148), équilibre (d-ama/d-sci42), capture (gradient intense, en-tête blanc lisible, cartes claires, 0 pageerror). Badge → **v303**.
