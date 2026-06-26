@@ -10888,7 +10888,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v320';
+    b.textContent='YADA · v321';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -19247,6 +19247,120 @@ ${lignes}
     }
   }catch(e){}
   try{ window.addEventListener('resize', function(){ try{ fitFA4(); }catch(e){} }); }catch(e){}
+})();
+</script>
+<script id="yada-addon161">
+/* ============================================================
+   ESPACE CLIENT — Carte « 🔁 Récurrences effectuées » (suivi), pleine largeur
+   sous les deux colonnes de la facturation client. Regroupe les factures
+   créées par récurrence (addon124, recurrence.groupe) et affiche par
+   récurrence : taux de TVA, nombre de mois, 1ʳᵉ et dernière date de facture,
+   montant total dû. Téléchargement EN LOT (toutes les factures) et UN PAR UN.
+   100% additif (greffe pageFacturationClient).
+   ============================================================ */
+(function(){
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];}); }
+
+  window.faRecGroupes=function(){
+    var map={};
+    (db.docs||[]).forEach(function(d){
+      if(!d.recurrence||!d.recurrence.groupe) return;
+      var g=d.recurrence.groupe;
+      if(!map[g]) map[g]={groupe:g, designation:d.recurrence.designation||'', clientId:d.clientId, docs:[]};
+      map[g].docs.push(d);
+    });
+    return Object.keys(map).map(function(g){
+      var o=map[g];
+      var ds=o.docs.slice().sort(function(a,b){ return a.date<b.date?-1:(a.date>b.date?1:0); });
+      var dates=ds.map(function(d){return d.date;}).filter(Boolean);
+      var l0=(ds[0]&&ds[0].lignes&&ds[0].lignes[0])?ds[0].lignes[0]:null;
+      o.docsSorted=ds;
+      o.taux=l0?(+l0.taux||0):(ds[0]?(+ds[0].taux||0):0);
+      o.nb=ds.length;
+      o.first=dates[0]||'';
+      o.last=dates[dates.length-1]||'';
+      o.totalTTC=r2(ds.reduce(function(s,d){ return s+(+d.ttc||0); },0));
+      return o;
+    }).sort(function(a,b){ return a.first<b.first?1:-1; });
+  };
+
+  window.faRecToggle=function(g){ var el=document.getElementById('frs-det-'+g); if(el) el.style.display=(el.style.display==='none'?'':'none'); };
+
+  /* Téléchargement EN LOT : toutes les factures de la récurrence, chacune sur sa page A4. */
+  window.faRecTelechargerLot=function(grp){
+    var ds=(db.docs||[]).filter(function(d){ return d.recurrence&&d.recurrence.groupe===grp; })
+      .sort(function(a,b){ return a.date<b.date?-1:1; });
+    if(!ds.length) return;
+    if(typeof docHTML!=='function'){ if(typeof toast==='function')toast('Aperçu indisponible'); return; }
+    var html=ds.map(function(d){ return docHTML(d); }).join('');
+    var pa=document.getElementById('print-area'); if(!pa) return;
+    pa.innerHTML='<div class="inv">'+html+'</div>';
+    if(typeof toast==='function') toast(ds.length+' facture(s) — fenêtre d\'impression → « Enregistrer en PDF »');
+    setTimeout(function(){ window.print(); },150);
+  };
+
+  window.faRecSuivi=function(){
+    var groups=window.faRecGroupes();
+    if(!groups.length) return '';
+    var totMois=groups.reduce(function(s,o){ return s+o.nb; },0);
+    var totDue=r2(groups.reduce(function(s,o){ return s+o.totalTTC; },0));
+    var rows=groups.map(function(o){
+      var c=(db.tiers||[]).find(function(x){ return x.id===o.clientId; });
+      var det=o.docsSorted.map(function(d){
+        return '<div class="frs-line"><span>'+frDate(d.date)+' · <b>'+esc(d.numero)+'</b> · '+eur(d.ttc)+'</span>'
+          +'<button class="btn btn-ghost btn-sm" onclick="telechargerDoc(\''+d.id+'\')">⤓ PDF</button></div>';
+      }).join('');
+      return '<tbody class="frs-grp">'
+        +'<tr>'
+        +'<td><b>'+esc(c?c.nom:'—')+'</b></td>'
+        +'<td>'+esc(o.designation||'—')+'</td>'
+        +'<td class="r num">'+(+o.taux||0)+'%</td>'
+        +'<td class="r num">'+o.nb+'</td>'
+        +'<td class="num">'+frDate(o.first)+'</td>'
+        +'<td class="num">'+frDate(o.last)+'</td>'
+        +'<td class="r num"><b>'+eur(o.totalTTC)+'</b></td>'
+        +'<td class="r" style="white-space:nowrap">'
+          +'<button class="btn btn-gold btn-sm" onclick="faRecTelechargerLot(\''+o.groupe+'\')">📦 Lot</button> '
+          +'<button class="btn btn-ghost btn-sm" onclick="faRecToggle(\''+o.groupe+'\')">▾ Factures</button>'
+        +'</td>'
+        +'</tr>'
+        +'<tr class="frs-det" id="frs-det-'+o.groupe+'" style="display:none"><td colspan="8"><div class="frs-detwrap">'+det+'</div></td></tr>'
+        +'</tbody>';
+    }).join('');
+    return '<div class="card frec-suivi-card"><h2>🔁 Récurrences effectuées</h2>'
+      +'<div class="sub">Suivi des prestations récurrentes créées. Téléchargez les factures <b>en lot</b> ou <b>une par une</b>.</div>'
+      +'<div class="grid g3" style="margin-bottom:12px">'
+        +'<div class="kpi blue"><div class="lbl">Récurrences</div><div class="val">'+groups.length+'</div></div>'
+        +'<div class="kpi"><div class="lbl">Factures (mois)</div><div class="val">'+totMois+'</div></div>'
+        +'<div class="kpi"><div class="lbl">Montant total dû</div><div class="val">'+eur(totDue)+'</div></div>'
+      +'</div>'
+      +'<div class="frs-scroll"><table class="frs-table"><thead><tr><th>Client</th><th>Prestation</th><th class="r">TVA</th><th class="r">Nb mois</th><th>1ʳᵉ facture</th><th>Dernière facture</th><th class="r">Total dû (TTC)</th><th class="r">Téléchargement</th></tr></thead>'
+      +rows+'</table></div></div>';
+  };
+
+  if(typeof window.pageFacturationClient==='function'){
+    var _p=window.pageFacturationClient;
+    window.pageFacturationClient=function(){
+      var h=_p.apply(this,arguments);
+      try{ if(h.indexOf('frec-suivi-card')<0){ var card=window.faRecSuivi(); if(card) h+=card; } }catch(e){}
+      return h;
+    };
+  }
+
+  try{ var st=document.createElement('style'); st.id='frec-suivi-mod'; st.textContent=
+    '.frec-suivi-card{border-left:4px solid #1e90ff;margin-top:22px}'
+    +'.frec-suivi-card h2{display:flex;align-items:center;gap:8px}'
+    +'.frs-scroll{overflow-x:auto}'
+    +'.frs-table{width:100%;border-collapse:collapse}'
+    +'.frs-grp>tr>td{padding:9px 10px}'
+    +'.frs-grp{border-top:1px solid var(--line)}'
+    +'.frs-det>td{padding:0 !important}'
+    +'.frs-detwrap{display:flex;flex-wrap:wrap;gap:8px;padding:9px 10px 12px}'
+    +'.frs-line{display:flex;align-items:center;gap:8px;font-size:12.5px;border:1px solid rgba(30,144,255,.22);border-radius:9px;padding:5px 9px}'
+    +'body[data-theme="noir"] .frs-detwrap{background:rgba(30,144,255,.06)}'
+    +'body[data-theme="noir"] .frs-line{color:#dbe8ff}'
+    +'@media print{#print-area .inv-page:not(:last-child){page-break-after:always}}';
+    document.head.appendChild(st); }catch(e){}
 })();
 </script>
 </body>

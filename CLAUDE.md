@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Fenêtre « Nouvelle facture » + barre latérale : habillage « navy raffiné » (dégradé subtil + champs soignés) — v320
+## 🟢 Dernière mise à jour — Espace Client : carte « 🔁 Récurrences effectuées » (suivi + téléchargement en lot / un par un) — v321
+**Quoi :** dans l'**espace Client** (Mes factures clients), une nouvelle carte **« 🔁 Récurrences effectuées »** est ajoutée **en pleine largeur sous les deux colonnes** (placement choisi). Elle regroupe les factures créées par **récurrence** (addon124, `recurrence.groupe`) et affiche, **par récurrence** : **Client**, **Prestation**, **taux de TVA**, **nombre de mois**, **1ʳᵉ date de facture**, **dernière date de facture**, **montant total dû (TTC)**. En tête : KPIs **nombre de récurrences**, total factures (mois), **montant total dû**. Les factures sont **téléchargeables en lot** (📦 toutes les factures de la récurrence, chacune sur sa page A4) **et une par une** (⤓ PDF par facture, via le détail dépliable « ▾ Factures »).
+
+**Comment — `yada-addon161` (greffe `pageFacturationClient`, 100% additif) :** `faRecGroupes()` regroupe `db.docs` par `recurrence.groupe` (taux depuis la 1ʳᵉ ligne, dates min/max, total TTC) ; `faRecSuivi()` rend la carte (table + `<tbody>` par récurrence, détail masqué `faRecToggle`) ; `faRecTelechargerLot(grp)` concatène les `docHTML()` de la récurrence dans `#print-area` puis `window.print()` (chaque facture sur sa page A4 via `@media print{.inv-page:not(:last-child){page-break-after:always}}`) ; téléchargement unitaire = `telechargerDoc(id)` existant. Greffe : `pageFacturationClient` renvoie son HTML **+ la carte** (donc pleine largeur sous `.cli-2col`). `<style id="frec-suivi-mod">`.
+
+**Limites :** affichage/téléchargement uniquement (aucune écriture créée — les écritures se génèrent toujours depuis « Mes factures de vente ») ; la carte n'apparaît que s'il existe au moins une récurrence. Validé : `node --check` (152 scripts, 0 erreur) + accolades addon161 (46/46) + Playwright (récurrence test 3 mois → nb=3, TVA 20 %, 1ʳᵉ 15/01, dernière 15/03, total dû 360 €, boutons lot + unitaire présents, 0 pageerror ; équilibre ✅). Badge → **v321**.
+
+---
+
+## 🟢 MAJ précédente — Fenêtre « Nouvelle facture » + barre latérale : habillage « navy raffiné » (dégradé subtil + champs soignés) — v320
 **Quoi :** le panneau de gauche de « Nouvelle facture » (jugé « pas élégant » en v319) est **redessiné en navy raffiné** (choix utilisateur) : **dégradé bleu nuit plus profond et subtil** (`168deg,#14365f→#0e2748→#0a1b34`, + léger reflet `inset` en haut), **champs soignés** (arrondis 10 px, fond translucide discret, libellés en **petites capitales bleu-gris**, anneau de focus bleu, plus d'espacement), **fins séparateurs** (totaux/pied/lignes), en-tête `.nf-bar` affiné. Le **même dégradé raffiné est appliqué à la barre latérale** (`aside`) pour rester cohérent (« pareil »).
 
 **Comment — `yada-addon160` (surcharges `#nf-overlay .nf-form …` + gradient partagé `aside`/`.nf-form`) :** gradient v318/v319 `#103a73…` remplacé par `#14365f…` (2 occurrences) ; ajout des règles de champs (`label` petites capitales `#90a8cc`, `input/select/textarea` `background:rgba(255,255,255,.055)`, `border-radius:10px`, focus `#2f8fff` + halo) ; `.nf-form-body` padding 20/22 px ; `.nf-li`/`.nf-tot`/`.nf-foot` séparateurs bleu discret ; indicateur de date inversé (`invert(.85)`).
