@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Éditeur (BANQUE) : contrepartie 512000000 posée même si la 2ᵉ ligne est « 000000000 » + écriture incomplète jamais validée — v309
+## 🟢 Dernière mise à jour — Qualité d'affichage : netteté du texte + bleu CRYSTAL + style plus épuré (hors page dossier) — v310
+**Quoi :** passe de **qualité d'affichage** globale (Jour + Nuit) : **lissage des polices** (`-webkit-font-smoothing:antialiased` + `text-rendering:optimizeLegibility`) → texte plus net ; **bleu CRYSTAL** (`#1e90ff`) sur la sélection de texte, l'**anneau de focus** des champs, les **onglets/segments actifs**, les **liens** et les **valeurs KPI** (mode nuit) ; **lisibilité** des textes secondaires (sous-titres/libellés) renforcée par thème ; **ombres plus nettes/pro** sur les cartes internes. La **formule marketing** du hero (qui chevauchait le nom de la société) est **retirée** pour un rendu net. **La page de sélection des dossiers n'est PAS touchée** (`.login-*`/`.dossier-card` exclus).
+
+**Où / comment :** `yada-addon-qualite-affichage` injecte `<style id="qualite-affichage">` en dernier (après jour/nuit-charme). Global, hors page dossier. Validé : `node --check` (150), équilibre (d-ama/d-sci42), captures @2x (jour + nuit nets, KPI bleu Crystal, hero propre, 0 pageerror). Badge → **v310**.
+
+---
+
+## 🟢 MAJ précédente — Éditeur (BANQUE) : contrepartie 512000000 posée même si la 2ᵉ ligne est « 000000000 » + écriture incomplète jamais validée — v309
 **Quoi :** deux corrections liées à la saisie d'une **écriture bancaire (BQ)** :
 1. **Contrepartie 512 automatique fiabilisée** : à la saisie du **compte de tiers** (classe 4) ou du **montant** sur la 1ʳᵉ ligne, le compte de la 2ᵉ ligne devient **512000000** — y compris quand cette 2ᵉ ligne portait le **compte non renseigné `000000000`** (cas d'une écriture importée/incomplète). Avant, `000000000` était traité comme un « compte choisi » et la banque n'apparaissait jamais.
 2. **Jamais valider une écriture incomplète** : la fermeture/validation de la page de saisie est **bloquée** si une **ligne mouvementée** (débit ou crédit ≠ 0) a un compte **vide OU `000000000`** (saisie incomplète) — en plus du contrôle d'équilibre existant.

@@ -10888,7 +10888,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v309';
+    b.textContent='YADA · v310';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -16125,6 +16125,41 @@ ${lignes}
     +'body[data-theme="noir"] ::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#5aa0ff,#1e90ff)}'
     +'body[data-theme="noir"]{scrollbar-color:#2f7fe0 transparent;scrollbar-width:thin}';
   try{ var st=document.createElement('style'); st.id='nuit-charme'; st.textContent=css; document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon-qualite-affichage">
+/* ============================================================
+   QUALITÉ D'AFFICHAGE — netteté du texte, bleu CRYSTAL, style plus épuré/pro,
+   meilleure lisibilité. Global (Jour + Nuit) — NE TOUCHE PAS la page de
+   sélection des dossiers (.login-*, .dossier-card exclus). Injecté en dernier.
+   ============================================================ */
+(function(){
+  var css=''
+    /* Netteté : lissage des polices + rendu optimisé (toutes pages) */
+    +'body{-webkit-font-smoothing:antialiased!important;-moz-osx-font-smoothing:grayscale!important;text-rendering:optimizeLegibility!important}'
+    +'svg,img,.kpi .val,.card h2,.page-head h1{transform:translateZ(0)}' /* rendu net (sous-pixel) */
+    /* Sélection & focus en bleu CRYSTAL (hors recherche dossier) */
+    +'::selection{background:rgba(30,144,255,.30)}'
+    +'body input:not(.login-search):focus,body select:focus,body textarea:focus{outline:none!important;border-color:#1e90ff!important;box-shadow:0 0 0 3px rgba(30,144,255,.20)!important}'
+    /* Titres : tracking soigné + graisse nette */
+    +'.card h2,.page-head h1{letter-spacing:.2px}'
+    +'.kpi .val{letter-spacing:.2px}'
+    /* Onglets/segments actifs : accent bleu CRYSTAL lumineux (style) */
+    +'.seg button.on{background:linear-gradient(120deg,#1e90ff,#0a64d6)!important;box-shadow:0 4px 14px rgba(30,144,255,.35)!important;color:#fff!important}'
+    /* Liens en bleu CRYSTAL (hors boutons / cartes dossier) */
+    +'body a:not(.btn):not(.dc-open):not(.nav-btn){color:#1e90ff}'
+    +'body a:not(.btn):not(.dc-open):not(.nav-btn):hover{color:#5ab0ff}'
+    /* Lisibilité (contraste) des textes secondaires — par thème, cartes internes seulement */
+    +'body[data-theme="noir"] .card .sub,body[data-theme="noir"] .card .mini,body[data-theme="noir"] .card .hint,body[data-theme="noir"] .kpi .lbl{color:#aebed8!important}'
+    +'body[data-theme="jour"] .card .sub,body[data-theme="jour"] .card .mini,body[data-theme="jour"] .card .hint{color:#46618c!important}'
+    /* KPI : valeurs en bleu CRYSTAL net en mode nuit (hors deb/cre comptables) */
+    +'body[data-theme="noir"] .kpi .val:not(.deb):not(.cre){color:#86c6ff!important}'
+    /* Style plus épuré/pro : ombres plus nettes (moins diffuses) sur les cartes internes */
+    +'body[data-theme="jour"] .card,body[data-theme="jour"] .kpi{box-shadow:0 1px 0 rgba(10,80,200,.04),0 8px 22px rgba(10,60,160,.08)!important}'
+    +'body[data-theme="noir"] .card,body[data-theme="noir"] .kpi{box-shadow:0 1px 0 rgba(30,144,255,.06),0 10px 26px rgba(0,0,0,.42)!important}'
+    /* Hero : retrait de la formule marketing en ::after (chevauchait le nom de la société) — rendu plus net/pro */
+    +'body[data-theme="jour"] #ec-hero.cab-hero::after,body[data-theme="noir"] #ec-hero.cab-hero::after{content:none!important;display:none!important}';
+  try{ var st=document.createElement('style'); st.id='qualite-affichage'; st.textContent=css; document.head.appendChild(st); }catch(e){}
 })();
 </script>
 <script id="yada-addon112">
