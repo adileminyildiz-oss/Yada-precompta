@@ -10885,7 +10885,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v304';
+    b.textContent='YADA · v305';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -14944,6 +14944,12 @@ ${lignes}
     el.textContent=txt+' · '+new Date().toLocaleTimeString('fr-FR'); el.style.display='block';
     clearTimeout(el._t); el._t=setTimeout(function(){ el.style.display='none'; }, 4000);
     var s=document.getElementById('cloud-status'); if(s) s.textContent=txt; }catch(e){} }
+  /* Message d'ÉCHEC de synchro automatique : affiché UNE SEULE FOIS par session
+     (à l'ouverture), puis silencieux — plus de bandeau à chaque enregistrement. */
+  var cloudErrShown=false;
+  function cloudErr(txt, toastMsg){ if(cloudErrShown) return; cloudErrShown=true;
+    try{ status(txt); }catch(e){}
+    if(toastMsg && typeof toast==='function'){ try{ toast(toastMsg); }catch(e){} } }
 
   function cloudFetch(method, path, body, extra){
     var c=cfg(); var ctrl=new AbortController(); var to=setTimeout(function(){ try{ctrl.abort();}catch(e){} }, 15000);
@@ -15020,8 +15026,7 @@ ${lignes}
         .then(function(){ localStorage.setItem(TSK, String(ts)); status(c.encrypt?'🔒 Enregistré (chiffré) dans le cloud':'☁ Enregistré dans le cloud'); return true; }); })
       .catch(function(e){ var msg=String((e&&e.message)||e||'').slice(0,160);
         try{ localStorage.setItem('yada-cloud-err', JSON.stringify({t:Date.now(), msg:msg})); }catch(_){}
-        status('☁ Échec de l\'envoi'+(msg?(' : '+msg):''));
-        if(typeof toast==='function') toast('Synchro : envoi échoué — '+(/enc/.test(msg)?'colonne « enc » manquante : ré-exécutez le script SQL (Paramétrage → Aide).':(msg||'vérifiez l\'URL, la clé et la table Supabase.')));
+        cloudErr('☁ Échec de l\'envoi'+(msg?(' : '+msg):''), 'Synchro : envoi échoué — '+(/enc/.test(msg)?'colonne « enc » manquante : ré-exécutez le script SQL (Paramétrage → Aide).':(msg||'vérifiez l\'URL, la clé et la table Supabase.')));
         return false; });
   };
   window.cloudPull=function(silencieux){
@@ -15035,7 +15040,7 @@ ${lignes}
           if(ok&&typeof toast==='function') toast('Dernier enregistrement récupéré depuis le cloud ✓'); return ok;
         }).catch(function(){ status('🔒 Phrase secrète invalide — données protégées non déchiffrées'); if(typeof toast==='function') toast('Phrase secrète invalide : impossible de déchiffrer les données du cloud.'); return false; });
       }).catch(function(e){ var msg=String((e&&e.message)||e||'').slice(0,160);
-        if(!silencieux){ status('☁ Réception impossible'+(msg?(' : '+msg):'')); if(typeof toast==='function') toast('Synchro : réception impossible — '+(msg||'vérifiez l\'URL, la clé et la table Supabase, et que la même clé d\'espace est utilisée sur chaque appareil.')); }
+        if(!silencieux){ cloudErr('☁ Réception impossible'+(msg?(' : '+msg):''), 'Synchro : réception impossible — '+(msg||'vérifiez l\'URL, la clé et la table Supabase, et que la même clé d\'espace est utilisée sur chaque appareil.')); }
         return false; });
   };
   window.cloudSyncNow=function(){ status('☁ Synchronisation…'); return window.cloudPull(true).then(function(){ return window.cloudPushNow(); }); };
