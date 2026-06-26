@@ -10888,7 +10888,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v314';
+    b.textContent='YADA · v315';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -19140,6 +19140,77 @@ ${lignes}
     +'body[data-theme="noir"] .sg-accinfo .sg-ai-c{color:#eaf2ff}'
     +'body[data-theme="noir"] .sg-accinfo .sg-ai-k{color:#5ab0ff;opacity:1}';
     document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon160">
+/* ============================================================
+   FACTURE — toujours au format A4 (aperçu écran + enregistrement PDF +
+   impression) : la feuille reste une page A4 (210×297 mm), le vide se
+   remplit jusqu'au bas, et si les désignations dépassent, le contenu est
+   reporté sur une 2ᵉ (3ᵉ…) page A4 sans couper les lignes/blocs.
+   + BARRE LATÉRALE élargie (272 px) et outils du bas plus aérés.
+   100% additif (CSS injecté en dernier + petit ajusteur d'aperçu).
+   ============================================================ */
+(function(){
+  try{
+    var st=document.createElement('style'); st.id='fa-a4-format-mod'; st.textContent=
+      /* ----- Facture au format A4 à l'écran (desktop) ----- */
+      '@media screen and (min-width:821px){'
+      +'.inv-page{width:210mm !important;max-width:210mm !important;min-height:297mm !important;'
+      +'box-sizing:border-box !important;padding:16mm 15mm !important;margin:0 auto 16px !important}'
+      +'}'
+      /* ----- Pas de coupure disgracieuse entre deux pages A4 ----- */
+      +'.inv-t thead{display:table-header-group}'
+      +'.inv-t tr{page-break-inside:avoid;break-inside:avoid}'
+      +'.inv-top,.inv-meta,.inv-parties,.inv-tot,.inv-pay,.inv-cond,.inv-foot-line{page-break-inside:avoid;break-inside:avoid}'
+      /* ----- Enregistrement PDF / impression : pages A4 enchaînées ----- */
+      +'@media print{'
+      +'@page{size:A4;margin:14mm}'
+      +'html,body{background:#fff !important}'
+      +'#print-area,#print-area .inv{background:#fff !important}'
+      +'#print-area .inv-page{width:auto !important;max-width:none !important;min-height:0 !important;'
+      +'margin:0 !important;padding:0 !important;border:none !important;box-shadow:none !important}'
+      +'#print-area .inv-t thead{display:table-header-group !important}'
+      +'#print-area .inv-t tr{page-break-inside:avoid !important}'
+      +'#print-area .inv-tot,#print-area .inv-pay,#print-area .inv-cond,#print-area .inv-foot-line{page-break-inside:avoid !important}'
+      +'}'
+      /* ----- Aperçu direct : la feuille A4 tient dans son cadre ----- */
+      +'#fa-a4-wrap .fa-a4-paper{display:block !important;overflow:auto !important;text-align:left}'
+      /* ----- Barre latérale élargie + outils du bas plus aérés ----- */
+      +'@media (min-width:821px){'
+      +'.layout{grid-template-columns:272px 1fr !important}'
+      +'aside{padding:22px 18px 16px !important}'
+      +'.side-foot{gap:5px !important;padding-top:10px !important}'
+      +'.side-foot button{font-size:11px !important;line-height:1.25 !important;padding:6px 10px !important;border-radius:7px !important}'
+      +'.theme-toggle-side{font-size:11px !important;padding:7px 10px !important;border-radius:7px !important}'
+      +'}';
+    document.head.appendChild(st);
+  }catch(e){}
+
+  /* Ajuste l'aperçu A4 en direct (#fa-a4) pour qu'il tienne en largeur dans le cadre. */
+  function fitFA4(){
+    try{
+      var paper=document.querySelector('#fa-a4-wrap .fa-a4-paper'); if(!paper) return;
+      var inv=paper.querySelector('.inv'); if(!inv) return;
+      var page=inv.querySelector('.inv-page'); if(!page) return;
+      var avail=paper.clientWidth-24; if(avail<60) return;
+      var pageW=page.offsetWidth||794;
+      var s=avail/pageW; if(s>1) s=1; if(!isFinite(s)||s<=0) s=0.9;
+      inv.style.transformOrigin='top left';
+      inv.style.transform='scale('+s+')';
+      inv.style.width=pageW+'px';
+      paper.style.height=Math.ceil(page.offsetHeight*s+8)+'px';
+    }catch(e){}
+  }
+  window.fitFA4=fitFA4;
+  /* re-greffe sur faMaj (déjà enveloppée par addon105) pour ajuster après chaque rafraîchissement de l'aperçu */
+  try{
+    if(typeof faMaj==='function'){
+      var _m=faMaj;
+      faMaj=function(){ var r=_m.apply(this,arguments); try{ requestAnimationFrame(fitFA4); }catch(e){ fitFA4(); } return r; };
+    }
+  }catch(e){}
+  try{ window.addEventListener('resize', function(){ try{ fitFA4(); }catch(e){} }); }catch(e){}
 })();
 </script>
 </body>
