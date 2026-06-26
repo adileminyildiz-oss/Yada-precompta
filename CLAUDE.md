@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Éditeur (BANQUE) : tant que l'écriture n'est pas soldée, ne pas ajouter de ligne — curseur sur la ligne à corriger — v285
+## 🟢 Dernière mise à jour — Éditeur (BANQUE) : compte de tiers en 1ʳᵉ ligne → 2ᵉ ligne 512000000 automatique — v286
+**Quoi :** dans la **Consultation des comptes** (éditeur d'écritures), en **journal de banque (BQ)**, dès qu'on **saisit un compte de tiers** (classe 4 : 401…/411…/421…/43…/45…) sur la **1ʳᵉ ligne** d'une écriture, le **compte de la 2ᵉ ligne devient automatiquement 512000000** (banque), avec le **montant miroir** (débit↔crédit) pour solder l'écriture. Vaut pour **toute écriture BQ** — indépendamment de l'option « validation automatique » (v277), qui ne s'active que si elle est cochée. Si la 2ᵉ ligne est déjà renseignée avec un autre compte (écriture multi-lignes / split), elle **n'est pas écrasée**.
+
+**Comment — `yada-addon154` (wrap de `window.ecSetLine`) :** sur `field==='compte'` et `i===0`, si `e.journal==='BQ'` et que le compte de la 1ʳᵉ ligne est de **classe 4** (`charAt(0)==='4'`), et que l'écriture a **≤ 2 lignes**, on crée au besoin la 2ᵉ ligne, on force `compte='512000000'` **seulement si elle est vide ou déjà la banque**, on reprend le libellé (si vide) et on pose le **montant miroir** (si aucun montant n'y figure encore), puis `ecRender()`. Aucune logique comptable modifiée.
+
+**Limites :** scope **banque** + **compte de tiers (classe 4)** en 1ʳᵉ ligne ; les écritures multi-lignes (> 2) et les 2ᵉ lignes déjà saisies manuellement sont préservées. Validé : `node --check` (142 scripts). Badge → **v286 · banque : 1ʳᵉ ligne tiers → 2ᵉ ligne 512 auto**.
+
+---
+
+## 🟢 MAJ précédente — Éditeur (BANQUE) : tant que l'écriture n'est pas soldée, ne pas ajouter de ligne — curseur sur la ligne à corriger — v285
 **Quoi :** dans l'éditeur, en **journal de banque (BQ)**, **tant que l'écriture n'est pas soldée** (Débit ≠ Crédit), descendre (Entrée/flèche du bas) **n'ajoute plus de nouvelle ligne** (compte) parasite. L'écriture ayant déjà sa contrepartie (2 lignes : opération + 512), le curseur **reste sur la ligne à corriger** — sur le **compte** s'il est vide, sinon sur le **montant manquant** (D > C → crédit à compléter, sinon débit) — avec le message « Soldez l'écriture… ». Une fois soldée, descendre passe à une nouvelle écriture (v283/v284). Les **autres journaux** (OD, ACH multi-lignes…) gardent l'ajout de ligne pour solder (v268).
 
 **Comment — 1 édition de `ecDescendre` (`addon146`) :** garde ajoutée avant l'ajout de ligne — si `e.journal==='BQ'` et `e.lignes.length>=2` et non soldée, on **ne fait pas** `ecAddLine` ; on focalise la ligne courante (compte vide → `input.ec-cpt`, sinon le `input.ec-num` du côté à compléter selon le signe de `d−c`) et on retourne `true` (pas de descente / nouvelle écriture).
