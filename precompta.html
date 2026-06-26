@@ -9073,10 +9073,13 @@ function ecFermer(){
     window.ecNewId=null;
     var _ov=document.getElementById('ec-overlay'); if(_ov) _ov.classList.remove('show'); render(); return;
   }
-  /* Empêcher la fermeture tant qu'une ligne mouvementée n'a pas de compte saisi. */
+  /* Empêcher la fermeture tant qu'une ligne mouvementée n'a pas de compte saisi
+     (compte vide OU non renseigné 000000000 = saisie incomplète → jamais valider). */
   try{ var manque=(typeof ecEcritures==='function'?ecEcritures():[]).some(function(e){
-      return (e.lignes||[]).some(function(l){ return (((+l.debit||0)!==0)||((+l.credit||0)!==0)) && !(l.compte||'').trim(); }); });
-    if(manque){ if(typeof toast==='function') toast('Renseignez un compte sur chaque ligne avant de fermer la page de saisie.'); return; }
+      return (e.lignes||[]).some(function(l){ var cc=(l.compte||'').trim();
+        var vide=(!cc || cc==='000000000' || (typeof c9==='function' && c9(cc)==='000000000'));
+        return (((+l.debit||0)!==0)||((+l.credit||0)!==0)) && vide; }); });
+    if(manque){ if(typeof toast==='function') toast('Renseignez un compte (≠ 000000000) sur chaque ligne mouvementée avant de fermer la page de saisie.'); return; }
   }catch(e){}
   /* Empêcher la fermeture tant qu'une écriture n'est pas SOLDÉE (Débit = Crédit).
      L'utilisateur doit équilibrer toute écriture modifiée avant de quitter la page. */
@@ -10885,7 +10888,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v308';
+    b.textContent='YADA · v309';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -18798,8 +18801,9 @@ ${lignes}
       if(!e.lignes[1]) e.lignes.push({compte:'',lib:'',debit:0,credit:0});
       var l1=e.lignes[1];
       var c1=String(l1.compte||'').trim();
-      /* ne remplir que si la 2ᵉ ligne est vide ou déjà la banque (respecte un choix manuel) */
-      if(c1!=='' && c1!=='512000000' && (typeof c9!=='function' || c9(c1)!=='512000000')) return r;
+      /* ne remplir que si la 2ᵉ ligne est vide / non saisie (000000000) ou déjà la banque (respecte un choix manuel) */
+      var vide1=(c1==='' || c1==='000000000' || (typeof c9==='function' && c9(c1)==='000000000'));
+      if(!vide1 && c1!=='512000000' && (typeof c9!=='function' || c9(c1)!=='512000000')) return r;
       l1.compte='512000000';
       if(l0.lib && !l1.lib) l1.lib=l0.lib;                  /* reprend le libellé si vide */
       var dd=+l0.debit||0, cc=+l0.credit||0;                /* montant miroir s'il n'y en a pas encore */
@@ -18837,8 +18841,9 @@ ${lignes}
       if(!e.lignes[1]) e.lignes.push({compte:'512000000',lib:'',debit:0,credit:0});
       var l1=e.lignes[1];
       var c1=String(l1.compte||'').trim();
-      /* n'agir que si la 2ᵉ ligne est la banque (vide → on pose 512 ; sinon on respecte un compte choisi) */
-      if(c1==='') l1.compte='512000000';
+      /* n'agir que si la 2ᵉ ligne est la banque (vide / non saisie 000000000 → on pose 512 ; sinon on respecte un compte choisi) */
+      var vide1=(c1==='' || c1==='000000000' || (typeof c9==='function' && c9(c1)==='000000000'));
+      if(vide1) l1.compte='512000000';
       else if(c1!=='512000000' && (typeof c9!=='function' || c9(c1)!=='512000000')) return r;
       var dd=+l0.debit||0, cc=+l0.credit||0;                         /* montant miroir pour solder */
       if(dd>0){ l1.debit=0; l1.credit=(typeof r2==='function')?r2(dd):dd; }

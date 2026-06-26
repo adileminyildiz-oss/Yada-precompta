@@ -36,7 +36,20 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Mode NUIT : habillage « charme » BLEU & NOIR (dégradé global, lignes bleu vif, boutons à effet bleu, cartes fixes) — v308
+## 🟢 Dernière mise à jour — Éditeur (BANQUE) : contrepartie 512000000 posée même si la 2ᵉ ligne est « 000000000 » + écriture incomplète jamais validée — v309
+**Quoi :** deux corrections liées à la saisie d'une **écriture bancaire (BQ)** :
+1. **Contrepartie 512 automatique fiabilisée** : à la saisie du **compte de tiers** (classe 4) ou du **montant** sur la 1ʳᵉ ligne, le compte de la 2ᵉ ligne devient **512000000** — y compris quand cette 2ᵉ ligne portait le **compte non renseigné `000000000`** (cas d'une écriture importée/incomplète). Avant, `000000000` était traité comme un « compte choisi » et la banque n'apparaissait jamais.
+2. **Jamais valider une écriture incomplète** : la fermeture/validation de la page de saisie est **bloquée** si une **ligne mouvementée** (débit ou crédit ≠ 0) a un compte **vide OU `000000000`** (saisie incomplète) — en plus du contrôle d'équilibre existant.
+
+**Comment — 3 retouches chirurgicales :**
+- `addon154` (compte) & `addon155` (montant) : le test « la 2ᵉ ligne est libre » considère désormais `''`, `000000000` et `c9(...)==='000000000'` comme **vides** (`vide1`) → on pose `512000000` au lieu de respecter le zéro.
+- `ecFermer` : la garde « ligne mouvementée sans compte » traite aussi `000000000` comme **absence de compte** → blocage avec message « Renseignez un compte (≠ 000000000)… ».
+
+**Limites :** scope banque pour l'auto-512 (≤ 2 lignes, hors split) ; le blocage de validation vaut pour tous les journaux. Validé : `node --check` (148 scripts) + Playwright (BQ : 2ᵉ ligne `000000000` → `512000000` à la saisie du compte ET du montant, miroir OK ; équilibre OK ; 0 pageerror). Badge → **v309**.
+
+---
+
+## 🟢 MAJ précédente — Mode NUIT : habillage « charme » BLEU & NOIR (dégradé global, lignes bleu vif, boutons à effet bleu, cartes fixes) — v308
 **Quoi :** le **Mode Nuit** (`data-theme="noir"`) reçoit le même traitement que le Mode Jour mais en **bleu & noir** : **dégradé global bleu→noir** posé sur le `body` (plein écran, sans cadrage, **transmis à tout le logiciel** — login + pages internes), **lignes en BLEU VIF lumineux** (barre en tête de chaque KPI et avant chaque titre de carte, halo `box-shadow` bleu), **tables** à en-tête bleu nuit + survol bleu, **cartes dossier** en dégradé bleu→noir avec **bord bleu vif** et avatar lumineux, **boutons** avec **effet bleu au survol ET à l'appui** (`:hover`/`:active` → halo + glow bleu), **scrollbar** bleue. **Cartes & modules FIXES** (aucun mouvement : `transform:none`, seul le bleu varie).
 
 **Où / comment :** `yada-addon-nuit-charme` injecte `<style id="nuit-charme">` en dernier, **100% scopé `body[data-theme="noir"]`** ; conteneurs (`.layout`/`main`/`.login-wrap`/`.mod-wrap`/`.dash-wrap`) transparents pour laisser voir le dégradé. **MODE JOUR inchangé.** Validé : `node --check` (149), équilibre (d-ama/d-sci42), captures (login + tableau de bord bleu/noir, lignes bleu vif, 0 pageerror). Badge → **v308**.
