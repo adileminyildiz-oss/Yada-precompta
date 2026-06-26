@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Mode JOUR : habillage « charme » bleu & blanc + formule marketing + bandeau Nouveautés retiré — v300
+## 🟢 Dernière mise à jour — Écran « Sélectionnez un dossier » (Mode Jour) : logo lisible + fond bleu→blanc + cartes accordées — v301
+**Quoi :** sur l'**écran de sélection de dossier** en **Mode Jour**, le **logo « YADA »** (texte SVG blanc) et le titre étaient **invisibles** (blanc sur blanc) et les **cartes dossier restaient sombres** (navy) sur fond blanc. Désormais : **logo + titres lisibles** (bleu nuit), **fond en dégradé bleu→blanc** sur la page, et **cartes dossier accordées** au thème (dégradé blanc→bleu clair, bord bleu, nom foncé lisible, pastille « Actif » bleue, avatar dégradé bleu).
+
+**Où / comment :** rallonge de `yada-addon-jour-charme` (`<style id="jour-charme">`), **100% scopé `body[data-theme="jour"]`** : `.login-brand svg text` (fill bleu), `.login-title/.login-sub/.login-cab`, `.login-wrap` (dégradé bleu→blanc), `.dossier-card` + `.dc-nom/.dc-meta/.dc-siren/.dc-av/.dc-badge/.dc-open/.dc-star`. **MODE NUIT inchangé.** Validé : `node --check` (148), équilibre (d-ama/d-sci42), capture Playwright (logo visible, cartes claires, dégradé, 0 pageerror). Badge → **v301**.
+
+---
+
+## 🟢 MAJ précédente — Mode JOUR : habillage « charme » bleu & blanc + formule marketing + bandeau Nouveautés retiré — v300
 **Quoi :** le **Mode Jour** (`data-theme="jour"`) est rendu **plus convaincant** : accents/dégradés **bleus**, **surlignements qui tapent à l'œil** (barre bleue en tête de chaque KPI et avant chaque titre de carte), **tables** en-tête bleu + zébrage, **hero** plus riche avec **formule marketing** (« ✨ Une comptabilité claire et maîtrisée — vos chiffres justes, en un coup d'œil. »), **scrollbar** fine et bleue. Le **bandeau « Nouveautés »** (addon111) est **désactivé**. **Le MODE NUIT n'est pas touché.**
 
 **Où / comment :** `yada-addon-jour-charme` injecte `<style id="jour-charme">` en dernier, **100% scopé `body[data-theme="jour"]`** (couleurs uniquement, aucun mouvement — règle v235 ; rouge/vert comptables conservés). `addon111.show()` retourne immédiatement. Validé : `node --check`, équilibre (d-ama/d-sci42), captures Playwright (jour embelli, popup absent, 0 pageerror). Badge → **v300**.
