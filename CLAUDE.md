@@ -36,7 +36,23 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Module TVA : suivi annuel CA3 en vert/rouge, suivi mensuel CA12 en bleu — v314
+## 🟢 Dernière mise à jour — Facture : toujours au format A4 (multi-pages) + barre latérale élargie — v315
+**Quoi :** deux demandes sur la **facture de vente** et l'interface :
+1. **Facture toujours en A4** — la feuille de facture (`.inv-page`) devient une **vraie page A4 (210 × 297 mm)** à l'écran (aperçu en direct + modale) : le **vide se remplit jusqu'au bas** de la page (« le champ vide s'adapte »), et **si les désignations dépassent**, le contenu est **reporté sur une 2ᵉ/3ᵉ page A4** sans couper les lignes/blocs — **aussi bien à l'enregistrement PDF qu'à l'impression**. L'aperçu A4 en direct est **ajusté en largeur** pour tenir dans son cadre.
+2. **Barre latérale élargie** — la colonne de navigation passe de **236 px à 272 px** (desktop) et les **boutons d'outils du bas** (`.side-foot`) sont **plus aérés** (police 11 px, padding 6/10 px, espacement 5 px) pour ne plus être « étouffants ».
+
+**Comment — `yada-addon160` (100% additif, `<style id="fa-a4-format-mod">` injecté en dernier + ajusteur d'aperçu) :**
+- **Écran (≥821 px)** : `.inv-page{width:210mm;max-width:210mm;min-height:297mm;box-sizing:border-box;padding:16mm 15mm}` (surcharge le `min-height:0` de `inv-a4-fix`/v200). Mesuré : 793,7 × 1122,5 px = A4.
+- **Pagination** : `.inv-t thead{display:table-header-group}` (en-tête répété) + `page-break-inside:avoid` sur `.inv-t tr` et les blocs (`.inv-top/.inv-meta/.inv-parties/.inv-tot/.inv-pay/.inv-cond/.inv-foot-line`).
+- **Impression / PDF** : `@page{size:A4;margin:14mm}` ; `#print-area .inv-page` remis à plat (sans bord/ombre, largeur auto, `min-height:0`) → le contenu **enchaîne les pages A4** ; `window.print()` (utilisé par « Télécharger PDF » et l'impression) en bénéficie.
+- **Aperçu en direct** : `fitFA4()` (re-greffé sur `faMaj`, déjà enveloppée par addon105, + écouteur `resize`) met la feuille A4 à l'échelle pour tenir dans la largeur du cadre (`#fa-a4-wrap .fa-a4-paper`).
+- **Barre latérale** : `@media(min-width:821px){.layout{grid-template-columns:272px 1fr}…}` (+ `aside`, `.side-foot`, `.side-foot button`, `.theme-toggle-side`). Mobile (≤820 px, barre fixe 82vw) inchangé.
+
+**Limites :** affichage / mise en page uniquement (aucune donnée/écriture/logique modifiée). Validé : `node --check` (151 scripts, 0 erreur) + accolades équilibrées (CSS statique 2010/2010 ; addon160 37/37) + Playwright (`.inv-page` = 210×297 mm border-box, barre latérale `272px 1fr`, équilibre OK, 0 pageerror). Badge → **v315**.
+
+---
+
+## 🟢 MAJ précédente — Module TVA : suivi annuel CA3 en vert/rouge, suivi mensuel CA12 en bleu — v314
 **Quoi :** ajustement des deux tableaux de suivi TVA selon la demande (« les deux points ») :
 1. **Tableau « Suivi annuel de la TVA » (CA3)** — les colonnes **Collectée** et **Déductible** **retrouvent leur coloration comptable** : **vert** (classe `cre`) pour la collectée, **rouge** (classe `deb`) pour la déductible (c'était neutralisé en v313 ; rétabli pour la lisibilité comptable).
 2. **Tableau « Suivi mensuel détaillé (CA3) » de la vue régime CA12** (réel simplifié) — les mêmes colonnes **Collectée / Déductible** passent au **texte neutre du thème (bleu système)** (classe `r num`), comme le reste du module.
