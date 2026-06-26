@@ -10875,7 +10875,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v285 · banque : pas de ligne tant que non soldée';
+    b.textContent='YADA · v286 · banque : 1ʳᵉ ligne tiers → 2ᵉ ligne 512 auto';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -18601,6 +18601,47 @@ ${lignes}
     if(ids.length>=3 && typeof yadaConfirm==='function'){
       yadaConfirm('Supprimer les '+ids.length+' écritures sélectionnées ? Cette action est définitive.', go, {danger:true});
     } else { go(); }   /* 1 ou 2 écritures : suppression directe (pas de message) */
+  };
+})();
+</script>
+<script id="yada-addon154">
+/* ============================================================
+   CONSULTATION / éditeur — JOURNAL DE BANQUE (BQ) :
+   en saisissant le COMPTE DE TIERS (classe 4 : 401…/411…/421…/43…/45…)
+   sur la 1ʳᵉ ligne d'une écriture, le compte de la 2ᵉ ligne devient
+   automatiquement 512000000 (banque), avec le montant miroir pour solder.
+   Vaut pour TOUTE écriture BQ (indépendant de la « validation automatique »
+   v277, qui ne s'active que si l'option est cochée).
+   100% additif — wrap de window.ecSetLine. Aucune logique comptable modifiée.
+   ============================================================ */
+(function(){
+  if(typeof window.ecSetLine!=='function') return;
+  var _esl=window.ecSetLine;
+  window.ecSetLine=function(id,i,field,v){
+    var r=_esl.apply(this, arguments);
+    try{
+      if(field!=='compte' || +i!==0) return r;              /* on n'agit que sur le compte de la 1ʳᵉ ligne */
+      var e=(typeof ecGet==='function')?ecGet(id):null;
+      if(!e || String(e.journal)!=='BQ') return r;          /* uniquement le journal de banque */
+      var l0=e.lignes && e.lignes[0]; if(!l0) return r;
+      var cpt=String(l0.compte||'').trim();
+      if(cpt.charAt(0)!=='4') return r;                      /* compte de tiers = classe 4 */
+      if((e.lignes||[]).length>2) return r;                 /* ne pas perturber une écriture multi-lignes (split) */
+      if(!e.lignes[1]) e.lignes.push({compte:'',lib:'',debit:0,credit:0});
+      var l1=e.lignes[1];
+      var c1=String(l1.compte||'').trim();
+      /* ne remplir que si la 2ᵉ ligne est vide ou déjà la banque (respecte un choix manuel) */
+      if(c1!=='' && c1!=='512000000' && (typeof c9!=='function' || c9(c1)!=='512000000')) return r;
+      l1.compte='512000000';
+      if(l0.lib && !l1.lib) l1.lib=l0.lib;                  /* reprend le libellé si vide */
+      var dd=+l0.debit||0, cc=+l0.credit||0;                /* montant miroir s'il n'y en a pas encore */
+      if(!(+l1.debit) && !(+l1.credit)){
+        if(dd>0){ l1.debit=0; l1.credit=(typeof r2==='function')?r2(dd):dd; }
+        else if(cc>0){ l1.credit=0; l1.debit=(typeof r2==='function')?r2(cc):cc; }
+      }
+      if(typeof ecRender==='function') ecRender();
+    }catch(_){}
+    return r;
   };
 })();
 </script>
