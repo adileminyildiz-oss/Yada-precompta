@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Éditeur : la FLÈCHE DU BAS valide aussi le montant (comme Entrée) → pas de 3ᵉ ligne fantôme, curseur sur la prochaine ligne — v284
+## 🟢 Dernière mise à jour — Éditeur (BANQUE) : tant que l'écriture n'est pas soldée, ne pas ajouter de ligne — curseur sur la ligne à corriger — v285
+**Quoi :** dans l'éditeur, en **journal de banque (BQ)**, **tant que l'écriture n'est pas soldée** (Débit ≠ Crédit), descendre (Entrée/flèche du bas) **n'ajoute plus de nouvelle ligne** (compte) parasite. L'écriture ayant déjà sa contrepartie (2 lignes : opération + 512), le curseur **reste sur la ligne à corriger** — sur le **compte** s'il est vide, sinon sur le **montant manquant** (D > C → crédit à compléter, sinon débit) — avec le message « Soldez l'écriture… ». Une fois soldée, descendre passe à une nouvelle écriture (v283/v284). Les **autres journaux** (OD, ACH multi-lignes…) gardent l'ajout de ligne pour solder (v268).
+
+**Comment — 1 édition de `ecDescendre` (`addon146`) :** garde ajoutée avant l'ajout de ligne — si `e.journal==='BQ'` et `e.lignes.length>=2` et non soldée, on **ne fait pas** `ecAddLine` ; on focalise la ligne courante (compte vide → `input.ec-cpt`, sinon le `input.ec-num` du côté à compléter selon le signe de `d−c`) et on retourne `true` (pas de descente / nouvelle écriture).
+
+**Limites :** scope **banque** (les écritures multi-lignes BQ — split — s'ajoutent via clic droit « Insérer une ligne »). Validé : `node --check` (141 scripts). Badge → **v285 · banque : pas de ligne tant que non soldée**.
+
+---
+
+## 🟢 MAJ précédente — Éditeur : la FLÈCHE DU BAS valide aussi le montant (comme Entrée) → pas de 3ᵉ ligne fantôme, curseur sur la prochaine ligne — v284
 **Quoi :** v283 avait corrigé la touche **Entrée** ; la **flèche du bas** générait encore une 3ᵉ ligne parasite quand l'écriture était soldée. Désormais, **flèche du bas** depuis un champ Débit/Crédit de la dernière ligne **valide d'abord le montant** (`blur`), puis : écriture **soldée** → **pas de 3ᵉ ligne** ; on **descend vers la prochaine ligne** — nouvelle écriture (curseur sur la **date**) **seulement si c'est la dernière écriture du journal**, sinon on passe à l'écriture suivante ; écriture **non soldée** → ligne ajoutée à solder (inchangé). Le curseur suit ainsi la suite chronologique.
 
 **Comment — 1 édition chirurgicale (`addon114`, branche `ArrowDown`) :** sur la dernière ligne, si le champ est Débit/Crédit (`col===6||col===7`), on applique la même logique « blur d'abord » que la branche Entrée (v283) : `inp.blur()` → recalcul de l'équilibre sur données fraîches → soldée : `ecAjouterEcriture()` si dernière écriture (sinon focus de l'écriture suivante), **jamais** `ecDescendre` ; non soldée : `ecDescendre` (ligne à solder). Les autres champs gardent le comportement précédent.
