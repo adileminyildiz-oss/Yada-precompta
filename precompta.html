@@ -10879,7 +10879,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v291 · curseur passe sur le libellé (toutes lignes)';
+    b.textContent='YADA · v292 · insérer une ligne : HA/VT non soldée seulement';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -16086,9 +16086,16 @@ ${lignes}
       if(typeof ecRender==='function') ecRender();
     }catch(_){ if(typeof ecRender==='function') ecRender(); }
   };
-  /* Helper : insérer une ligne vierge APRÈS la ligne i de l'écriture. */
+  /* Helper : insérer une ligne vierge APRÈS la ligne i de l'écriture.
+     RÉSERVÉ aux journaux Achats (ACH/HA) et Ventes (VTE/VT) ; INTERDIT si
+     l'écriture est déjà soldée (Débit = Crédit). */
   window.ecInsertLine=function(id,i){
     var e=(typeof ecGet==='function')?ecGet(id):null; if(!e||!e.lignes) return;
+    var jr=String(e.journal||'');
+    if(jr!=='ACH' && jr!=='VTE'){ if(typeof toast==='function') toast('Insertion de ligne réservée aux journaux Achats (HA) et Ventes (VT).'); return; }
+    var _d=0,_c=0; e.lignes.forEach(function(l){ _d+=(+l.debit||0); _c+=(+l.credit||0); });
+    var soldee=Math.abs((typeof r2==='function'?r2(_d-_c):(_d-_c)))<0.005 && (_d>0||_c>0);
+    if(soldee){ if(typeof toast==='function') toast('Écriture déjà soldée — insertion de ligne impossible (Débit = Crédit).'); return; }
     var pos=(typeof i==='number' && i>=0)?(i+1):e.lignes.length;
     var lib=(e.lignes[0]&&e.lignes[0].lib)||'';
     e.lignes.splice(pos,0,{compte:'',lib:lib,debit:0,credit:0});

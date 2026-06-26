@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Éditeur : le curseur passe sur le LIBELLÉ à chaque ligne (modifiable partout, tous journaux) — v291
+## 🟢 Dernière mise à jour — Éditeur : « Insérer une ligne » réservé aux journaux HA/VT et seulement si l'écriture n'est PAS soldée — v292
+**Quoi :** dans l'**éditeur d'écritures** (Consultation des comptes), le clic droit **« ↧ Insérer une ligne »** n'insère désormais une ligne **que dans les journaux Achats (HA = ACH) et Ventes (VT = VTE)**, et **uniquement si l'écriture n'est pas soldée** (Débit ≠ Crédit). Si l'écriture est **déjà soldée** → **insertion interdite** (message « Écriture déjà soldée — insertion impossible »). Dans les autres journaux (BQ, OD, ODP…) → insertion refusée (« réservée aux journaux Achats (HA) et Ventes (VT) »).
+
+**Comment — 1 garde ajoutée en tête de `window.ecInsertLine` (`yada-addon113`) :** refus si `e.journal` ∉ {`ACH`,`VTE`} ; sinon calcul de l'équilibre (`Σdébit`/`Σcrédit`) → refus si soldée (`|Σd−Σc|<0,005` et un mouvement > 0) ; sinon insertion normale (`splice` + `ecRender`). Toast explicatif dans les deux cas de refus.
+
+**Limites :** ne touche que l'action d'insertion (le menu reste affiché ; le refus est signalé par un toast). Validé : `node --check` (144 scripts) + Playwright (ACH/VTE non soldée → insérée ; ACH/VTE soldée → bloquée ; BQ/OD → bloquées ; équilibre OK ; 0 pageerror). Badge → **v292 · insérer une ligne : HA/VT non soldée seulement**.
+
+---
+
+## 🟢 MAJ précédente — Éditeur : le curseur passe sur le LIBELLÉ à chaque ligne (modifiable partout, tous journaux) — v291
 **Quoi :** dans l'**éditeur d'écritures** (Consultation des comptes), pendant la **saisie au clavier** (Tab / Entrée / flèches), le **curseur passe désormais aussi sur le libellé** — sur **toutes les lignes** de l'écriture, pas seulement la première — afin de pouvoir **modifier le libellé** à tout moment. Vaut pour **tous les journaux**. Avant, le libellé n'était éditable que sur la 1ʳᵉ ligne (répété en lecture seule sur les suivantes) ; en saisie de banque, le flux amenait le curseur sur la 2ᵉ ligne (contrepartie 512) où le libellé était inaccessible.
 
 **Comment — 1 édition chirurgicale de `ecRender` (cellule `ec-lb`) :** le libellé devient un **`<input class="ec-i">` sur chaque ligne** (au lieu d'un `<span class="ec-ro">` sur les lignes ≥ 2), toujours lié à `e.libelle` via `onchange="ecSetLibelleEcr(id, v)"`. La navigation clavier (`addon114`, basée sur les `input.ec-i`) inclut donc le libellé sur chaque ligne. `ecSetLibelleEcr` met à jour `e.libelle` et re-rend → le libellé **reste identique sur toutes les lignes** (invariant v221 préservé).
