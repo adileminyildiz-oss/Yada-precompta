@@ -10879,7 +10879,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v289 · clic droit : supprimer les lignes sélectionnées';
+    b.textContent='YADA · v290 · supprimer une écriture entière (sélection)';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -16495,18 +16495,25 @@ ${lignes}
   window.ecSelectedEcritureIds=function(){ var seen={},out=[]; Object.keys(selKeys).forEach(function(k){ var id=k.split('|')[0]; if(!seen[id]){ seen[id]=1; out.push(id); } }); return out; };
   /* références {eid,li} des LIGNES sélectionnées */
   window.ecSelectedLineRefs=function(){ return Object.keys(selKeys).map(function(k){ var p=k.split('|'); return {eid:p[0], li:+p[1]}; }); };
-  /* supprimer TOUTES les lignes sélectionnées (sur une ou plusieurs écritures) */
+  /* supprimer TOUTES les lignes sélectionnées (sur une ou plusieurs écritures) ;
+     si TOUTES les lignes d'une écriture sont sélectionnées → l'écriture entière est
+     retirée du stockage (pas de première ligne vide laissée derrière). */
   window.ecSupprimerLignesSelection=function(){
     var keys=Object.keys(selKeys); if(!keys.length) return 0;
     var byE={}; keys.forEach(function(k){ var p=k.split('|'); (byE[p[0]]=byE[p[0]]||[]).push(+p[1]); });
+    var removeIds=[];
     Object.keys(byE).forEach(function(id){ var e=(typeof ecGet==='function')?ecGet(id):null; if(!e||!e.lignes) return;
       byE[id].sort(function(a,b){return b-a;}).forEach(function(li){ if(e.lignes[li]) e.lignes.splice(li,1); });
-      if(!e.lignes.length) e.lignes.push({compte:'',lib:'',debit:0,credit:0});   /* jamais d'écriture à 0 ligne */
+      if(!e.lignes.length) removeIds.push(id);   /* toutes les lignes supprimées → on retire l'écriture entière */
     });
+    if(removeIds.length){
+      try{ db.ecritures=(db.ecritures||[]).filter(function(e){ return removeIds.indexOf(e.id)<0; }); }catch(_){}
+      try{ db.odiv=(db.odiv||[]).filter(function(o){ return removeIds.indexOf(o.ecritureId)<0; }); }catch(_){}
+    }
     clearSel();
     if(typeof save==='function') save();
     if(typeof ecRender==='function') ecRender();
-    if(typeof toast==='function') toast(keys.length+' ligne(s) supprimée(s)');
+    if(typeof toast==='function') toast(keys.length+' ligne(s) supprimée(s)'+(removeIds.length?(' · '+removeIds.length+' écriture(s) retirée(s)'):''));
     return keys.length;
   };
   function selectRange(w,a,b){ selKeys={}; var R=rows(w); var lo=Math.min(a,b),hi=Math.max(a,b); for(var i=lo;i<=hi;i++){ if(R[i]) selKeys[keyOf(R[i])]=1; } paint(w);

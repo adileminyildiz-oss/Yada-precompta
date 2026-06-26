@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Éditeur : clic droit « Supprimer la ligne » supprime TOUTES les lignes sélectionnées (plus de « Supprimer l'écriture sélectionnée ») — v289
+## 🟢 Dernière mise à jour — Éditeur : sélectionner toutes les lignes d'une écriture → l'écriture entière est supprimée (plus de 1ʳᵉ ligne vide laissée) — v290
+**Quoi :** complément de la v289. Dans l'**éditeur d'écritures**, quand on **sélectionne toutes les lignes d'une écriture** (donc l'écriture entière) et qu'on **supprime** (clic droit → « Supprimer les N lignes sélectionnées »), **l'écriture entière est retirée** — on ne laisse **plus une première ligne vide** derrière. Si seules **certaines** lignes d'une écriture sont sélectionnées, elle conserve ses lignes restantes (inchangé). Vaut pour **plusieurs écritures** à la fois.
+
+**Comment — 1 édition de `ecSupprimerLignesSelection` (`yada-addon120`) :** après avoir splicé les lignes sélectionnées (index décroissant), toute écriture qui se retrouve à **0 ligne** est **retirée du stockage** (`db.ecritures=db.ecritures.filter(e=>removeIds.indexOf(e.id)<0)` + `db.odiv` filtré sur `ecritureId`) **au lieu** d'y pousser une ligne vide. `save`+`ecRender` ; toast « N ligne(s) supprimée(s) · M écriture(s) retirée(s) ».
+
+**Limites :** suppression directe (sans confirmation, demande explicite). Validé : `node --check` (144 scripts) + Playwright (pilotage réel de la sélection : 3 lignes d'une écriture sélectionnées → écriture retirée, 19→18, plus présente, 0 pageerror ; équilibre des écritures OK). Badge → **v290 · supprimer une écriture entière (sélection)**.
+
+---
+
+## 🟢 MAJ précédente — Éditeur : clic droit « Supprimer la ligne » supprime TOUTES les lignes sélectionnées (plus de « Supprimer l'écriture sélectionnée ») — v289
 **Quoi :** dans l'**éditeur d'écritures** (Consultation des comptes), après avoir **sélectionné plusieurs lignes** (glisser / Maj+clic sur la zone gauche/droite des lignes), le **clic droit** ne propose plus **« Supprimer l'écriture sélectionnée »** (ni « les N écritures sélectionnées »). À la place, l'entrée **« 🗑 Supprimer la ligne »** (qui devient **« 🗑 Supprimer les N lignes sélectionnées »** quand plusieurs lignes sont sélectionnées) **supprime toutes les lignes sélectionnées** par l'utilisateur — sur une ou plusieurs écritures. Sans sélection, elle supprime simplement la ligne cliquée (comportement inchangé).
 
 **Comment — 3 éditions chirurgicales :**
