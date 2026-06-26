@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Mode JOUR : dégradé bleu→blanc GLOBAL (login + logiciel), plein écran sans cadrage — v304
+## 🟢 Dernière mise à jour — Synchro cloud : message d'échec affiché UNE SEULE FOIS par session (plus à chaque enregistrement) — v305
+**Quoi :** le **bandeau rouge d'échec de synchronisation** (« ☁ Échec de l'envoi : … » / « Réception impossible … », ex. l'erreur Supabase `PGRST205 : table yada_sync introuvable`) n'apparaît désormais **qu'une seule fois par session** — à la **première tentative** (à l'ouverture) — au lieu de réapparaître à **chaque enregistrement / mise à jour** (la poussée cloud est débattue après chaque `save`, donc l'erreur se répétait sans cesse). Après la première fois, les échecs de **synchro automatique** sont **silencieux** pour le reste de la session.
+
+**Comment — `yada-addon102` (3 retouches) :** un drapeau de session `cloudErrShown` + un helper `cloudErr(txt, toastMsg)` qui n'affiche `status()` + `toast()` **que si `cloudErrShown` est faux** (puis le passe à vrai). Les branches d'erreur de `cloudPushNow` (envoi) et `cloudPull` (réception) appellent `cloudErr(...)` au lieu de `status()`/`toast()` directs. Les actions **manuelles** (« Tester la connexion » `cloudTest`, contrôle d'intégrité) gardent leur retour d'erreur **non filtré** (diagnostic à la demande). Le drapeau se réinitialise au **rechargement** (nouvelle session).
+
+**Limites :** seuls les échecs de synchro **automatique** sont limités à une fois ; les boutons de test restent bavards (volontairement). Validé : `node --check` + Playwright (3 `cloudPushNow` en échec → **1 seul** toast d'erreur ; 0 pageerror). Badge → **v305**.
+
+---
+
+## 🟢 MAJ précédente — Mode JOUR : dégradé bleu→blanc GLOBAL (login + logiciel), plein écran sans cadrage — v304
 **Quoi :** le **dégradé bleu→blanc** est désormais posé sur le **`body`** (racine, sans marge) → il **couvre tout l'écran bord à bord (plus de cadrage/frame)** et **se transmet à toutes les pages du logiciel** (tableau de bord, modules…), pas seulement l'écran de sélection des dossiers. Les conteneurs (`.layout`, `main`, `.login-wrap`, `.mod-wrap`, `.dash-wrap`) passent en **transparent** pour laisser voir le dégradé ; les cartes blanches « flottent » dessus.
 
 **Aussi :** la **formule marketing** du hero (`#ec-hero.cab-hero::after`) qui **débordait/était coupée** est repositionnée proprement (`position:absolute` en bas du hero, plein largeur, sans rognage).
