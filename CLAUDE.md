@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Écran « Sélectionnez un dossier » (Mode Jour) : dégradé bleu→blanc pleine page, plus accentué, sans cadrage — v302
+## 🟢 Dernière mise à jour — Écran « Sélectionnez un dossier » (Mode Jour) : dégradé bleu plus INTENSE + en-tête en blanc lisible — v303
+**Quoi :** le dégradé pleine page de l'écran de sélection des dossiers (Mode Jour) est rendu **nettement plus intense** (bleu soutenu `#3f86ff` en haut → blanc en bas). Comme le haut devient un bleu vif, l'**en-tête (logo « YADA », titre, sous-titre, nom du cabinet) passe en BLANC** pour rester parfaitement lisible ; les **cartes dossier** restent claires avec texte foncé.
+
+**Où / comment :** dans `jour-charme` — `.login-wrap` : `linear-gradient(158deg,#3f86ff→#5e9eff→#86b8ff→#b4d4ff→#e3f0ff→#ffffff)` (fixed, 100vh) ; `.login-brand svg text/.login-title` → blanc (+ ombre portée légère), `.login-sub/.login-cab/small` → bleu très clair. **100% scopé Mode Jour, MODE NUIT inchangé.** Validé : `node --check` (148), équilibre (d-ama/d-sci42), capture (gradient intense, en-tête blanc lisible, cartes claires, 0 pageerror). Badge → **v303**.
+
+---
+
+## 🟢 MAJ précédente — Écran « Sélectionnez un dossier » (Mode Jour) : dégradé bleu→blanc pleine page, plus accentué, sans cadrage — v302
 **Quoi :** le **dégradé** de la page de sélection des dossiers (Mode Jour) est rendu **plus accentué** (bleu plus soutenu en haut) et **couvre toute la page** (de haut en bas, bord à bord) — **plus de bande blanche en bas ni d'effet « panneau/cadrage »**.
 
 **Où / comment :** dans `jour-charme`, la règle `body[data-theme="jour"] .login-wrap` passe d'un dégradé partiel (fondu transparent à 660px) à `linear-gradient(158deg,#8fbdff→#aed1ff→#cfe4ff→#e9f3ff→#ffffff)` avec `min-height:100vh` + `background-attachment:fixed` (couvre tout le viewport) ; `body[data-theme="jour"]:has(.login-wrap)` posé en bleu de départ en secours. **100% scopé Mode Jour, MODE NUIT inchangé.** Validé : `node --check` (148), équilibre (d-ama/d-sci42), capture (dégradé pleine page, sans cadrage, 0 pageerror). Badge → **v302**.
