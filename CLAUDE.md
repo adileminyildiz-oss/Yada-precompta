@@ -36,7 +36,18 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Éditeur : « Insérer une ligne » réservé aux journaux HA/VT et seulement si l'écriture n'est PAS soldée — v292
+## 🟢 Dernière mise à jour — Éditeur (HA/VT) : compte de tiers → TVA + charge/produit générés depuis TIERS, TTC → HT + TVA auto — v293
+**Quoi :** dans l'**éditeur d'écritures** (Consultation des comptes), en **journal Achats (HA = ACH)** ou **Ventes (VT = VTE)**, dès qu'on **saisit un compte de tiers** (401…/411…) sur la **1ʳᵉ ligne**, l'application **récupère dans le module TIERS** le **taux de TVA**, le **compte de TVA** et le **compte de charge** (achat) / **produit** (vente), et **génère automatiquement les 2 lignes de contrepartie**. Puis, dès qu'on **saisit le montant TTC** sur la ligne du tiers, le **HT et la TVA sont calculés automatiquement** → l'écriture est **soldée** ; on peut valider et passer à une autre.
+- **ACH (fournisseur)** : `401…` crédit TTC | `445660000` (compteTVA du tiers) débit TVA | `60x` (compteContre) débit HT.
+- **VTE (client)** : `411…` débit TTC | `445710000` (compteTVA du tiers) crédit TVA | `70x` (compteContre) crédit HT.
+
+**Comment — `yada-addon157` (wrap de `window.ecSetLine`) :** sur `i===0` et `e.journal ∈ {ACH,VTE}`, `ecResolveTiers(compte)` retrouve le tiers (type fournisseur↔ACH / client↔VTE) ; `build(e)` pose les comptes (`c9(compteTVA)`, `c9(compteContre)`) sur les lignes 2-3, normalise le côté du tiers (achat → crédit, vente → débit) et calcule HT/TVA via `calcMontants(TTC, taux, 'TTC')` (mêmes comptes/sens que `posterFacture`). Déclenché à la saisie du **compte** (génère les comptes) et du **montant** (recalcule HT/TVA). N'écrase pas un compte de contrepartie déjà saisi lors d'un simple changement de montant ; ne touche pas les écritures de plus de 3 lignes (split).
+
+**Limites :** scope **HA/VT** + tiers correspondant au journal ; les comptes (TVA/charge/produit) et le taux proviennent de la **fiche du tiers** (module TIERS). Validé : `node --check` (145 scripts) + Playwright (ACH EDF Pro : 401/445660000/606100000 = 120/20/100 soldée ; VTE SARL Dupont : 411/445710000/706000000 = 240/40/200 soldée ; équilibre des écritures OK ; 0 pageerror). Badge → **v293 · saisie assistée HA/VT (tiers → TVA + HT auto)**.
+
+---
+
+## 🟢 MAJ précédente — Éditeur : « Insérer une ligne » réservé aux journaux HA/VT et seulement si l'écriture n'est PAS soldée — v292
 **Quoi :** dans l'**éditeur d'écritures** (Consultation des comptes), le clic droit **« ↧ Insérer une ligne »** n'insère désormais une ligne **que dans les journaux Achats (HA = ACH) et Ventes (VT = VTE)**, et **uniquement si l'écriture n'est pas soldée** (Débit ≠ Crédit). Si l'écriture est **déjà soldée** → **insertion interdite** (message « Écriture déjà soldée — insertion impossible »). Dans les autres journaux (BQ, OD, ODP…) → insertion refusée (« réservée aux journaux Achats (HA) et Ventes (VT) »).
 
 **Comment — 1 garde ajoutée en tête de `window.ecInsertLine` (`yada-addon113`) :** refus si `e.journal` ∉ {`ACH`,`VTE`} ; sinon calcul de l'équilibre (`Σdébit`/`Σcrédit`) → refus si soldée (`|Σd−Σc|<0,005` et un mouvement > 0) ; sinon insertion normale (`splice` + `ecRender`). Toast explicatif dans les deux cas de refus.

@@ -10879,7 +10879,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v292 · insérer une ligne : HA/VT non soldée seulement';
+    b.textContent='YADA · v293 · saisie assistée HA/VT (tiers → TVA + HT auto)';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -18747,6 +18747,62 @@ ${lignes}
       window[fn]=function(){ try{ window.exoSyncPeriodes(); }catch(_){} return _o.apply(this, arguments); };
     }
   });
+})();
+</script>
+<script id="yada-addon157">
+/* ============================================================
+   CONSULTATION / éditeur — SAISIE ASSISTÉE ACHATS (HA=ACH) / VENTES (VT=VTE).
+   À la saisie d'un COMPTE DE TIERS (401…/411…) sur la 1ʳᵉ ligne, on récupère
+   dans le module TIERS le TAUX de TVA, le COMPTE DE TVA et le COMPTE DE
+   CHARGE (achat) / PRODUIT (vente), et on génère les 2 lignes de contrepartie.
+   À la saisie du MONTANT TTC (sur la ligne du tiers), HT et TVA sont calculés
+   automatiquement → écriture soldée. On peut alors valider et passer à une autre.
+     ACH (fournisseur) : 401 crédit TTC | 445660000 débit TVA | 60x débit HT
+     VTE (client)      : 411 débit TTC  | 445710000 crédit TVA | 70x crédit HT
+   100% additif — wrap de window.ecSetLine (mêmes comptes/sens que posterFacture).
+   ============================================================ */
+(function(){
+  if(typeof window.ecSetLine!=='function') return;
+  function R2(x){ return (typeof r2==='function')?r2(x):Math.round((+x||0)*100)/100; }
+  function C9(x){ return (typeof c9==='function')?c9(x):String(x||''); }
+  function lib(code){ try{ if(typeof COMPTES!=='undefined'){ return COMPTES[code]||COMPTES[C9(code)]||''; } }catch(_){} return ''; }
+  function build(e, setAccounts){
+    try{
+      var jr=String(e.journal||''); if(jr!=='ACH' && jr!=='VTE') return false;
+      var l0=e.lignes && e.lignes[0]; if(!l0) return false;
+      if((e.lignes||[]).length>3) return false;            /* ne pas perturber un split multi-lignes */
+      var t=(typeof ecResolveTiers==='function')?ecResolveTiers(l0.compte):null; if(!t) return false;
+      var isAchat=(jr==='ACH');
+      var typeOk=(isAchat && t.type==='fournisseur') || (!isAchat && t.type==='client');
+      if(!typeOk) return false;                            /* le tiers doit correspondre au journal */
+      var taux=+t.taux||0;
+      var cTVA=C9(t.compteTVA||(isAchat?'445660000':'445710000'));
+      var cCtr=t.compteContre?C9(t.compteContre):'';
+      /* TTC = montant saisi sur la ligne du tiers (peu importe le côté) → normalisé */
+      var ttc=Math.max(+l0.debit||0, +l0.credit||0);
+      if(isAchat){ l0.credit=R2(ttc); l0.debit=0; } else { l0.debit=R2(ttc); l0.credit=0; }
+      while(e.lignes.length<3) e.lignes.push({compte:'',lib:e.libelle||l0.lib||'',debit:0,credit:0});
+      var lTVA=e.lignes[1], lCtr=e.lignes[2];
+      if(setAccounts || !String(lTVA.compte||'').trim()){ lTVA.compte=cTVA; lTVA.lib=lib(t.compteTVA)||'TVA'; }
+      if(setAccounts || !String(lCtr.compte||'').trim()){ lCtr.compte=cCtr; lCtr.lib=lib(t.compteContre)||(isAchat?'Charge':'Produit'); }
+      var m=(typeof calcMontants==='function')?calcMontants(ttc,taux,'TTC'):{ht:R2(ttc),tva:0};
+      if(isAchat){ lTVA.debit=R2(m.tva); lTVA.credit=0; lCtr.debit=R2(m.ht); lCtr.credit=0; }
+      else        { lTVA.credit=R2(m.tva); lTVA.debit=0; lCtr.credit=R2(m.ht); lCtr.debit=0; }
+      return true;
+    }catch(_){ return false; }
+  }
+  var _esl=window.ecSetLine;
+  window.ecSetLine=function(id,i,field,v){
+    var r=_esl.apply(this, arguments);
+    try{
+      if(+i!==0) return r;                                 /* on agit depuis la ligne du tiers */
+      var e=(typeof ecGet==='function')?ecGet(id):null; if(!e) return r;
+      var jr=String(e.journal||''); if(jr!=='ACH' && jr!=='VTE') return r;
+      if(field==='compte'){ if(build(e,true) && typeof ecRender==='function') ecRender(); }
+      else if(field==='debit'||field==='credit'){ if(build(e,false) && typeof ecRender==='function') ecRender(); }
+    }catch(_){}
+    return r;
+  };
 })();
 </script>
 </body>
