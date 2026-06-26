@@ -36,7 +36,19 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Module TIERS : moyen de paiement préféré (liste fermée VIR/PRLV/CHQ/CB/ESP) — v295
+## 🟢 Dernière mise à jour — Consultation (page principale) : panneau « Compte sélectionné » dans la barre du bas — v296
+**Quoi :** reprise de la fonction v294 (panneau de l'éditeur) **sur la page principale de Consultation des comptes** (la grille en lecture, pas l'éditeur). À chaque **clic sur une ligne d'écriture** de la grille (`sgJournalGrid`, **tous les journaux**), la **barre du bas** (`.sg-status`, zone encerclée par l'utilisateur) affiche les **informations du compte cliqué** :
+- **Compte de TIERS** → compte de tiers + libellé (Fournisseur/Client + nom, ou libellé de l'écriture), compte de TVA + libellé, compte de charge/produit + libellé (lus dans l'écriture).
+- **Compte de TVA** → libellé du compte de TVA.
+- **Compte de charge / produit** → libellé du compte de charge / produit.
+
+**Comment — `yada-addon159` :** les lignes de la grille portent déjà `data-cpt` (compte) et `data-ecr` (écriture). Un écouteur `click` (capture) sur `.sgj tbody tr[data-cpt]` mémorise `{eid, compte}` ; `paint()` injecte un panneau `#sg-accinfo` dans `.sg-status` (avant le badge YADA) et le remplit via la même classification que v294 (`ecResolveTiers` ou préfixe `40/41` ; TVA `445…` ; charge `6…` ; produit `7…`) ; libellés via `COMPTES` (repli `db.plan`). Greffe `render` → repeint quand `current==='compta'`. `<style id="sg-accinfo-mod">` (couleurs adaptées au thème, accent bleu en mode nuit).
+
+**Limites :** affichage seul ; cible la grille des journaux (`.sgj`) — la liste des comptes généraux (sans journal sélectionné) n'a pas de `data-cpt`. Validé : `node --check` (147 scripts) + Playwright (clic réel sur la grille ACH : tiers → tiers+TVA+charge avec libellés ; TVA → libellé TVA ; charge → libellé charge ; équilibre OK ; 0 pageerror). Badge → **v296 · Consultation : panneau « compte sélectionné »**.
+
+---
+
+## 🟢 MAJ précédente — Module TIERS : moyen de paiement préféré (liste fermée VIR/PRLV/CHQ/CB/ESP) — v295
 **Quoi :** dans le **module TIERS**, la fiche d'édition (Modifier — <tiers>) gagne un champ **« Moyen de paiement préféré »** — une **liste déroulante fermée** à choisir parmi : **VIR (Virement)**, **PRLV (Prélèvement)**, **CHQ (Chèque)**, **CB (Carte Bancaire)**, **ESP (Espèces)** (+ « — » vide). Disponible pour **tous les tiers** : **Fournisseurs**, **Clients – Sociétés** et **Clients – Particuliers** (la fiche est commune aux 3 types). Le choix est **enregistré** sur le tiers (`t.modeReglement`, code VIR/PRLV/CHQ/CB/ESP) et **repré-sélectionné** à la réouverture.
 
 **Comment — 2 éditions chirurgicales :**

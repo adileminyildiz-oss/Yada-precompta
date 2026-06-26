@@ -10885,7 +10885,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v295 · TIERS : moyen de paiement préféré (VIR/PRLV/CHQ/CB/ESP)';
+    b.textContent='YADA · v296 · Consultation : panneau « compte sélectionné » (barre du bas)';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -18902,6 +18902,77 @@ ${lignes}
     +'.ec-accinfo .ec-ai-l{flex:1;color:#cfe0f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
     +'.ec-accinfo .ec-ai-empty{font-size:11.5px;color:#7a8696;font-style:italic;align-self:center}'
     +'@media(max-width:760px){.ec-accinfo{flex-basis:100%;margin-left:0;max-width:none}}';
+    document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon159">
+/* ============================================================
+   CONSULTATION (page principale) — PANNEAU « COMPTE SÉLECTIONNÉ » dans la barre du bas.
+   Même principe que l'éditeur (v294, addon158), mais sur la GRILLE DE CONSULTATION :
+   à chaque clic sur une ligne d'écriture (tous journaux), la barre du bas (.sg-status)
+   affiche les infos du compte cliqué :
+   • compte de TIERS → compte de tiers (+ libellé) + compte de TVA (+ libellé)
+     + compte de charge/produit (+ libellé) de l'écriture ;
+   • compte de TVA → libellé du compte de TVA ;
+   • compte de charge / produit → libellé du compte de charge / produit.
+   Les lignes de la grille portent data-cpt (compte) et data-ecr (écriture). 100% additif.
+   ============================================================ */
+(function(){
+  function C9(x){ return (typeof c9==='function')?c9(x):String(x||''); }
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function libOf(code){ try{
+      if(typeof COMPTES!=='undefined'){ var v=COMPTES[code]||COMPTES[C9(code)]; if(v) return v; }
+      if(typeof db!=='undefined'&&db&&db.plan&&db.plan.length){ var p=db.plan.find(function(x){ return C9(x.compte||x.num||x.code)===C9(code); }); if(p) return p.libelle||p.nom||p.lib||''; }
+    }catch(_){} return ''; }
+  function rowsTiers(eid, compte){
+    var e=(typeof ecGet==='function')?ecGet(eid):null;
+    var c9c=C9(compte), rows=[];
+    var t=(typeof ecResolveTiers==='function')?ecResolveTiers(compte):null;
+    var tiersLib=t?((t.type==='fournisseur'?'Fournisseur ':'Client ')+(t.nom||'')):((e&&e.libelle)||'Tiers');
+    rows.push(['Compte de tiers', c9c, tiersLib]);
+    if(e){ (e.lignes||[]).forEach(function(l){ var lc=C9(l.compte); if(!lc||lc===c9c) return;
+      if(lc.slice(0,3)==='445') rows.push(['Compte de TVA', lc, libOf(l.compte)||'TVA']);
+      else if(lc.charAt(0)==='6') rows.push(['Compte de charge', lc, libOf(l.compte)||'Charge']);
+      else if(lc.charAt(0)==='7') rows.push(['Compte de produit', lc, libOf(l.compte)||'Produit']); }); }
+    return rows;
+  }
+  function infoRows(eid, compte){
+    compte=String(compte||'').trim(); if(!compte) return null;
+    var c9c=C9(compte);
+    var isTiers=(typeof ecResolveTiers==='function'&&ecResolveTiers(compte))||/^4(0|1)/.test(c9c);
+    if(isTiers) return rowsTiers(eid, compte);
+    if(c9c.slice(0,3)==='445') return [['Compte de TVA', c9c, libOf(compte)||'TVA']];
+    if(c9c.charAt(0)==='6') return [['Compte de charge', c9c, libOf(compte)||'Charge']];
+    if(c9c.charAt(0)==='7') return [['Compte de produit', c9c, libOf(compte)||'Produit']];
+    return [['Compte', c9c, libOf(compte)||'']];
+  }
+  function html(rows){ if(!rows||!rows.length) return '<span class="sg-ai-empty">Cliquez un compte d\'une écriture pour voir ses informations</span>';
+    return rows.map(function(r){ return '<span class="sg-ai-item"><span class="sg-ai-k">'+esc(r[0])+'</span> <span class="sg-ai-c">'+esc(r[1])+'</span> <span class="sg-ai-l">'+esc(r[2])+'</span></span>'; }).join(''); }
+  window.sgAccSel=window.sgAccSel||null;
+  function panel(){
+    var st=document.querySelector('.sg-app .sg-status'); if(!st) return null;
+    var p=st.querySelector('#sg-accinfo');
+    if(!p){ p=document.createElement('div'); p.id='sg-accinfo'; p.className='sg-accinfo'; var sp=st.querySelector('.sp'); st.insertBefore(p, sp||null); }
+    return p;
+  }
+  function paint(){ var p=panel(); if(!p) return; var s=window.sgAccSel; p.innerHTML = s ? html(infoRows(s.eid, s.compte)) : html(null); }
+  window.sgAccInfoPaint=paint;
+  document.addEventListener('click', function(ev){
+    var tr=ev.target&&ev.target.closest?ev.target.closest('.sgj tbody tr[data-cpt]'):null;
+    if(!tr) return;
+    window.sgAccSel={ eid: tr.getAttribute('data-ecr'), compte: tr.getAttribute('data-cpt') };
+    paint();
+  }, true);
+  if(typeof window.render==='function'){ var _r=window.render; window.render=function(){ var x=_r.apply(this,arguments); try{ if(typeof current!=='undefined' && current==='compta') paint(); }catch(_){} return x; }; }
+  try{ var st=document.createElement('style'); st.id='sg-accinfo-mod'; st.textContent=
+     '.sg-accinfo{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center;flex:1;min-width:0;margin:0 14px;overflow:hidden}'
+    +'.sg-accinfo .sg-ai-item{display:inline-flex;gap:6px;align-items:baseline;white-space:nowrap;max-width:100%;overflow:hidden}'
+    +'.sg-accinfo .sg-ai-k{font-size:10px;text-transform:uppercase;letter-spacing:.4px;opacity:.65}'
+    +'.sg-accinfo .sg-ai-c{font-weight:700;font-variant-numeric:tabular-nums}'
+    +'.sg-accinfo .sg-ai-l{opacity:.92;overflow:hidden;text-overflow:ellipsis}'
+    +'.sg-accinfo .sg-ai-empty{opacity:.6;font-style:italic}'
+    +'body[data-theme="noir"] .sg-accinfo .sg-ai-c{color:#eaf2ff}'
+    +'body[data-theme="noir"] .sg-accinfo .sg-ai-k{color:#5ab0ff;opacity:1}';
     document.head.appendChild(st); }catch(e){}
 })();
 </script>
