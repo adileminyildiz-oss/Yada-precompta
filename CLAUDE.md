@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Espace Client : carte « 🔁 Récurrences effectuées » (suivi + téléchargement en lot / un par un) — v321
+## 🟢 Dernière mise à jour — Page d'ouverture (écran de connexion) : design amélioré bleu/noir + bleu Crystal — v322
+**Quoi :** la **page d'ouverture du logiciel** (écran de connexion `#sec-lock`, disposition scindée marque/formulaire) est **améliorée** en gardant **tous les éléments** et **les mêmes couleurs** (bleu / noir / bleu Crystal) et les **mêmes effets** : panneau marque (gauche) à **dégradé bleu→noir plus riche + halo bleu Crystal**, logo « YADA » avec **glow bleu**, puces à **flèches bleu Crystal lumineuses** ; panneau formulaire (droite) en **dégradé bleu→noir** (au lieu d'un noir plat) ; **boutons Espace Cabinet/Client** en bleu Crystal avec **effet bleu au survol ET à l'appui** (halo + glow) ; **champs** à focus bleu Crystal ; liens/notes/version en accents bleu Crystal.
+
+**Où / comment :** `yada-addon-sec-charme` injecte `<style id="sec-charme">` en dernier (prioritaire sur `sec-split`), ciblant uniquement `#sec-lock` (aucune logique modifiée, tous les éléments conservés). Validé : `node --check` (153), équilibre (d-ama/d-sci42), capture @2x (écran de connexion embelli, 0 pageerror). Badge → **v322**.
+
+---
+
+## 🟢 MAJ précédente — Espace Client : carte « 🔁 Récurrences effectuées » (suivi + téléchargement en lot / un par un) — v321
 **Quoi :** dans l'**espace Client** (Mes factures clients), une nouvelle carte **« 🔁 Récurrences effectuées »** est ajoutée **en pleine largeur sous les deux colonnes** (placement choisi). Elle regroupe les factures créées par **récurrence** (addon124, `recurrence.groupe`) et affiche, **par récurrence** : **Client**, **Prestation**, **taux de TVA**, **nombre de mois**, **1ʳᵉ date de facture**, **dernière date de facture**, **montant total dû (TTC)**. En tête : KPIs **nombre de récurrences**, total factures (mois), **montant total dû**. Les factures sont **téléchargeables en lot** (📦 toutes les factures de la récurrence, chacune sur sa page A4) **et une par une** (⤓ PDF par facture, via le détail dépliable « ▾ Factures »).
 
 **Comment — `yada-addon161` (greffe `pageFacturationClient`, 100% additif) :** `faRecGroupes()` regroupe `db.docs` par `recurrence.groupe` (taux depuis la 1ʳᵉ ligne, dates min/max, total TTC) ; `faRecSuivi()` rend la carte (table + `<tbody>` par récurrence, détail masqué `faRecToggle`) ; `faRecTelechargerLot(grp)` concatène les `docHTML()` de la récurrence dans `#print-area` puis `window.print()` (chaque facture sur sa page A4 via `@media print{.inv-page:not(:last-child){page-break-after:always}}`) ; téléchargement unitaire = `telechargerDoc(id)` existant. Greffe : `pageFacturationClient` renvoie son HTML **+ la carte** (donc pleine largeur sous `.cli-2col`). `<style id="frec-suivi-mod">`.

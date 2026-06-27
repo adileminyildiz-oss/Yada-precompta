@@ -10888,7 +10888,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v321';
+    b.textContent='YADA · v322';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -16160,6 +16160,44 @@ ${lignes}
     /* Hero : retrait de la formule marketing en ::after (chevauchait le nom de la société) — rendu plus net/pro */
     +'body[data-theme="jour"] #ec-hero.cab-hero::after,body[data-theme="noir"] #ec-hero.cab-hero::after{content:none!important;display:none!important}';
   try{ var st=document.createElement('style'); st.id='qualite-affichage'; st.textContent=css; document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon-sec-charme">
+/* ============================================================
+   PAGE D'OUVERTURE (écran de connexion #sec-lock) — design amélioré :
+   mêmes éléments, mêmes couleurs (bleu / noir / bleu Crystal), mêmes effets
+   (dégradé + halo + effet bleu au survol/appui des boutons). Injecté en dernier.
+   ============================================================ */
+(function(){
+  var css=''
+    /* Panneau MARQUE (gauche) : dégradé bleu→noir plus riche + halo bleu Crystal */
+    +'#sec-lock .sec-hero{background:radial-gradient(720px 500px at 16% 14%,rgba(30,144,255,.50),transparent 58%),radial-gradient(620px 520px at 92% 90%,rgba(10,100,214,.30),transparent 60%),linear-gradient(158deg,#10336e 0%,#0a2350 38%,#06122a 70%,#05080f 100%)!important;border-right:1px solid rgba(30,144,255,.38)!important}'
+    +'#sec-lock .sec-logo{text-shadow:0 6px 34px rgba(30,144,255,.55)!important}'
+    +'#sec-lock .sec-logo small{color:#a8caf2!important;letter-spacing:.20em!important}'
+    +'#sec-lock .sec-tagline{color:#dbeaff!important}'
+    +'#sec-lock .sec-points li{color:#bcd2ef!important}'
+    +'#sec-lock .sec-points li::before{color:#1e90ff!important;text-shadow:0 0 10px rgba(30,144,255,.75)!important}'
+    /* Panneau FORMULAIRE (droite) : dégradé bleu→noir au lieu d\'un noir plat */
+    +'#sec-lock .sec-body{background:linear-gradient(200deg,#0c1626 0%,#0a0f1a 52%,#08080e 100%)!important}'
+    +'#sec-lock .sec-body h2{color:#eaf2ff!important}'
+    +'#sec-lock .sec-p,#sec-lock .sec-lab{color:#9fb2cf!important}'
+    /* Boutons : bleu Crystal + EFFET BLEU au survol ET à l\'appui (toucher) */
+    +'#sec-lock .sec-cta{background:linear-gradient(120deg,#2f9bff,#0a64d6)!important;color:#fff!important;border:1px solid rgba(90,176,255,.55)!important;box-shadow:0 8px 24px rgba(30,144,255,.35)!important}'
+    +'#sec-lock .sec-cta:hover{box-shadow:0 0 0 2px rgba(30,144,255,.5),0 14px 34px rgba(30,144,255,.48)!important;filter:brightness(1.08)}'
+    +'#sec-lock .sec-cta:active{box-shadow:0 0 0 3px rgba(30,144,255,.72),0 0 26px rgba(30,144,255,.6)!important;filter:brightness(1.18)}'
+    +'#sec-lock .sec-cta-2{background:rgba(30,144,255,.06)!important;color:#eaf2ff!important;border:1.5px solid rgba(30,144,255,.5)!important;box-shadow:none!important}'
+    +'#sec-lock .sec-cta-2:hover{background:rgba(30,144,255,.13)!important;border-color:#1e90ff!important;box-shadow:0 0 0 2px rgba(30,144,255,.35)!important}'
+    /* Champs : focus bleu Crystal net */
+    +'#sec-lock input{background:rgba(30,144,255,.06)!important;border:1px solid rgba(30,144,255,.35)!important;color:#fff!important;border-radius:14px!important;box-shadow:none!important}'
+    +'#sec-lock input:focus{border-color:#1e90ff!important;box-shadow:0 0 0 3px rgba(30,144,255,.20)!important}'
+    +'#sec-lock input::placeholder{color:#6f86a8!important}'
+    /* Liens, note de sécurité, version : accents bleu Crystal */
+    +'#sec-lock .sec-link{color:#5ab0ff!important}'
+    +'#sec-lock .sec-id{color:#c8d6ec!important}'
+    +'#sec-lock .sec-secnote{color:#9fd0ff!important;background:rgba(30,144,255,.12)!important;border:1px solid rgba(30,144,255,.4)!important}'
+    +'#sec-lock .sec-remember{color:#9fb2cf!important}#sec-lock .sec-remember input{accent-color:#1e90ff!important}'
+    +'#sec-lock .sec-ver{color:#6f86a8!important}';
+  try{ var st=document.createElement('style'); st.id='sec-charme'; st.textContent=css; document.head.appendChild(st); }catch(e){}
 })();
 </script>
 <script id="yada-addon112">
