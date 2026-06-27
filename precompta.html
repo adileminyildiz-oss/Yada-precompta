@@ -10888,7 +10888,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v322';
+    b.textContent='YADA · v323';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -19398,6 +19398,46 @@ ${lignes}
     +'body[data-theme="noir"] .frs-detwrap{background:rgba(30,144,255,.06)}'
     +'body[data-theme="noir"] .frs-line{color:#dbe8ff}'
     +'@media print{#print-area .inv-page:not(:last-child){page-break-after:always}}';
+    document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon162">
+/* ============================================================
+   ESPACE CLIENT — pages Client & Fournisseur :
+   1) Cartes HORIZONTALES (pleine largeur, empilées) au lieu des 2 colonnes.
+   2) « Créer une facture » : le formulaire inline ouvert (.fa-cli-creer) est
+      remplacé par une CARTE-BOUTON qui ouvre la fenêtre complète du cabinet
+      (#nf-overlay via factureNouvelleOuvrir) — panneau large « toutes options »
+      + aperçu de la facture au format A4 mis à jour en temps réel.
+   100% additif (CSS + remplacement DOM post-render).
+   ============================================================ */
+(function(){
+  function btnCreerCard(){
+    return '<div class="card faccli-create"><h2>🧾 Créer une facture</h2>'
+      +'<div class="sub">Ouvre la fenêtre complète — <b>toutes les options</b> (comme l\'espace cabinet) avec l\'<b>aperçu de la facture au format A4 mis à jour en temps réel</b>.</div>'
+      +'<div class="right" style="margin-top:12px"><button class="btn btn-pri" onclick="factureNouvelleOuvrir()">➕ Créer une facture</button></div>'
+      +'</div>';
+  }
+  /* Remplace le formulaire inline ouvert par la carte-bouton (post-render, robuste). */
+  if(typeof render==='function'){
+    var _r=render;
+    render=function(){
+      var ret=_r.apply(this,arguments);
+      try{
+        if(window.sessionRole==='client'){
+          var card=document.querySelector('.fa-cli-creer');
+          if(card && typeof factureNouvelleOuvrir==='function'){ card.outerHTML=btnCreerCard(); }
+        }
+      }catch(e){}
+      return ret;
+    };
+  }
+  /* Cartes horizontales (pleine largeur) pour les pages Client & Fournisseur de l'espace client. */
+  try{ var st=document.createElement('style'); st.id='faccli-horizontal-mod'; st.textContent=
+    'body[data-role="client"] .cli-2col{grid-template-columns:1fr !important;gap:0 !important}'
+    +'body[data-role="client"] .cli-2col .cli-col{min-width:0}'
+    +'body[data-role="client"] .cli-2col .cli-col+.cli-col{margin-top:10px}'
+    +'.faccli-create h2{display:flex;align-items:center;gap:8px}';
     document.head.appendChild(st); }catch(e){}
 })();
 </script>
