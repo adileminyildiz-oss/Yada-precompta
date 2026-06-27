@@ -36,7 +36,21 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Page d'ouverture (écran de connexion) : design amélioré bleu/noir + bleu Crystal — v322
+## 🟢 Dernière mise à jour — Espace Client : cartes horizontales (Client & Fournisseur) + « Créer une facture » ouvre la fenêtre complète (cabinet) avec aperçu A4 en direct — v323
+**Quoi :** dans l'**espace Client**, trois demandes :
+1. **Cartes horizontales** — les pages **Client** (facturation) et **Fournisseur** (achats) passent en **cartes pleine largeur empilées** (au lieu des 2 colonnes `.cli-2col`).
+2. **Carte « Créer une facture » à la place du formulaire ouvert** — le **formulaire inline** de création (`.fa-cli-creer`) est **remplacé par une carte-bouton « ➕ Créer une facture »**.
+3. **Fenêtre complète comme le cabinet** — au clic sur « Créer une facture », ouverture de la **même fenêtre que l'espace cabinet** (`#nf-overlay` via `factureNouvelleOuvrir()`) : **panneau de gauche large avec toutes les options** (type, client, dates, devise, lignes, remise, acompte, moyen, escompte, retenue…) **et l'aperçu de la facture au format A4 mis à jour en temps réel** à droite.
+
+**Comment — `yada-addon162` (100% additif) :**
+- **Cartes horizontales** : `<style>` `body[data-role="client"] .cli-2col{grid-template-columns:1fr !important}` (les deux pages client utilisent `.cli-2col`).
+- **Bouton + retrait du formulaire** : greffe **post-render** sur `render` — si `sessionRole==='client'` et qu'un `.fa-cli-creer` est présent, il est **remplacé** (`outerHTML`) par la carte-bouton qui appelle `factureNouvelleOuvrir()` (fonction cabinet existante, ouvre `#nf-overlay` = `nfFormHTML()` + aperçu `nfApercu()`/`docHTML` en direct). La création (`nfCreer`) pousse la facture dans `db.docs` → visible dans « Mes factures de vente ».
+
+**Limites :** la carte de **récurrence** et le **dépôt** restent (pleine largeur) ; le formulaire inline n'est plus utilisé (remplacé à l'affichage). Validé : `node --check` (153 scripts, 0 erreur) + accolades addon162 (14/14) + Playwright (page client : `.fa-cli-creer` retiré → carte-bouton présente, `.cli-2col` = 1 colonne pleine largeur, `factureNouvelleOuvrir` disponible, 0 pageerror ; équilibre ✅). Badge → **v323**.
+
+---
+
+## 🟢 MAJ précédente — Page d'ouverture (écran de connexion) : design amélioré bleu/noir + bleu Crystal — v322
 **Quoi :** la **page d'ouverture du logiciel** (écran de connexion `#sec-lock`, disposition scindée marque/formulaire) est **améliorée** en gardant **tous les éléments** et **les mêmes couleurs** (bleu / noir / bleu Crystal) et les **mêmes effets** : panneau marque (gauche) à **dégradé bleu→noir plus riche + halo bleu Crystal**, logo « YADA » avec **glow bleu**, puces à **flèches bleu Crystal lumineuses** ; panneau formulaire (droite) en **dégradé bleu→noir** (au lieu d'un noir plat) ; **boutons Espace Cabinet/Client** en bleu Crystal avec **effet bleu au survol ET à l'appui** (halo + glow) ; **champs** à focus bleu Crystal ; liens/notes/version en accents bleu Crystal.
 
 **Où / comment :** `yada-addon-sec-charme` injecte `<style id="sec-charme">` en dernier (prioritaire sur `sec-split`), ciblant uniquement `#sec-lock` (aucune logique modifiée, tous les éléments conservés). Validé : `node --check` (153), équilibre (d-ama/d-sci42), capture @2x (écran de connexion embelli, 0 pageerror). Badge → **v322**.
