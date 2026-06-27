@@ -10888,7 +10888,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v324';
+    b.textContent='YADA · v325';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -16198,6 +16198,52 @@ ${lignes}
     +'#sec-lock .sec-remember{color:#9fb2cf!important}#sec-lock .sec-remember input{accent-color:#1e90ff!important}'
     +'#sec-lock .sec-ver{color:#6f86a8!important}';
   try{ var st=document.createElement('style'); st.id='sec-charme'; st.textContent=css; document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon-idb-persist">
+/* ============================================================
+   PERSISTANCE GRANDE CAPACITÉ (IndexedDB) — pour les dossiers volumineux
+   (> ~5 Mo) que le localStorage ne peut pas enregistrer (échec silencieux →
+   données perdues au redémarrage). On MIROITE chaque enregistrement vers
+   IndexedDB (capacité bien plus grande) et on RESTAURE au démarrage.
+   100% additif, sûr (try/catch partout). Aucune logique comptable modifiée.
+   ============================================================ */
+(function(){
+  if(!('indexedDB' in window)) return;
+  var DBN='yada-store', ST='kv', K='db', TSK='yada-db-ts';
+  function open(){ return new Promise(function(res,rej){ try{ var r=indexedDB.open(DBN,1);
+    r.onupgradeneeded=function(){ try{ if(!r.result.objectStoreNames.contains(ST)) r.result.createObjectStore(ST); }catch(e){} };
+    r.onsuccess=function(){ res(r.result); }; r.onerror=function(){ rej(r.error); };
+  }catch(e){ rej(e); } }); }
+  function idbSet(obj){ return open().then(function(d){ return new Promise(function(res,rej){
+    var tx=d.transaction(ST,'readwrite'); tx.objectStore(ST).put(obj,K);
+    tx.oncomplete=function(){res(1);}; tx.onerror=function(){rej(tx.error);}; tx.onabort=function(){rej(tx.error);}; }); }); }
+  function idbGet(){ return open().then(function(d){ return new Promise(function(res,rej){
+    var tx=d.transaction(ST,'readonly'); var rq=tx.objectStore(ST).get(K);
+    rq.onsuccess=function(){res(rq.result||null);}; rq.onerror=function(){rej(rq.error);}; }); }); }
+  window.__yadaIdbSet=idbSet; window.__yadaIdbGet=idbGet;
+  /* Miroir : chaque save() écrit aussi dans IndexedDB (+ un horodatage minuscule en localStorage) */
+  function mirror(){ try{ var ts=Date.now(); try{ localStorage.setItem(TSK, String(ts)); }catch(e){}
+    idbSet({ data:JSON.stringify(db), ts:ts }).catch(function(){}); }catch(e){} }
+  if(typeof window.save==='function'){ var _s=window.save; var t=null;
+    window.save=function(){ var r=_s.apply(this, arguments);
+      try{ clearTimeout(t); t=setTimeout(mirror, 300); }catch(e){}
+      return r; }; }
+  /* Au démarrage : restaurer depuis IndexedDB s'il est au moins aussi récent que localStorage
+     (cas d'un dossier trop gros pour le localStorage → seule la copie IndexedDB est complète). */
+  (function bootApply(){
+    var lsTs=0; try{ lsTs=parseInt(localStorage.getItem(TSK)||'0',10)||0; }catch(e){}
+    idbGet().then(function(rec){ if(!rec||!rec.data) return;
+      var o; try{ o=JSON.parse(rec.data); }catch(e){ return; }
+      if(!(o&&o.dossiersData&&o.cabinet)) return;
+      var idbTs=rec.ts||0;
+      if(idbTs>=lsTs){
+        try{ db=o; }catch(e){ try{ window.db=o; }catch(_e){} }
+        try{ if(typeof snapshotDB==='function') snapshotDB(); }catch(e){}
+        try{ if(typeof render==='function' && (typeof connecte==='undefined' || connecte)) render(); }catch(e){}
+      }
+    }).catch(function(){});
+  })();
 })();
 </script>
 <script id="yada-addon112">

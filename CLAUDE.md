@@ -36,7 +36,18 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Espace Client : cartes horizontales (Client & Fournisseur) + « Créer une facture » ouvre la fenêtre complète (cabinet) avec aperçu A4 en direct — v323
+## 🟢 Dernière mise à jour — Persistance grande capacité (IndexedDB) : les gros dossiers (> 5 Mo) ne sont plus perdus au redémarrage — v325
+**Quoi :** correction d'un problème majeur de **persistance des données**. YADA enregistrait dans le **`localStorage`** (limité à ~5 Mo, et chaque caractère y compte double) : un dossier volumineux (ex. ~3,4 Mo de JSON) **dépassait le quota** → `save()` échouait **silencieusement** → au redémarrage, les données avaient disparu et il fallait **ré-importer le fichier à chaque fois**. Désormais chaque enregistrement est **miroité dans IndexedDB** (capacité bien plus grande) et **restauré au démarrage** : on importe **une seule fois**, et le dossier **reste** sur l'appareil.
+
+**Comment — `yada-addon-idb-persist` (100% additif) :** helpers `idbSet`/`idbGet` (base `yada-store`, store `kv`, clé `db`) ; **wrap de `save()`** qui écrit aussi `{data:JSON(db), ts}` dans IndexedDB (+ un horodatage minuscule `yada-db-ts` en localStorage) ; au démarrage, `bootApply()` lit IndexedDB et **restaure** la copie si elle est **au moins aussi récente** que le localStorage (`idbTs ≥ lsTs`) — cas d'un dossier trop gros pour le localStorage où seule la copie IndexedDB est complète. Aucune logique comptable modifiée.
+
+**Note confidentialité :** les données réelles du cabinet **ne sont PAS embarquées** dans l'application publique (ce serait exposé sur le web) — elles restent **locales** (IndexedDB), persistantes après un seul import.
+
+**Limites :** la persistance est **par appareil** (IndexedDB local) — pour partager entre appareils, utiliser le transfert par fichier (Importer) ou la synchro cloud. Validé : `node --check` (155 scripts), filet d'équilibre (d-ama/d-sci42), test Playwright avec le fichier réel **3,33 Mo** (stocké en IndexedDB + 3 dossiers restaurés après reload, 0 pageerror). Badge → **v325**.
+
+---
+
+## 🟢 MAJ précédente — Espace Client : cartes horizontales (Client & Fournisseur) + « Créer une facture » ouvre la fenêtre complète (cabinet) avec aperçu A4 en direct — v323
 **Quoi :** dans l'**espace Client**, trois demandes :
 1. **Cartes horizontales** — les pages **Client** (facturation) et **Fournisseur** (achats) passent en **cartes pleine largeur empilées** (au lieu des 2 colonnes `.cli-2col`).
 2. **Carte « Créer une facture » à la place du formulaire ouvert** — le **formulaire inline** de création (`.fa-cli-creer`) est **remplacé par une carte-bouton « ➕ Créer une facture »**.
