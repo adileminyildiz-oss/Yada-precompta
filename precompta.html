@@ -10896,7 +10896,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v335';
+    b.textContent='YADA · v336';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -20012,6 +20012,94 @@ ${lignes}
     }
     if(typeof render==='function'){ var _r=render; render=function(){ var x=_r.apply(this,arguments); injectBar(); return x; }; }
     if(document.readyState!=='loading') injectBar(); else document.addEventListener('DOMContentLoaded', injectBar);
+  }catch(e){}
+})();
+</script>
+
+<script id="yada-addon171">
+/* ============================================================
+   DA « phase 2 » (2/3) — Badge de STATUT du dossier dans l'en-tête de page.
+   Un badge cliquable (pastille colorée) est ajouté à droite du titre de
+   chaque page (en-tête `.page-head`) et reflète le statut de tenue du
+   dossier actif : À faire / En cours / À revoir / Tenue cabinet ✓.
+   Le badge est l'unique contrôle (pas de boutons d'action) : un clic ouvre
+   un petit menu pour changer le statut → enregistré sur le dossier.
+   100% additif : greffe sur `head()` (aucune logique comptable modifiée).
+   ============================================================ */
+(function(){
+  try{
+    var STATS=[
+      {k:'a_faire', lbl:'À faire',        cls:'todo'},
+      {k:'en_cours',lbl:'En cours',       cls:'wip'},
+      {k:'a_revoir',lbl:'À revoir',       cls:'rev'},
+      {k:'revu',    lbl:'Tenue cabinet ✓',cls:'ok'}
+    ];
+    function meta(k){ for(var i=0;i<STATS.length;i++){ if(STATS[i].k===k) return STATS[i]; } return STATS[1]; }
+
+    var st=document.createElement('style'); st.id='dstat-mod'; st.textContent=
+      '.dstat-wrap{position:relative;display:inline-flex;flex:0 0 auto;align-self:center}'
+      +'.dstat-chip{display:inline-flex;align-items:center;gap:7px;cursor:pointer;border:1px solid transparent;'
+      +'border-radius:999px;padding:6px 13px;font:600 12px system-ui,sans-serif;white-space:nowrap;line-height:1;transition:filter .15s,transform .12s}'
+      +'.dstat-chip:hover{filter:brightness(1.12)} .dstat-chip:active{transform:scale(.97)}'
+      +'.dstat-chip .dot{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}'
+      +'.dstat-chip .cv{font:600 9px system-ui,sans-serif;letter-spacing:.05em;text-transform:uppercase;opacity:.6;margin-left:2px}'
+      +'.dstat-chip.todo{background:rgba(225,52,44,.15);border-color:rgba(225,52,44,.4);color:#ff8a82}'
+      +'.dstat-chip.wip{background:rgba(30,144,255,.16);border-color:rgba(30,144,255,.42);color:#6cb6ff}'
+      +'.dstat-chip.rev{background:rgba(232,170,40,.16);border-color:rgba(232,170,40,.42);color:#ffce6a}'
+      +'.dstat-chip.ok{background:rgba(40,190,120,.15);border-color:rgba(40,190,120,.42);color:#5bd39a}'
+      +'.dstat-menu{position:absolute;right:0;top:calc(100%+6px);z-index:9000;display:none;min-width:170px;'
+      +'background:#12161d;border:1px solid rgba(255,255,255,.12);border-radius:11px;box-shadow:0 18px 48px rgba(0,0,0,.55);padding:5px;overflow:hidden}'
+      +'.dstat-wrap.open .dstat-menu{display:block}'
+      +'.dstat-menu button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:0;cursor:pointer;'
+      +'padding:8px 11px;border-radius:8px;font:500 13px system-ui,sans-serif;color:#dCEAFB}'
+      +'.dstat-menu button:hover{background:rgba(30,144,255,.14)}'
+      +'.dstat-menu button .dot{width:8px;height:8px;border-radius:50%;box-shadow:0 0 6px currentColor}'
+      +'.dstat-menu button.todo .dot{background:#ff8a82;color:#ff8a82} .dstat-menu button.wip .dot{background:#6cb6ff;color:#6cb6ff}'
+      +'.dstat-menu button.rev .dot{background:#ffce6a;color:#ffce6a} .dstat-menu button.ok .dot{background:#5bd39a;color:#5bd39a}'
+      +'.dstat-menu button .cur{margin-left:auto;color:#5ab0ff;font-weight:700}'
+      /* en-tête de page : autoriser le retour à la ligne pour loger le badge */
+      +'.page-head{flex-wrap:wrap;gap:10px}';
+    document.head.appendChild(st);
+
+    function dossierActif(){
+      try{ if(!db||!db.cabinet||!db.cabinet.dossiers||!db.activeId) return null;
+        return db.cabinet.dossiers.find(function(x){ return x.id===db.activeId; })||null; }catch(e){ return null; }
+    }
+    window.dstatToggle=function(ev){ if(ev){ ev.stopPropagation(); } var w=ev&&ev.currentTarget?ev.currentTarget.closest('.dstat-wrap'):null;
+      if(!w) return; var was=w.classList.contains('open');
+      Array.prototype.forEach.call(document.querySelectorAll('.dstat-wrap.open'), function(o){ o.classList.remove('open'); });
+      if(!was) w.classList.add('open'); };
+    window.dstatSet=function(k, ev){ if(ev){ ev.stopPropagation(); } var d=dossierActif(); if(!d) return;
+      d.statutTenue=k; try{ if(typeof save==='function') save(); }catch(e){}
+      try{ if(typeof render==='function') render(); }catch(e){} };
+    document.addEventListener('click', function(){ Array.prototype.forEach.call(document.querySelectorAll('.dstat-wrap.open'), function(o){ o.classList.remove('open'); }); });
+
+    function chipHTML(){
+      var d=dossierActif(); if(!d) return '';
+      var cur=meta(d.statutTenue||'en_cours');
+      var menu=STATS.map(function(s){
+        return '<button class="'+s.cls+'" onclick="dstatSet(\''+s.k+'\',event)"><span class="dot"></span>'+s.lbl
+          +(s.k===cur.k?'<span class="cur">✓</span>':'')+'</button>';
+      }).join('');
+      return '<div class="dstat-wrap"><button class="dstat-chip '+cur.cls+'" title="Statut du dossier — cliquer pour changer" onclick="dstatToggle(event)">'
+        +'<span class="dot"></span>'+cur.lbl+'<span class="cv">'+(d.nom||'')+'</span></button>'
+        +'<div class="dstat-menu">'+menu+'</div></div>';
+    }
+
+    /* greffe head() : ajoute le badge à droite du titre (sauf portefeuille / écran non connecté) */
+    if(typeof head==='function'){
+      var _h=head;
+      head=function(title,desc){
+        var html=_h.apply(this,arguments);
+        try{
+          if(typeof connecte!=='undefined' && !connecte) return html;
+          if(typeof current!=='undefined' && current==='societe') return html; /* portefeuille = liste tous dossiers */
+          var chip=chipHTML(); if(!chip) return html;
+          /* insère le badge comme 2e enfant de .page-head (flex space-between → à droite) */
+          return html.replace(/<\/div>\s*$/, chip+'</div>');
+        }catch(e){ return html; }
+      };
+    }
   }catch(e){}
 })();
 </script>
