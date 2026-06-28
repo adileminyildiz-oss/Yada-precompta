@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — DA « phase 2 » (1/3) : barre de recherche + palette de commandes ⌘K — v335
+## 🟢 Dernière mise à jour — DA « phase 2 » (2/3) : badge de STATUT du dossier dans l'en-tête de page — v336
+**Quoi :** suite de la refonte DA. Un **badge de statut** (pastille colorée) est ajouté **à droite du titre de chaque page** (en-tête `.page-head`) et reflète l'état de **tenue du dossier actif** : **À faire** (rouge) · **En cours** (bleu) · **À revoir** (ambre) · **Tenue cabinet ✓** (vert). Conformément à la demande, **le badge est l'unique contrôle (pas de boutons d'action)** : un **clic** ouvre un petit menu pour **changer le statut** → enregistré sur le dossier (persistant). Le nom du dossier est rappelé en petit dans le badge.
+
+**Comment — `yada-addon171` (100% additif) :** `<style id="dstat-mod">` (pastille `.dstat-chip` + menu `.dstat-menu`, 4 couleurs de statut) ; `dossierActif()` lit `db.cabinet.dossiers` via `db.activeId` ; statut stocké dans **`dossier.statutTenue`** (persisté par `save()`) ; `dstatToggle`/`dstatSet` (changement + `save`+`render`) ; fermeture du menu au clic extérieur. **Greffe sur `head()`** : insère le badge comme 2ᵉ enfant de `.page-head` (flex → à droite), **sauf** écran non connecté et **portefeuille** (`current==='societe'`). Aucune logique comptable modifiée.
+
+**Limites :** un seul statut par dossier (workflow simple) ; reste de la phase 2 : **KPI en pavés à icône** + **restyle des graphiques**. Validé : `node --check` (164 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (`dstatSet`/`dstatToggle` exposés, style injecté, `head()` valide, badge masqué hors connexion, équilibre ✅, 0 pageerror). Badge → **v336**.
+
+---
+
+## 🟢 MAJ précédente — DA « phase 2 » (1/3) : barre de recherche + palette de commandes ⌘K — v335
 **Quoi :** suite de la refonte DA (d'après l'image de référence). Ajout d'une **barre de recherche** en tête de la **barre latérale** (« 🔎 Rechercher…  ⌘K ») et d'une **palette de commandes ⌘K** (raccourci **⌘K / Ctrl+K**, ou clic sur la barre) : une fenêtre centrée permet d'**aller directement à n'importe quel module** — saisie → **filtre instantané** (insensible aux accents, sur le libellé et la section), **↑/↓** pour choisir, **Entrée** pour ouvrir, **Échap** ou clic à l'extérieur pour fermer. Accent **BLEU** conservé.
 
 **Comment — `yada-addon170` (100% additif) :** `<style id="cmdk-mod">` (barre `.cmdk-search`, overlay `#cmdk-ov`, palette `#cmdk-box`, items `.cmdk-it` au survol/sélection en dégradé bleu) ; `dests()` construit la liste depuis **`PAGES`** (filtrée par rôle : client → `CLIENT_PAGES` + Espace Client) ; `open()/close()/paint()/goItem()` ; la navigation réutilise **`current=<id>; render()`** (aucune logique modifiée) ; barre re-greffée en tête de `#nav` à chaque rendu (idempotent) ; ouverture bloquée tant que le logiciel n'est pas ouvert (`connecte`).
