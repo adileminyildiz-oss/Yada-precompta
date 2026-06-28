@@ -36,7 +36,18 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Redéploiement de vérification (auto-déploiement Netlify) — v329
+## 🟢 Dernière mise à jour — 3ᵉ dossier « MBC » ajouté à la base (ALR CONSEIL · MBC · BY HOLDING) — v330
+**Quoi :** ajout du dossier **MBC** dans la base, entre **ALR CONSEIL** (`d-ama`) et **BY HOLDING** (`d-sci42`). Le portefeuille « Sociétés » et l'écran de sélection affichent désormais **3 dossiers** : **ALR CONSEIL · MBC · BY HOLDING**. MBC est un **dossier vierge** (société « MBC », plan comptable BTP chargé) prêt à l'emploi / import FEC.
+
+**Comment :**
+- **Seed** : `cabinetDefaut().dossiers` reçoit `{id:'d-mbc', nom:'MBC', forme:'SAS'}` (au milieu), `total:3` ; `seed()` crée `db.dossiersData['d-mbc']=construireMBC()` (nouveau builder = `datasetVide` société MBC + `chargerPlanBTP`).
+- **`yada-addon163`** : `ensureMBC()` **ajoute MBC** à une **base déjà enregistrée** (avant v330) si absent — insertion après `d-ama`, dataset vierge — **idempotent**. `save()` après ajout.
+
+**Limites :** MBC est **vierge** (à alimenter par saisie / import FEC). Validé : `node --check` (158 scripts, 0 erreur) + Playwright (seed → 3 dossiers ALR CONSEIL/MBC/BY HOLDING, migration base à 2 dossiers → MBC ajouté & idempotent, total=3, équilibre ✅, 0 pageerror). Badge → **v330**.
+
+---
+
+## 🟢 MAJ précédente — Redéploiement de vérification (auto-déploiement Netlify) — v329
 **Quoi :** **aucun changement fonctionnel** — simple **bump de version v328 → v329** pour vérifier de bout en bout la chaîne de déploiement automatique vers l'hébergeur externe **Netlify** (`silly-kataifi-e6c958.netlify.app`). À chaque push sur `main`, Netlify reconstruit le site (~30 s) et le badge passe à v329, confirmant que la mise à jour en ligne est automatique (service worker « réseau d'abord » + addon103 mise à jour auto). Badge `#yada-ver` → `YADA · v329`, `version.json` → 329.
 
 **Limites :** aucune logique/écriture/UI modifiée. Validé : `node --check` + équilibre des écritures ✅. Badge → **v329**.
