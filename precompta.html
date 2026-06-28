@@ -10896,7 +10896,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v330';
+    b.textContent='YADA · v331';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -19701,6 +19701,58 @@ ${lignes}
       return h;
     };
   }
+})();
+</script>
+<script id="yada-addon166">
+/* ============================================================
+   BARRE LATÉRALE (cabinet + client) : plus étroite, TOUT EN NOIR,
+   et boutons du bas (.side-foot) modernisés. Injecté en dernier →
+   prime sur les habillages bleus précédents (addon160 v318/v320).
+   100% CSS additif.
+   ============================================================ */
+(function(){
+  try{ var st=document.createElement('style'); st.id='sidebar-noir-mod'; st.textContent=
+    /* ----- Largeur réduite (desktop) ----- */
+    '@media (min-width:821px){'
+    +'.layout:not(.solo){grid-template-columns:208px 1fr !important}'
+    +'aside{padding:16px 10px 12px !important}'
+    +'#nav .nav-sec{font-size:9px !important;letter-spacing:.12em !important;padding:11px 9px 4px !important}'
+    +'#nav .nav-btn{font-size:12.5px !important;padding:7px 9px !important;gap:8px !important;border-radius:9px !important}'
+    +'#nav .nav-btn .ico{width:14px !important}'
+    +'#nav .nav-sub{margin:2px 0 7px 10px !important}'
+    +'#nav .nav-sub-btn{padding-left:9px !important;font-size:12px !important}'
+    +'.brand{font-size:18px !important;padding:2px 8px !important}'
+    +'.brand small{font-size:9px !important;letter-spacing:.12em !important}'
+    +'}'
+    /* ----- Barre latérale TOUT EN NOIR (tous thèmes) ----- */
+    +'body[data-theme] aside{background:#000 !important;background-image:none !important;'
+    +'-webkit-backdrop-filter:none !important;backdrop-filter:none !important;'
+    +'border-right:1px solid #1b1b1b !important;box-shadow:none !important}'
+    +'body[data-theme] aside .brand,body[data-theme] aside .brand svg text{color:#f5f7fa !important;fill:#f5f7fa !important}'
+    +'body[data-theme] aside .nav-sec{color:#7d8794 !important}'
+    +'body[data-theme] aside .nav-btn{color:#d6dde6 !important}'
+    +'body[data-theme] aside .nav-btn:hover{background:rgba(255,255,255,.07) !important;color:#fff !important}'
+    +'body[data-theme] aside .nav-sub{border-left-color:rgba(255,255,255,.14) !important}'
+    /* ----- Boutons du bas : style moderne (pilules sobres) ----- */
+    +'body[data-theme] aside .side-foot{display:flex !important;flex-direction:column !important;gap:6px !important;'
+    +'padding-top:10px !important;margin-top:8px !important;border-top:1px solid rgba(255,255,255,.10) !important}'
+    +'body[data-theme] aside .side-foot button,body[data-theme] aside .theme-toggle-side{'
+    +'width:100% !important;box-sizing:border-box !important;text-align:center !important;'
+    +'font:600 11px system-ui,Segoe UI,sans-serif !important;letter-spacing:.01em !important;'
+    +'padding:8px 10px !important;border-radius:10px !important;'
+    +'background:rgba(255,255,255,.055) !important;border:1px solid rgba(255,255,255,.12) !important;'
+    +'color:#e8eef6 !important;cursor:pointer !important;'
+    +'overflow:hidden !important;text-overflow:ellipsis !important;white-space:nowrap !important;'
+    +'transition:background .15s,border-color .15s,transform .08s !important;box-shadow:none !important}'
+    +'body[data-theme] aside .side-foot button:hover,body[data-theme] aside .theme-toggle-side:hover{'
+    +'background:rgba(255,255,255,.13) !important;border-color:rgba(255,255,255,.22) !important;color:#fff !important}'
+    +'body[data-theme] aside .side-foot button:active,body[data-theme] aside .theme-toggle-side:active{transform:scale(.97) !important}'
+    /* bouton « Mode nuit/jour » : id pour primer sur les styles dédiés */
+    +'body[data-theme] aside #theme-toggle-side{width:100% !important;box-sizing:border-box !important;text-align:center !important;'
+    +'font:600 11px system-ui,Segoe UI,sans-serif !important;padding:8px 10px !important;border-radius:10px !important;'
+    +'background:rgba(255,255,255,.055) !important;border:1px solid rgba(255,255,255,.12) !important;color:#e8eef6 !important;box-shadow:none !important}'
+    +'body[data-theme] aside #theme-toggle-side:hover{background:rgba(255,255,255,.13) !important;border-color:rgba(255,255,255,.22) !important;color:#fff !important}';
+    document.head.appendChild(st); }catch(e){}
 })();
 </script>
 </body>

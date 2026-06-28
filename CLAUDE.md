@@ -36,7 +36,19 @@
 
 ---
 
-## 🟢 Dernière mise à jour — 3ᵉ dossier « MBC » ajouté à la base (ALR CONSEIL · MBC · BY HOLDING) — v330
+## 🟢 Dernière mise à jour — Barre latérale : plus étroite, tout en noir, boutons du bas modernisés — v331
+**Quoi :** la **barre latérale** (espace **cabinet** et **client**) est rendue **beaucoup plus étroite**, **entièrement noire**, et les **boutons du bas** (`.side-foot`) sont **modernisés**.
+- **Largeur** : colonne de navigation **300 px → 208 px** (desktop), entrées de menu plus compactes (police 12,5 px, sous-sections/sous-modules resserrés, libellés tronqués proprement).
+- **Tout en noir** : `aside` passe au **fond noir plein `#000`** (plus de dégradé bleu v318/v320 ni de flou), bord droit gris très sombre ; textes clairs lisibles, survol gris discret.
+- **Boutons du bas modernisés** : pilules sobres translucides (`rgba(255,255,255,.055)`, bord léger, **arrondi 10 px**, plein largeur, centré), survol qui éclaircit, appui léger (`scale .97`) ; le bouton **« Mode nuit/jour »** (`#theme-toggle-side`) reçoit le même style (règle id pour primer).
+
+**Comment — `yada-addon166` (100% CSS, injecté en dernier → prime sur addon160) :** `@media(min-width:821px){.layout:not(.solo){grid-template-columns:208px 1fr}…}` ; `body[data-theme] aside{background:#000;background-image:none;backdrop-filter:none}` ; restyle `.side-foot button`/`.theme-toggle-side` + override id `#theme-toggle-side`. S'applique à tous les thèmes (cabinet + client). Mobile (drawer 82vw) inchangé.
+
+**Limites :** habillage/mise en page uniquement. Validé : `node --check` (159 scripts, 0 erreur) + Playwright (`.layout` = `208px 1fr`, `aside` fond `rgb(0,0,0)`, boutons du bas + Mode nuit en pilules arrondies 10 px translucides, équilibre ✅, 0 pageerror). Badge → **v331**.
+
+---
+
+## 🟢 MAJ précédente — 3ᵉ dossier « MBC » ajouté à la base (ALR CONSEIL · MBC · BY HOLDING) — v330
 **Quoi :** ajout du dossier **MBC** dans la base, entre **ALR CONSEIL** (`d-ama`) et **BY HOLDING** (`d-sci42`). Le portefeuille « Sociétés » et l'écran de sélection affichent désormais **3 dossiers** : **ALR CONSEIL · MBC · BY HOLDING**. MBC est un **dossier vierge** (société « MBC », plan comptable BTP chargé) prêt à l'emploi / import FEC.
 
 **Comment :**
