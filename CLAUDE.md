@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Barre latérale : stabilité au clic + bouton « Outils » modernisé — v340
+## 🟢 Dernière mise à jour — Barre latérale : disposition IDENTIQUE au dépliage (anti-tassement flex) + défilement bleu — v341
+**Quoi :** correctif du **décalage/espacement** signalé : en dépliant un module, les autres entrées **se tassaient** (hauteur de ligne 27 → 23 px). Cause : les boutons de la nav avaient le `flex-shrink:1` par défaut → quand la nav débordait, **flexbox compressait toutes les lignes**. Désormais `flex:0 0 auto` sur chaque entrée → **aucune compression** : la disposition reste **exactement la même** qu'un module soit déplié ou non ; s'il n'y a pas assez de place, la barre **défile** (barre de défilement **bleue** dégradée).
+
+**Comment — 1 ajout dans `yada-addon173` (`<style id="sidebar-stable-mod">`, desktop) :** `#nav .nav-btn,.nav-sec,.nav-sub,.nav-sub-btn{flex:0 0 auto !important}` (anti-tassement) + scrollbar bleue (`#nav::-webkit-scrollbar-thumb{linear-gradient(#3b9bff,#0a64d6)}`, `scrollbar-color:#1e90ff`). Aucune logique modifiée.
+
+**Limites :** habillage/mise en page. Validé : `node --check` (166 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (écarts entre modules **identiques** déplié/replié = 42 px, débordement → défilement, scrollbar bleue, équilibre ✅, 0 pageerror). Badge → **v341**.
+
+---
+
+## 🟢 MAJ précédente — Barre latérale : stabilité au clic + bouton « Outils » modernisé — v340
 **Quoi :** deux retouches de la **barre latérale** (espace cabinet).
 1. **Stabilité au clic** — en dépliant un module, la nav débordait → une **barre de défilement apparaissait et rétrécissait la largeur** (texte re-tronqué), donnant l'impression que la **taille d'écriture / l'espacement** changeaient. La **gouttière de défilement est désormais réservée** (`scrollbar-gutter:stable`) → largeur constante ; la **police est unifiée** (sous-modules 13 → 14px, même hauteur que les modules) et l'**espacement entre entrées est fixe** (la barre **défile** au lieu de se compresser).
 2. **Bouton « Outils » modernisé** — la touche du bas reçoit un **design plus récent** : **pastille à icône carrée bleue** (dégradé), libellé « Outils », **chevron animé**, fond en **dégradé bleu + halo au survol** (léger soulèvement), coins arrondis 13 px.
