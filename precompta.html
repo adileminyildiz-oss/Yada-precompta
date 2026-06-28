@@ -3950,8 +3950,8 @@ function cabinetDefaut(){ return {
   collaborateur:'Adil-emin Yildiz', cabinetNom:'ALR CONSEIL', role:'Collaborateur',
   ecrituresRejetees:0,
   dossiers:[
-    {id:'d-ama', nom:'AMA', forme:'SAS', siren:'933729345', activite:'Négoce', ville:'THIAIS', actif:true, favori:false, factFourn:10, factClient:20, docsManquants:8, portail:'Qonto'},
-    {id:'d-sci42', nom:'SCI DU 42', forme:'SCI', siren:'', activite:'Immobilier', ville:'', actif:true, favori:false, factFourn:0, factClient:0, docsManquants:0, portail:'Qonto', importeFEC:true},
+    {id:'d-ama', nom:'ALR CONSEIL', forme:'SAS', siren:'933729345', activite:'Conseil', ville:'THIAIS', actif:true, favori:false, factFourn:10, factClient:20, docsManquants:8, portail:'Qonto'},
+    {id:'d-sci42', nom:'BY HOLDING', forme:'SAS', siren:'', activite:'Holding', ville:'', actif:true, favori:false, factFourn:0, factClient:0, docsManquants:0, portail:'Qonto', importeFEC:true},
   ],
   total:2
 }; }
@@ -3988,7 +3988,7 @@ function seed(){
   db.activeId='d-ama'; const d=db.dossiersData['d-ama']; CHAMPS_DOSSIER.forEach(k=>db[k]=d[k]); syncComptesDuDossier();
 }
 function construireAMA(){
-  const ds=datasetVide(Object.assign(societeDefaut(),{ raison:'AMA', dossierNom:'AMA', dossierCode:'AMA', siren:'933729345', activite:'Négoce', ville:'THIAIS' }));
+  const ds=datasetVide(Object.assign(societeDefaut(),{ raison:'ALR CONSEIL', dossierNom:'ALR CONSEIL', dossierCode:'ALRCO', siren:'933729345', activite:'Conseil', ville:'THIAIS' }));
   withDataset(ds, ()=>{
     chargerPlanBTP();
     const ts=[
@@ -4036,7 +4036,7 @@ function construireAMA(){
   return ds;
 }
 function construireSCI42(){
-  const ds=datasetVide(Object.assign(societeDefaut(),{ raison:'SCI DU 42', dossierNom:'SCI DU 42', dossierCode:'SCI42', formeJur:'SCI', siren:'894221033', activite:'Immobilier (location)', ville:'PARIS', adresse:'42 rue de la République', cp:'75011' }));
+  const ds=datasetVide(Object.assign(societeDefaut(),{ raison:'BY HOLDING', dossierNom:'BY HOLDING', dossierCode:'BYHOLD', formeJur:'SAS', siren:'894221033', activite:'Holding', ville:'PARIS', adresse:'42 rue de la République', cp:'75011' }));
   withDataset(ds, ()=>{
     chargerPlanBTP();
     const ts=[
@@ -10888,7 +10888,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v325';
+    b.textContent='YADA · v326';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -19485,6 +19485,54 @@ ${lignes}
     +'body[data-role="client"] .cli-2col .cli-col+.cli-col{margin-top:10px}'
     +'.faccli-create h2{display:flex;align-items:center;gap:8px}';
     document.head.appendChild(st); }catch(e){}
+})();
+</script>
+<script id="yada-addon163">
+/* ============================================================
+   DOSSIERS de la base : renommage des dossiers de démonstration en
+   « ALR CONSEIL » (d-ama) et « BY HOLDING » (d-sci42) — pour qu'ils
+   apparaissent ainsi dans le logiciel (portefeuille + sélection).
+   Le seed crée déjà ces noms ; cette migration met aussi à jour une base
+   déjà enregistrée. Idempotente (ne touche que les anciens noms de démo).
+   ============================================================ */
+(function(){
+  var REN={
+    'AMA':{nom:'ALR CONSEIL', activite:'Conseil', forme:'SAS'},
+    'SCI DU 42':{nom:'BY HOLDING', activite:'Holding', forme:'SAS'}
+  };
+  function migrer(){
+    try{
+      if(typeof db!=='object'||!db) return false;
+      var changed=false;
+      if(db.cabinet&&Array.isArray(db.cabinet.dossiers)){
+        db.cabinet.dossiers.forEach(function(d){ var r=REN[d&&d.nom]; if(r){
+          d.nom=r.nom;
+          if(d.activite==='Négoce'||d.activite==='Immobilier'||!d.activite) d.activite=r.activite;
+          if(d.forme==='SCI') d.forme=r.forme;
+          changed=true;
+        }});
+      }
+      if(db.dossiersData){ Object.keys(db.dossiersData).forEach(function(id){
+        var ds=db.dossiersData[id]; var s=ds&&ds.societe; if(!s) return;
+        var r1=REN[s.raison]; if(r1){ s.raison=r1.nom; changed=true; }
+        var r2=REN[s.dossierNom]; if(r2){ s.dossierNom=r2.nom; changed=true; }
+      }); }
+      if(db.societe){
+        var rs=REN[db.societe.raison]; if(rs){ db.societe.raison=rs.nom; changed=true; }
+        var rd=REN[db.societe.dossierNom]; if(rd){ db.societe.dossierNom=rd.nom; changed=true; }
+      }
+      return changed;
+    }catch(e){ return false; }
+  }
+  window.migrerNomsDossiers=migrer;
+  try{ if(migrer() && typeof save==='function') save(); }catch(e){}
+  if(typeof render==='function'){
+    var done=false; var _r=render;
+    render=function(){
+      if(!done){ try{ if(migrer() && typeof save==='function') save(); }catch(e){} done=true; }
+      return _r.apply(this,arguments);
+    };
+  }
 })();
 </script>
 </body>

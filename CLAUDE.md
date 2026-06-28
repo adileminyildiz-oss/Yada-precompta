@@ -36,7 +36,18 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Persistance grande capacité (IndexedDB) : les gros dossiers (> 5 Mo) ne sont plus perdus au redémarrage — v325
+## 🟢 Dernière mise à jour — Dossiers de la base : ALR CONSEIL & BY HOLDING (renommage des dossiers + migration) — v326
+**Quoi :** les deux dossiers de la base s'appellent désormais **ALR CONSEIL** (id interne `d-ama`) et **BY HOLDING** (id interne `d-sci42`) — ils **apparaissent ainsi dans le logiciel** (portefeuille « Sociétés » + écran de sélection des dossiers + société active). Les **ids internes sont conservés** (`d-ama`/`d-sci42`) pour ne pas casser le filet de tests ni le portail Client (`CLIENT_DOSSIER='d-ama'`).
+
+**Comment :**
+- **Seed** (`cabinetDefaut`, `construireAMA`, `construireSCI42`) : `nom`/`raison`/`dossierNom` passés à **ALR CONSEIL** (SAS, Conseil) et **BY HOLDING** (SAS, Holding) ; les jeux de données de démonstration (tiers, écritures équilibrées) sont **conservés** (application fonctionnelle + tests verts).
+- **`yada-addon163`** : migration **idempotente** au chargement et au 1er rendu — renomme une base **déjà enregistrée** (`db.cabinet.dossiers`, `db.dossiersData[*].societe`, société active), **uniquement** si le nom courant est exactement l'ancien nom de démo (`AMA`→ALR CONSEIL, `SCI DU 42`→BY HOLDING). `save()` après changement.
+
+**Limites :** données de démonstration conservées sous les nouveaux noms (à compléter/réinitialiser pour les données réelles). Validé : `node --check` (155 scripts, 0 erreur) + accolades addon163 (24/24) + Playwright (seed → « ALR CONSEIL »/« BY HOLDING », migration depuis anciens noms OK & idempotente, équilibre ✅, 0 pageerror). Badge → **v326**.
+
+---
+
+## 🟢 MAJ précédente — Persistance grande capacité (IndexedDB) : les gros dossiers (> 5 Mo) ne sont plus perdus au redémarrage — v325
 **Quoi :** correction d'un problème majeur de **persistance des données**. YADA enregistrait dans le **`localStorage`** (limité à ~5 Mo, et chaque caractère y compte double) : un dossier volumineux (ex. ~3,4 Mo de JSON) **dépassait le quota** → `save()` échouait **silencieusement** → au redémarrage, les données avaient disparu et il fallait **ré-importer le fichier à chaque fois**. Désormais chaque enregistrement est **miroité dans IndexedDB** (capacité bien plus grande) et **restauré au démarrage** : on importe **une seule fois**, et le dossier **reste** sur l'appareil.
 
 **Comment — `yada-addon-idb-persist` (100% additif) :** helpers `idbSet`/`idbGet` (base `yada-store`, store `kv`, clé `db`) ; **wrap de `save()`** qui écrit aussi `{data:JSON(db), ts}` dans IndexedDB (+ un horodatage minuscule `yada-db-ts` en localStorage) ; au démarrage, `bootApply()` lit IndexedDB et **restaure** la copie si elle est **au moins aussi récente** que le localStorage (`idbTs ≥ lsTs`) — cas d'un dossier trop gros pour le localStorage où seule la copie IndexedDB est complète. Aucune logique comptable modifiée.
