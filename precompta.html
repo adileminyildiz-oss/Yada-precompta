@@ -10896,7 +10896,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v340';
+    b.textContent='YADA · v341';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -20196,6 +20196,15 @@ ${lignes}
       /* espacement constant entre les entrées (la barre défile au lieu de se compresser) */
       +'#nav{gap:3px !important}'
       +'#nav .nav-sub{margin:3px 0 8px 14px !important;gap:3px !important}'
+      /* CLÉ : aucune compression flex — les entrées gardent EXACTEMENT la même taille,
+         qu\'un module soit déplié ou non ; quand ça déborde, la nav DÉFILE (pas de tassement) */
+      +'#nav .nav-btn,#nav .nav-sec,#nav .nav-sub,#nav .nav-sub-btn{flex:0 0 auto !important}'
+      /* barre de défilement BLEUE */
+      +'#nav{scrollbar-width:thin !important;scrollbar-color:#1e90ff rgba(255,255,255,.06) !important}'
+      +'#nav::-webkit-scrollbar{width:9px}'
+      +'#nav::-webkit-scrollbar-track{background:transparent}'
+      +'#nav::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3b9bff,#0a64d6) !important;border-radius:8px;border:2px solid transparent;background-clip:padding-box}'
+      +'#nav::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#5ab0ff,#0a64d6) !important;background-clip:padding-box}'
       +'}'
       /* ---- (2) bouton « Outils » modernisé (prime sur addon168, même sélecteur + source plus tardive) ---- */
       +'aside .side-foot button.sf-toggle.sf-tog-new{display:flex !important;align-items:center !important;gap:10px !important;justify-content:flex-start !important;'
