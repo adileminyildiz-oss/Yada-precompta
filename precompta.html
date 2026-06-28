@@ -3951,9 +3951,10 @@ function cabinetDefaut(){ return {
   ecrituresRejetees:0,
   dossiers:[
     {id:'d-ama', nom:'ALR CONSEIL', forme:'SAS', siren:'933729345', activite:'Conseil', ville:'THIAIS', actif:true, favori:false, factFourn:10, factClient:20, docsManquants:8, portail:'Qonto'},
+    {id:'d-mbc', nom:'MBC', forme:'SAS', siren:'', activite:'', ville:'', actif:true, favori:false, factFourn:0, factClient:0, docsManquants:0, portail:'Qonto'},
     {id:'d-sci42', nom:'BY HOLDING', forme:'SAS', siren:'', activite:'Holding', ville:'', actif:true, favori:false, factFourn:0, factClient:0, docsManquants:0, portail:'Qonto', importeFEC:true},
   ],
-  total:2
+  total:3
 }; }
 /* champs propres à CHAQUE dossier (jamais partagés entre sociétés) */
 const CHAMPS_DOSSIER=['tiers','factures','ecritures','reglements','docs','banque','odiv','releves','paie','demandesFactures','societe','parametres','plan','journaux','fecLog','seq','immos','emprunts','creditbails','locations','vehicules'];
@@ -3982,10 +3983,17 @@ function seed(){
   CHAMPS_DOSSIER.forEach(k=>db[k]=undefined);
   // --- DOSSIER 1 : AMA (négoce) ---
   db.dossiersData['d-ama']=construireAMA();
-  // --- DOSSIER 2 : SCI DU 42 (immobilier, données distinctes) ---
+  // --- DOSSIER 2 : MBC (dossier vierge prêt à l'emploi / import FEC) ---
+  db.dossiersData['d-mbc']=construireMBC();
+  // --- DOSSIER 3 : SCI DU 42 (immobilier, données distinctes) ---
   db.dossiersData['d-sci42']=construireSCI42();
   // dossier actif par défaut : AMA
   db.activeId='d-ama'; const d=db.dossiersData['d-ama']; CHAMPS_DOSSIER.forEach(k=>db[k]=d[k]); syncComptesDuDossier();
+}
+function construireMBC(){
+  const ds=datasetVide(Object.assign(societeDefaut(),{ raison:'MBC', dossierNom:'MBC', dossierCode:'MBC', formeJur:'SAS', siren:'', activite:'', ville:'' }));
+  try{ withDataset(ds, ()=>{ if(typeof chargerPlanBTP==='function') chargerPlanBTP(); }); }catch(e){}
+  return ds;
 }
 function construireAMA(){
   const ds=datasetVide(Object.assign(societeDefaut(),{ raison:'ALR CONSEIL', dossierNom:'ALR CONSEIL', dossierCode:'ALRCO', siren:'933729345', activite:'Conseil', ville:'THIAIS' }));
@@ -10888,7 +10896,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v329';
+    b.textContent='YADA · v330';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -19521,7 +19529,27 @@ ${lignes}
         var rs=REN[db.societe.raison]; if(rs){ db.societe.raison=rs.nom; changed=true; }
         var rd=REN[db.societe.dossierNom]; if(rd){ db.societe.dossierNom=rd.nom; changed=true; }
       }
+      /* Ajout du dossier MBC s'il manque (base déjà enregistrée avant v330) */
+      if(ensureMBC()) changed=true;
       return changed;
+    }catch(e){ return false; }
+  }
+  function ensureMBC(){
+    try{
+      if(!db||!db.cabinet||!Array.isArray(db.cabinet.dossiers)) return false;
+      var exists=db.cabinet.dossiers.some(function(d){ return d&&(d.id==='d-mbc' || String(d.nom||'').toUpperCase()==='MBC'); });
+      if(exists) return false;
+      var entry={id:'d-mbc', nom:'MBC', forme:'SAS', siren:'', activite:'', ville:'', actif:true, favori:false, factFourn:0, factClient:0, docsManquants:0, portail:'Qonto'};
+      var idx=-1; for(var i=0;i<db.cabinet.dossiers.length;i++){ if(db.cabinet.dossiers[i].id==='d-ama'){ idx=i; break; } }
+      if(idx>=0) db.cabinet.dossiers.splice(idx+1,0,entry); else db.cabinet.dossiers.push(entry);
+      db.cabinet.total=db.cabinet.dossiers.length;
+      if(!db.dossiersData) db.dossiersData={};
+      if(!db.dossiersData['d-mbc'] && typeof datasetVide==='function'){
+        var soc=Object.assign((typeof societeDefaut==='function'?societeDefaut():{}),{ raison:'MBC', dossierNom:'MBC', dossierCode:'MBC', formeJur:'SAS', siren:'', activite:'', ville:'' });
+        db.dossiersData['d-mbc']=datasetVide(soc);
+        try{ if(typeof withDataset==='function' && typeof chargerPlanBTP==='function') withDataset(db.dossiersData['d-mbc'], function(){ chargerPlanBTP(); }); }catch(e){}
+      }
+      return true;
     }catch(e){ return false; }
   }
   window.migrerNomsDossiers=migrer;
