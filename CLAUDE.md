@@ -36,7 +36,19 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Module TVA : « Détail par compte de TVA » (toute écriture à compte 445…, CA3/CA12) — v349
+## 🟢 Dernière mise à jour — Module TVA : carte « Écriture & déclaration de TVA » (mois du CA3) → Générer l'OD puis Déclarer — v350
+**Quoi :** sous le **Tableau CA3** (mois & année affichés), une carte **« 🧾 Écriture & déclaration de TVA »** présente, **comme une écriture comptable**, les **comptes de TVA concernés par les montants** (collectée 445710000, déductible 445660000, à décaisser 445510000 / crédit 445670000) avec **libellé + Débit/Crédit** et le total équilibré. Cycle :
+1. **Générer l'OD TVA** (bouton) → crée l'écriture OD TVA (journal OD TVA, dernier jour du mois, pièce MM/AAAA) — lignes identiques à `posterODTVA`.
+2. Une fois l'OD générée → **Déclarer la TVA (CA3)** (bouton) : marque le mois **déclaré** (persistant, `db.societe.tvaDeclaree[mois]`).
+3. Une fois déclarée → **🖨 Imprimer la déclaration** (récap CA3 + écriture, format A4) + lien **Espace impots.gouv.fr**.
+
+**Comment — `yada-addon177` (100% additif) :** `tvaODLignes(m)` (preview = `posterODTVA`), `tvaEcritureCard()` (mois = `tvaMoisSel`, états non posté / posté-non déclaré / déclaré), `tvaDeclarer(m)` (enregistre la déclaration), `tvaImprimerDeclaration(m)` (doc-page CA3 dans `#print-area`). Greffe `pageTVA` : carte insérée **juste avant « Suivi annuel de la TVA »** (donc après le tableau CA3) ; régime franchise exclu. Réutilise `tvaGenererOD`/`tvaSupprimerOD` existants.
+
+**Limites :** « Déclarer » = marquage interne + édition/impression de la déclaration (la télétransmission se fait sur impots.gouv.fr). Validé : `node --check` (170 scripts, 0 erreur) + Playwright (carte après CA3 ; cycle Générer→Déclarer→déclaré persistant ; OD équilibrée ; impression remplit `#print-area` ; équilibre ✅, 0 pageerror). Badge → **v350**.
+
+---
+
+## 🟢 MAJ précédente — Module TVA : « Détail par compte de TVA » (toute écriture à compte 445…, CA3/CA12) — v349
 **Quoi :** le **module TVA** récolte et **retranscrit toutes les écritures touchant un compte de TVA (445…)**, **quel que soit le compte utilisé** — issues des **factures clients & fournisseurs**, de l'**import FEC** et des **saisies (Analyse)**. Une carte **« Détail par compte de TVA »** est ajoutée (sous le tableau CA3 / la vue CA12) listant, pour la période (mois en CA3, exercice en CA12) : Compte · Libellé · Nature (Collectée / Déductible / À décaisser / Crédit à reporter) · Débit · Crédit · Solde · Journal(x), avec total des comptes 445. Ces montants alimentent le calcul CA3/CA12 et la **proposition de déclaration** (génération de l'OD TVA CA3 / vue CA12 déjà en place).
 
 **Comment — `yada-addon176` (100% additif) :** `tvaDetailParCompte()` scanne `db.ecritures` filtrées par mois (`tvaMoisSel`) ou par année d'exercice (CA12), agrège débit/crédit par `c9(compte)` commençant par `445`, classe par nature (préfixes 4457 / 4456-44562 / 44551 / 44567) ; libellés via `COMPTES` (repli `db.plan`) ; greffe sur `pageTVA` (sauf régime franchise). Le calcul `tvaDuMois`/`tvaDetailMois` et la génération OD TVA restent inchangés.

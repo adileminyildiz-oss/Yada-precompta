@@ -10915,7 +10915,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v349';
+    b.textContent='YADA · v350';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -20373,6 +20373,101 @@ ${lignes}
   var _pt=pageTVA;
   pageTVA=function(){ var h=_pt.apply(this,arguments);
     try{ if(((db.societe&&db.societe.tvaRegime)||'CA3')!=='franchise') h+=window.tvaDetailParCompte(); }catch(e){}
+    return h; };
+})();
+</script>
+
+<script id="yada-addon177">
+/* ============================================================
+   MODULE TVA — Carte « Écriture & déclaration de TVA » pour le MOIS affiché
+   (celui du Tableau CA3). Affiche l'écriture OD TVA (comptes de TVA concernés
+   par les montants + libellés), un bouton « Générer l'OD TVA » ; une fois l'OD
+   générée, un bouton « Déclarer la TVA (CA3) » + impression de la déclaration.
+   Lignes IDENTIQUES à posterODTVA. 100% additif (greffe pageTVA, après le CA3).
+   ============================================================ */
+(function(){
+  if(typeof pageTVA!=='function' || typeof tvaDetailMois!=='function') return;
+  function libCompte(cc){ if(typeof COMPTES!=='undefined' && COMPTES[cc]) return COMPTES[cc];
+    var sh=cc.replace(/0+$/,''); if(typeof COMPTES!=='undefined' && COMPTES[sh]) return COMPTES[sh];
+    var p=(db.plan||[]).find(function(x){ return c9(x.code)===cc; }); return p?p.lib:''; }
+  /* lignes OD TVA proposées — MÊME logique que posterODTVA (preview = génération) */
+  window.tvaODLignes=function(m){
+    var d=tvaDetailMois(m); var L=[];
+    if(d.col>0) L.push({compte:'445710000',debit:d.col,credit:0});
+    if(d.ded>0) L.push({compte:'445660000',debit:0,credit:d.ded});
+    if(d.reportCredit>0) L.push({compte:'445670000',debit:0,credit:d.reportCredit});
+    if(d.aDecaisser>0) L.push({compte:'445510000',debit:0,credit:d.aDecaisser});
+    else if(d.credit>0) L.push({compte:'445670000',debit:d.credit,credit:0});
+    return L;
+  };
+  /* Déclarer la TVA (après l'OD) — marque le mois déclaré (persistant) */
+  window.tvaDeclarer=function(m){
+    if(typeof odTvaDejaPostee==='function' && !odTvaDejaPostee(m)){ if(typeof toast==='function')toast('Générez d\'abord l\'OD TVA'); return; }
+    var d=tvaDetailMois(m);
+    db.societe.tvaDeclaree=db.societe.tvaDeclaree||{};
+    db.societe.tvaDeclaree[m]={ date:todayStr(), aDecaisser:d.aDecaisser||0, credit:d.credit||0 };
+    if(typeof save==='function')save(); if(typeof render==='function')render();
+    if(typeof toast==='function')toast('TVA '+pieceMois(m)+' déclarée ✓');
+  };
+  /* Impression de la déclaration CA3 du mois */
+  window.tvaImprimerDeclaration=function(m){
+    var d=tvaDetailMois(m); var L=window.tvaODLignes(m); var s=db.societe||{};
+    var lr=L.map(function(l){ var cc=c9(l.compte);
+      return '<tr><td>'+cc+'</td><td>'+(libCompte(cc)||'—')+'</td><td class="r num">'+(l.debit?eur(r2(l.debit)):'—')+'</td><td class="r num">'+(l.credit?eur(r2(l.credit)):'—')+'</td></tr>'; }).join('');
+    var html='<div class="doc-page"><h1 style="font-size:18px;margin-bottom:4px">Déclaration de TVA — CA3 — '+moisLabel(m)+'</h1>'
+      +'<div class="mini" style="margin-bottom:12px">'+(s.raison||'')+(s.siret?(' · SIRET '+s.siret):'')+(s.tvaIntra?(' · TVA '+s.tvaIntra):'')+' — Édité le '+horodatage().dateFr+'</div>'
+      +'<table><thead><tr><th>Rubrique</th><th class="r">Montant</th></tr></thead><tbody>'
+      +'<tr><td>TVA brute collectée (ligne 16)</td><td class="r num">'+eur(d.col)+'</td></tr>'
+      +'<tr><td>TVA déductible (ligne 23)</td><td class="r num">'+eur(r2(d.ded+(d.reportCredit||0)))+'</td></tr>'
+      +'<tr class="totrow"><td><b>'+(d.aDecaisser?'TVA nette à payer (ligne 28)':'Crédit de TVA à reporter (ligne 27)')+'</b></td><td class="r num"><b>'+eur(d.aDecaisser||d.credit)+'</b></td></tr>'
+      +'</tbody></table>'
+      +'<h2 style="font-size:14px;margin-top:16px">Écriture comptable (OD TVA — '+pieceMois(m)+')</h2>'
+      +'<table><thead><tr><th>Compte</th><th>Libellé</th><th class="r">Débit</th><th class="r">Crédit</th></tr></thead><tbody>'+lr+'</tbody></table>'
+      +'</div>';
+    var pa=document.getElementById('print-area'); if(pa){ pa.innerHTML=html; if(typeof toast==='function')toast('Fenêtre d\'impression → « Enregistrer en PDF »'); setTimeout(function(){ try{window.print();}catch(e){} },150); }
+  };
+  /* Carte écriture & déclaration pour le mois affiché (tvaMoisSel) */
+  window.tvaEcritureCard=function(){
+    var regime=(db.societe&&db.societe.tvaRegime)||'CA3'; if(regime==='franchise') return '';
+    var m=window.tvaMoisSel; if(!m) return '';
+    if(typeof tvaEstNeant==='function' && tvaEstNeant(m))
+      return '<div class="card"><h2>🧾 Écriture &amp; déclaration de TVA — '+moisLabel(m)+'</h2><div class="empty">Mois sans TVA (Néant) — aucune écriture OD TVA ni déclaration à produire.</div></div>';
+    var L=window.tvaODLignes(m);
+    var sd=r2(L.reduce(function(s,l){return s+l.debit;},0)), sc=r2(L.reduce(function(s,l){return s+l.credit;},0));
+    var equ=Math.abs(sd-sc)<0.005;
+    var rows=L.map(function(l){ var cc=c9(l.compte);
+      return '<tr><td class="num">'+cc+'</td><td>'+(libCompte(cc)||'—')+'</td>'
+        +'<td class="r num deb">'+(l.debit?eur(r2(l.debit)):'—')+'</td>'
+        +'<td class="r num cre">'+(l.credit?eur(r2(l.credit)):'—')+'</td></tr>'; }).join('');
+    var poste=(typeof odTvaDejaPostee==='function')&&odTvaDejaPostee(m);
+    var decl=(db.societe.tvaDeclaree&&db.societe.tvaDeclaree[m]);
+    var actions;
+    if(!poste){
+      actions='<span class="mini" style="margin-right:auto">Générez l\'OD TVA pour pouvoir déclarer.</span>'
+        +'<button class="btn btn-pri" onclick="tvaGenererOD(\''+m+'\')">Générer l\'OD TVA</button>';
+    } else if(!decl){
+      actions='<span class="lx-soldee" style="margin-right:auto">✓ OD TVA '+pieceMois(m)+' générée</span>'
+        +'<button class="btn btn-ghost" onclick="tvaSupprimerOD(\''+m+'\')">Supprimer l\'OD</button>'
+        +'<button class="btn btn-pri" onclick="tvaDeclarer(\''+m+'\')">Déclarer la TVA (CA3)</button>';
+    } else {
+      actions='<span class="lx-soldee" style="margin-right:auto">✓ TVA déclarée le '+frDate(decl.date)+' — '+(decl.aDecaisser>0?('à payer '+eur(decl.aDecaisser)):('crédit '+eur(decl.credit||0)))+'</span>'
+        +'<button class="btn btn-ghost" onclick="tvaImprimerDeclaration(\''+m+'\')">🖨 Imprimer la déclaration</button>'
+        +'<a class="btn btn-ghost" href="https://cfspro.impots.gouv.fr/" target="_blank" rel="noopener">Espace impots.gouv.fr ↗</a>';
+    }
+    return '<div class="card" style="border-color:var(--blue)"><h2>🧾 Écriture &amp; déclaration de TVA — '+moisLabel(m)+'</h2>'
+      +'<div class="sub">Écriture <b>OD TVA</b> du mois affiché : comptes de TVA concernés par les montants + libellés. Générez l\'OD TVA (journal OD TVA, '+frDate(dernierJourMoisISO(m))+', pièce '+pieceMois(m)+'), puis déclarez la TVA.</div>'
+      +'<table><thead><tr><th>Compte</th><th>Libellé</th><th class="r">Débit</th><th class="r">Crédit</th></tr></thead><tbody>'
+      +(rows||'<tr><td colspan=4 class=empty>Aucun montant de TVA ce mois</td></tr>')
+      +'<tr class="totrow" style="border-top:2px solid var(--ink)"><td colspan=2><b>Totaux — '+(equ?'équilibré ✓':'⚠ déséquilibré')+'</b></td><td class="r num deb">'+eur(sd)+'</td><td class="r num cre">'+eur(sc)+'</td></tr>'
+      +'</tbody></table>'
+      +'<div class="right" style="margin-top:12px;display:flex;align-items:center;gap:8px">'+actions+'</div>'
+      +'</div>';
+  };
+  var _pt2=pageTVA;
+  pageTVA=function(){ var h=_pt2.apply(this,arguments);
+    try{ if(((db.societe&&db.societe.tvaRegime)||'CA3')!=='franchise'){ var c=window.tvaEcritureCard();
+      if(c){ var anchor='<div class="card"><h2>Suivi annuel de la TVA';
+        if(h.indexOf(anchor)>=0) h=h.replace(anchor, c+anchor); else h+=c; } } }catch(e){}
     return h; };
 })();
 </script>
