@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Import FEC : intégration UNIQUEMENT dans le dossier déjà créé (création de dossier retirée) — v343
+## 🟢 Dernière mise à jour — Éditions : carte « Montants sans facture » → bouton Afficher + bouton Imprimer (au lieu d'une liste générée) — v344
+**Quoi :** dans le module **Éditions**, la carte **« Montants sans facture — à vérifier & demander au tiers »** ne génère plus la liste directement. Elle affiche un **bouton « 📋 Afficher la liste »** ; au clic, la liste (3 blocs : Grand livre général / Fournisseurs / Clients) s'affiche, accompagnée d'un **bouton « 🖨 Imprimer la liste »** (édition au format A4, fond blanc).
+
+**Comment — éditions chirurgicales de `cardSansFacture` + 2 fonctions :** la carte teste `window._sfShow` ; si faux → bouton « Afficher » + invite ; si vrai → bouton « Masquer » + bouton « Imprimer » + `${blocs}${histo}`. `sfAfficherToggle()` bascule `_sfShow` puis `render()`. `sfImprimer()` construit une `.doc-page` (tables Date/Tiers/Libellé/Sens/Montant/E-mail + total par bloc) dans `#print-area` puis `window.print()`. Aucune logique comptable modifiée (cases « Vérifié » / « Demander la facture » inchangées dans la liste affichée).
+
+**Limites :** affichage/impression. Validé : `node --check` (167 scripts, 0 erreur) + Playwright (replié : 0 `<table>`, bouton « Afficher » présent ; affiché : `<table>` + bouton « Imprimer » ; `sfImprimer` remplit `#print-area` en `doc-page` ; équilibre ✅, 0 pageerror). Badge → **v344**.
+
+---
+
+## 🟢 MAJ précédente — Import FEC : intégration UNIQUEMENT dans le dossier déjà créé (création de dossier retirée) — v343
 **Quoi :** dans **Import / Export FEC**, la fonction **« Créer un nouveau dossier pour ce FEC ? »** (formulaire Nom/Début/Fin + bouton « Créer le dossier & intégrer le FEC ») est **retirée**. Désormais le FEC est **toujours intégré dans le dossier courant (déjà créé)**. Si les dates du fichier débordent de l'exercice courant, **l'exercice du dossier est élargi automatiquement** (union) pour couvrir toutes les écritures (sinon elles seraient rejetées hors période) — **aucun nouveau dossier n'est créé**.
 
 **Comment — 3 éditions chirurgicales :**
