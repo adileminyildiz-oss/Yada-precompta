@@ -6502,12 +6502,35 @@ function cardSansFacture(){
     <table style="margin-top:6px"><thead><tr><th>Date demande</th><th>Tiers</th><th>Libellé</th><th class="r">Montant</th><th>Canal</th><th>Statut</th></tr></thead><tbody>
     ${dem.slice().reverse().map(d=>`<tr><td class="num">${d.dateDemande}</td><td>${d.tiers}</td><td>${d.libelle}</td><td class="r num">${eur(d.montant)}</td><td>${d.canal}</td><td><span class="tag t-att">en attente retour</span></td></tr>`).join('')}
     </tbody></table></div>`:'';
+  const show=!!window._sfShow;
   return `<div class="card"><h2>Montants sans facture — à vérifier & demander au tiers</h2>
     <div class="sub">Sous chaque grand livre : les montants non lettrés sans facture rattachée. Cochez « Vérifié » après contrôle, puis demandez la pièce au tiers. Le tiers pourra renvoyer la facture par mail ou via son accès au logiciel.</div>
-    ${blocs}
-    ${histo}
-    <div class="hint">La case « Vérifié » est l'étape de validation par l'utilisateur avant tout envoi. Aucune demande n'est transmise tant que la ligne n'est pas vérifiée.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn btn-pri" onclick="sfAfficherToggle()">${show?'🙈 Masquer la liste':'📋 Afficher la liste'}</button>
+      ${show?`<button class="btn btn-ghost" onclick="sfImprimer()">🖨 Imprimer la liste</button>`:''}
+    </div>
+    ${show?`<div id="sf-liste">${blocs}${histo}
+      <div class="hint">La case « Vérifié » est l'étape de validation par l'utilisateur avant tout envoi. Aucune demande n'est transmise tant que la ligne n'est pas vérifiée.</div></div>`
+      :`<div class="hint">Cliquez sur « Afficher la liste » pour consulter les montants sans facture, puis « Imprimer la liste » pour l'éditer.</div>`}
   </div>`;
+}
+function sfAfficherToggle(){ window._sfShow=!window._sfShow; render(); }
+function sfImprimer(){
+  const types=[['general','Grand livre général'],['fournisseur','Fournisseurs'],['client','Clients']];
+  let html='<div class="doc-page"><h1 style="font-size:18px;margin-bottom:4px">Montants sans facture — à vérifier &amp; demander au tiers</h1>'
+    +`<div class="mini" style="margin-bottom:12px">${db.societe.raison||''} — Exercice ${frDate(db.societe.exoDebut)} → ${frDate(db.societe.exoFin)} — Édité le ${horodatage().dateFr}</div>`;
+  types.forEach(([t,lbl])=>{
+    const list=montantsSansFacture(t);
+    html+=`<h2 style="font-size:14px;margin-top:14px">${lbl}</h2>`;
+    if(!list.length){ html+='<div class="mini">Aucun montant sans facture ✓</div>'; return; }
+    const total=r2(list.reduce((a,x)=>a+x.montant,0));
+    html+='<table><thead><tr><th>Date</th><th>Tiers</th><th>Libellé</th><th>Sens</th><th class="r">Montant</th><th>E-mail</th></tr></thead><tbody>'
+      + list.map(x=>`<tr><td>${frDate(x.date)}</td><td>${x.tiers}</td><td>${x.libelle}</td><td>${x.sens==='C'?'Encaissement':'Décaissement'}</td><td class="r num">${eur(x.montant)}</td><td>${x.email||'—'}</td></tr>`).join('')
+      + `<tr><td colspan="4" class="r"><b>Total ${lbl}</b></td><td class="r num"><b>${eur(total)}</b></td><td></td></tr></tbody></table>`;
+  });
+  html+='</div>';
+  document.getElementById('print-area').innerHTML=html;
+  toast('Fenêtre d\'impression → « Enregistrer en PDF »'); setTimeout(()=>window.print(),150);
 }
 function sfToggle(k){ db._sfVerif=db._sfVerif||{}; db._sfVerif[k]=!db._sfVerif[k]; render(); }
 function sfDemander(type,k){
@@ -10865,7 +10888,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v343';
+    b.textContent='YADA · v344';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
