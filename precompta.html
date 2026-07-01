@@ -10987,7 +10987,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v365';
+    b.textContent='YADA · v366';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -21268,6 +21268,67 @@ ${lignes}
     +'.sal-doc-stamp{margin-top:40px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;text-align:right}'
     +'.sal-doc-tampon{border:1px dashed #888;border-radius:8px;padding:16px 30px;color:#888;font-size:12px}'
     +'@media(max-width:820px){.sal-form{grid-template-columns:1fr}}';
+  document.head.appendChild(st);
+})();
+</script>
+
+<script id="yada-addon184">
+/* ============================================================
+   MISE EN PAGE — qualité + suppression des EMOJIS.
+   1) Balayage post-rendu : retire les emojis pictographiques du texte affiché
+      (garde les glyphes de contrôle : ‹ › ✕ ✎ ✓ ▾ ▸ ─ ▢ flèches, %, Σ…).
+   2) Polish CSS additif (espacements, titres, tableaux, boutons) injecté en
+      dernier. 100% additif, aucune donnée modifiée.
+   ============================================================ */
+(function(){
+  var HASEMO=/\p{Extended_Pictographic}/u;
+  var EMO=/(?:\p{Extended_Pictographic}(?:\u{FE0F}|\u{200D}|[\u{1F3FB}-\u{1F3FF}]|\p{Extended_Pictographic})*)\u{FE0F}?[\t ]?/gu;
+  function stripStr(s){ if(!s||!HASEMO.test(s)) return s; return s.replace(EMO,'').replace(/[\t ]{2,}/g,' '); }
+  var busy=false, obs=null;
+  function sweep(root){
+    root=root||document.body; if(!root||!root.ownerDocument) return;
+    var tw=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode:function(n){
+      var p=n.parentNode; if(!p) return NodeFilter.FILTER_REJECT;
+      var t=p.nodeName; if(t==='SCRIPT'||t==='STYLE'||t==='TEXTAREA') return NodeFilter.FILTER_REJECT;
+      return HASEMO.test(n.data)? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+    }});
+    var arr=[], n; while((n=tw.nextNode())) arr.push(n);
+    arr.forEach(function(x){ var v=stripStr(x.data); if(v!==x.data) x.data=v; });
+  }
+  function run(){ if(busy) return; busy=true;
+    try{ if(obs) obs.disconnect(); sweep(document.body); }catch(e){}
+    finally{ try{ if(obs) obs.observe(document.body,{childList:true,subtree:true,characterData:true}); }catch(e){} busy=false; } }
+  function schedule(){ try{ requestAnimationFrame(run); }catch(e){ setTimeout(run,0); } }
+  if(typeof render==='function'){ var _r=render; render=function(){ var x=_r.apply(this,arguments); schedule(); return x; }; }
+  try{ obs=new MutationObserver(function(muts){ if(busy) return; var need=false;
+      for(var i=0;i<muts.length && !need;i++){ var m=muts[i];
+        if(m.type==='characterData'){ if(HASEMO.test(m.target.data||'')) need=true; }
+        else { for(var j=0;j<m.addedNodes.length;j++){ var a=m.addedNodes[j];
+          if(a.nodeType===3){ if(HASEMO.test(a.data||'')){ need=true; break; } }
+          else if(a.nodeType===1){ if(HASEMO.test(a.textContent||'')){ need=true; break; } } } }
+      }
+      if(need) schedule(); });
+    obs.observe(document.body,{childList:true,subtree:true,characterData:true});
+  }catch(e){}
+  schedule();
+
+  var st=document.createElement('style'); st.id='mep-quality-mod'; st.textContent=
+    /* icônes vidées par le nettoyage : on masque le vide pour éviter les décalages */
+    '.nav-btn .ico:empty,.ico:empty,.pil-tab:empty{display:none}'
+    /* titres & sous-titres : hiérarchie plus nette */
+    +'.card h2{letter-spacing:.2px;line-height:1.25}'
+    +'.card>.sub,.card .sub{line-height:1.5;opacity:.82}'
+    +'.page-head h1{letter-spacing:.2px}'
+    /* onglets Pilotage/Salarié : plus sobres */
+    +'.pil-tabs{gap:6px}.pil-tab{border-radius:9px;padding:8px 15px;font-weight:600}'
+    /* tableaux internes : lisibilité (n\'affecte ni Sage .sg-app ni .doc-page) */
+    +'.mod-wrap .card table:not(.sg-grid):not(.sgj-grid){border-collapse:collapse}'
+    +'.mod-wrap .card table th{font-weight:600;letter-spacing:.15px}'
+    /* boutons : rayon homogène, appui net */
+    +'.mod-wrap .btn,.dash-wrap .btn{border-radius:9px}'
+    +'.mod-wrap .btn-sm{border-radius:8px}'
+    /* champs : cohérence visuelle */
+    +'.pil-form input,.pil-form select,.sal-form input,.sal-form select,.pil-grid5 input,.pil-grid5 select,.pil-grid6 input{border:1px solid rgba(30,144,255,.22)}';
   document.head.appendChild(st);
 })();
 </script>
