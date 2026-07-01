@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — HUB : rubriques sans barre latérale + carte « Dossier sélectionné » cadrée/agrandie — v377
+## 🟢 Dernière mise à jour — HUB : carte principale de la société redessinée (plus esthétique) — v378
+**Quoi :** dans la page HUB (`yada-addon189`), la **carte principale de la société** (à gauche : nom, SAS, adresse…) est **remplacée par une carte plus esthétique** : **en-tête à dégradé bleu** avec **avatar arrondi** (initiale de la société), **nom en gros**, **badge de forme juridique** + **SIREN** en sous-titre, puis une **grille d'informations** (SIRET, Code APE, N° TVA, Dirigeant en 2 colonnes ; Activité & Adresse en pleine largeur) — chaque info dans un **pavé translucide bleu** avec libellé en petites capitales. S'adapte aux champs renseignés (les vides sont masqués ; message si société à compléter).
+
+**Comment — `yada-addon189` :** `socItem(lbl,val,full)` (pavé label/valeur, option pleine largeur) ; `ecranHub` construit `.dsc-card` (`.dsc-head` avatar+nom+tags, `.dsc-grid` items). CSS `<style id="ds-flow-mod">` : `.dsc-card/.dsc-head/.dsc-av/.dsc-nom/.dsc-badge/.dsc-siren/.dsc-grid/.dsc-item(.full)/.dsc-l/.dsc-v` (responsive 1 colonne < 520px). L'ancien rendu `.ds-soc-row` (lignes label/valeur) n'est plus utilisé. Validé : `node --check` (182 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (carte `.dsc-card` : avatar « M », nom « MBC », badge « SAS », en-tête dégradé, 0 ancienne `.ds-soc-row` ; équilibre 34 écritures ✅, 0 pageerror). Badge → **v378**.
+
+---
+
+## 🟢 MAJ précédente — HUB : rubriques sans barre latérale + carte « Dossier sélectionné » cadrée/agrandie — v377
 **Quoi :** deux changements dans le parcours d'entrée (`yada-addon189`).
 1. **Rubriques sans barre latérale + regroupement par nature** : les 5 cartes du HUB (Permanent, Déclarations, Ressources Humaines, Pilotages, Comptabilité) n'entrent plus directement dans un module unique (avec barre latérale) — chaque carte ouvre désormais une **page de rubrique SANS barre latérale** listant **uniquement les modules de sa nature** :
    - **Permanent** → paramétrages principaux : Informations société · Paramétrage · Plan comptable · Coffre-fort · Société & création du dossier.
