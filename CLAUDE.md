@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Liste des dossiers : rangée à droite + effet « roue / cylindre » (flou circulaire au défilement) — v387
+## 🟢 Dernière mise à jour — Liste des dossiers : défilement libre (chaque dossier atteint le centre net) — v388
+**Quoi :** dans la liste « roue/cylindre » (v387), les **premier et dernier dossiers restaient bloqués dans le flou** (padding fixe 96px insuffisant) → impossible de les amener au centre net. Le **rembourrage haut/bas passe à ~½ hauteur du conteneur** (`padding:31vh`) : la liste **monte et descend sans limite**, chaque dossier peut être défilé jusqu'au **centre net** (haut comme bas).
+
+**Comment — 1 édition CSS d'`yada-addon192` :** `.ds-list-right{padding:96px 10px}` → `padding:31vh 10px` (moitié de `max-height:62vh`). Validé : `node --check` (185 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (12 dossiers : 1ᵉʳ centré opacité **1**, dernier centré opacité **1** — auparavant le dernier restait à .18 ; 0 pageerror) + filet d'équilibre ✅. Badge → **v388**.
+
+---
+
+## 🟢 MAJ précédente — Liste des dossiers : rangée à droite + effet « roue / cylindre » (flou circulaire au défilement) — v387
 **Quoi :** l'écran **« Liste des dossiers »** (après clic sur « Liste Dossier ») affiche la liste **rangée à droite** de l'écran, avec un **effet de roue/cylindre** au défilement : les lignes **montent en tournant dans le flou** (haut) et **descendent dans le flou** (bas), comme un sélecteur circulaire (rotation `rotateX` + éloignement `translateZ` + opacité décroissante + `blur` progressif, fondus haut/bas via `mask-image`).
 
 **Comment — `yada-addon192` (100% additif) + 1 édition d'`ecranListe` :** le conteneur devient `<div id="ds-liste-scroll" class="ds-list ds-list-right">` ; CSS `.ds-list-right` (placé à droite `margin:… auto`, `width:min(520px,44vw)`, `max-height:62vh`, `overflow-y:auto`, `perspective:1000px`, `mask-image` fondu haut/bas, scrollbar masquée) ; `paint(box)` calcule pour chaque `.ds-row` `rotateX`/`translateZ`/opacité/`blur` selon sa distance au centre ; `wire()` (écouteur `scroll` throttlé rAF + repaint après chaque `render`). Validé : `node --check` (185 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (liste à droite : box 680→1200 sur 1400 ; effet : haut op .55/blur 2.4, bas op .18/blur 6.5 ; après défilement le flou se déplace — haut op .18/blur 6.5 ; 0 pageerror) + filet d'équilibre ✅. Badge → **v387**.
