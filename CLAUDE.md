@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Écran « Dossier sélectionné » : carte remise à la taille d'origine (compacte) + cadre conservé — v379
+## 🟢 Dernière mise à jour — Connexion : on atterrit toujours sur « Espace dossiers » — v380
+**Quoi :** à la **connexion** (login, ou re-connexion après verrouillage / déconnexion dans la même session), l'utilisateur **atterrit toujours sur la page « Espace dossiers »** (accueil avec Liste Dossier / Créer / Importer), au lieu de retomber sur le dernier écran de sélection (dossier sélectionné / hub / rubrique) laissé en mémoire. Un rechargement complet atterrissait déjà sur l'accueil (états `window` frais) ; le cas corrigé est la **re-connexion sans rechargement** (les états `window.dsSel/dsHub/dsRub` persistaient).
+
+**Comment — `yada-addon189` (1 ajout) :** un **garde sur `render`** mémorise l'état `connecte` ; à chaque transition **connecté→déconnecté** (verrouillage / déconnexion, détectée au 1er rendu de re-login où `connecte` est déjà `false` mais l'état précédent était `true`), il **réinitialise le parcours** (`dsSel=null; dsListe=false; dsHub=false; dsRub=null`) → `dsScreen()` renvoie `ecranAccueil()`. Installé une seule fois (`window.__dsHomeGuard`), lit le `let connecte` global. Validé : `node --check` (182 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (entrée module → `connecte=true`+barre latérale ; puis `connecte=false`+rendu → états remis à zéro, titre « Espace dossiers », bouton « Liste Dossier » présent ; équilibre 34 écritures ✅, 0 pageerror). Badge → **v380**.
+
+---
+
+## 🟢 MAJ précédente — Écran « Dossier sélectionné » : carte remise à la taille d'origine (compacte) + cadre conservé — v379
 **Quoi :** la carte « Dossier sélectionné » reprend sa **taille d'origine (compacte)** : colonne `440px` → **`280px`** (rendu ~263 px), plus de `min-height:320px` ni de padding agrandi (hauteur naturelle ~224 px). Le **cadre bleu** (bordure 2px + anneau `box-shadow`) est **conservé**.
 
 **Comment — 1 édition CSS d'`yada-addon189` :** `.ds-grid-solo{grid-template-columns:280px…justify-items:start}` (retour v376) ; `body[data-theme] .ds-grid-solo .dossier-card` ne garde que le cadre (`border:2px` + anneau), sans `min-height`/`flex`/`padding` agrandi ; ligne `.dc-foot{margin-top:auto}` retirée. Validé : `node --check` (182 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (carte **263×224 px**, bord 2px ; équilibre 34 écritures ✅, 0 pageerror). Badge → **v379**.
