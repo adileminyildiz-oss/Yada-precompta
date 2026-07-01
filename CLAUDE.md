@@ -36,7 +36,18 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Nouveau module SALARIÉ (fiches, documents, paie/charges, absences, RDV colorés, Équipe imprimable) — v365
+## 🟢 Dernière mise à jour — Mise en page : suppression des EMOJIS + polish qualité — v366
+**Quoi :** amélioration de la qualité de la mise en page et **suppression des emojis** dans toute l'interface (titres de cartes, onglets, boutons, navigation, tableaux…). Les **glyphes fonctionnels** sont conservés (‹ › ✕ ✎ ✓ ▾ ▸ ─ ▢ flèches, %, Σ, ▮ des KPI) pour ne pas casser les contrôles (fenêtres Sage, chevrons de nav, éditeur).
+
+**Comment — `yada-addon184` (100% additif) :**
+- **Balayage post-rendu** : `sweep()` parcourt les nœuds texte (hors `SCRIPT`/`STYLE`/`TEXTAREA`) et retire les **emojis pictographiques** via `\p{Extended_Pictographic}` (+ VS16 `\u{FE0F}`, ZWJ `\u{200D}`, teintes de peau) sans toucher les glyphes de contrôle ; idempotent (ne re-modifie pas un texte déjà nettoyé). Déclenché après chaque `render()` (rAF) et via un **MutationObserver** pour les overlays/modales ajoutés hors rendu (garde anti-boucle : `busy` + `disconnect` pendant le balayage). Aucune donnée du modèle modifiée (affichage uniquement).
+- **Polish CSS** `<style id="mep-quality-mod">` (injecté en dernier) : `.ico:empty{display:none}` (icônes vidées masquées), titres/sous-titres plus nets, onglets `.pil-tab` sobres, tableaux internes lisibles (hors `.sg-app`/`.doc-page`), rayons de boutons homogènes, champs de formulaire cohérents.
+
+**Limites :** affichage uniquement (les emojis restent dans le code source des libellés, mais ne s'affichent plus) ; les glyphes de contrôle non-emoji sont volontairement conservés. Validé : `node --check` (177 scripts, 0 erreur) + brace CSS (2010/2010) + regex (`« 🎯 Pilotage »`→`« Pilotage »`, `« ✎ Fiche »`/`« ✕ »`/`« ✓ »` conservés) + Playwright (11 pages visitées : **0 emoji pictographique** restant dans `#nav`/`#main`/`.side-foot` ; équilibre 34 écritures ✅, 0 pageerror). Badge → **v366**.
+
+---
+
+## 🟢 MAJ précédente — Nouveau module SALARIÉ (fiches, documents, paie/charges, absences, RDV colorés, Équipe imprimable) — v365
 **Quoi :** ajout d'un **module « Salarié »** (section Pilotage, cabinet) à **5 onglets** :
 1. **👥 Salariés** — liste + **fiche complète** : Nom, Prénom, date de naissance, adresse (n° rue, adresse, CP, ville), e-mail, téléphone, **salaire brut & net**, poste, **n° sécurité sociale**, **Cadre / Non cadre**, date d'embauche, type de contrat, **n° CNI/passeport**. Par salarié : **connexion YADA** (identifiant e-mail généré + envoi par `mailto:`), **documents** joignables & téléchargeables (**DPAE**, **contrat**, **carte d'identité**, **carte vitale**, **domiciliation**, **fiches de paie** multiples), **charges patronales détaillées**, **congés déposés** (dates).
 2. **🚫 Absences** — déclaration par salarié, **justifiées / non justifiées**, justificatif joignable & téléchargeable.
