@@ -10987,7 +10987,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v377';
+    b.textContent='YADA · v378';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -21715,10 +21715,17 @@ ${lignes}
       +actions('<button class="btn btn-ghost" onclick="dsOuvrirListe()">Changer de dossier</button>')+'</div>';
   }
   function socRow(lbl,val){ if(!val) return ''; return '<div class="ds-soc-row"><span>'+esc(lbl)+'</span><b>'+esc(val)+'</b></div>'; }
+  function socItem(lbl,val,full){ if(!val) return ''; return '<div class="dsc-item'+(full?' full':'')+'"><span class="dsc-l">'+esc(lbl)+'</span><span class="dsc-v">'+esc(val)+'</span></div>'; }
   function ecranHub(id){ var i=societeInfo(id);
-    var soc='<div class="card ds-soc"><h2>'+esc(i.nom)+'</h2>'+(i.forme?('<div class="ds-soc-badge">'+esc(i.forme)+'</div>'):'')
-      +socRow('SIREN', i.siren)+socRow('SIRET', i.siret)+socRow('Code APE', i.ape)+socRow('N° TVA', i.tva)
-      +socRow('Activité', i.activite)+socRow('Adresse', i.adresse)+socRow('Dirigeant', i.dirigeant)+'</div>';
+    var items=socItem('SIREN', i.siren)+socItem('SIRET', i.siret)+socItem('Code APE', i.ape)+socItem('N° TVA', i.tva)
+      +socItem('Dirigeant', i.dirigeant)+socItem('Activité', i.activite,true)+socItem('Adresse', i.adresse,true);
+    var soc='<div class="card ds-soc dsc-card">'
+      +'<div class="dsc-head"><span class="dsc-av">'+esc((i.nom||'?')[0])+'</span>'
+      +'<span class="dsc-hmain"><span class="dsc-nom">'+esc(i.nom)+'</span>'
+      +'<span class="dsc-tags">'+(i.forme?('<span class="dsc-badge">'+esc(i.forme)+'</span>'):'')+(i.siren?('<span class="dsc-siren">SIREN '+esc(i.siren)+'</span>'):'')+'</span>'
+      +'</span></div>'
+      +'<div class="dsc-grid">'+(items||'<div class="dsc-empty">Informations société à compléter.</div>')+'</div>'
+      +'</div>';
     var tiles=TILES.map(function(t){ return '<button class="ds-tile" onclick="dsOuvrirRubrique(\''+t[1]+'\')"><span class="ds-tile-t">'+esc(t[0])+'</span><span class="ds-tile-d">'+esc(t[2])+'</span><span class="ds-tile-o">Ouvrir →</span></button>'; }).join('');
     return '<div class="login-wrap ds-hub-wrap">'+loginHead()
       +'<div class="login-title">'+esc(i.nom)+'</div>'
@@ -21771,6 +21778,21 @@ ${lignes}
     +'.ds-tile-t{font-weight:700;font-size:15px}.ds-tile-d{font-size:12px;opacity:.72}.ds-tile-o{font-size:12px;opacity:.8;margin-top:4px}'
     +'.ds-soc h2{margin-top:0}.ds-soc-badge{display:inline-block;background:linear-gradient(#1e90ff,#0a64d6);color:#fff;font-size:12px;font-weight:600;padding:3px 12px;border-radius:20px;margin-bottom:8px}'
     +'.ds-soc-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid rgba(30,144,255,.14);font-size:13px}.ds-soc-row>span{opacity:.7}.ds-soc-row b{text-align:right}'
+    +'.dsc-card{padding:0!important;overflow:hidden;border:1px solid rgba(30,144,255,.30)!important;box-shadow:0 18px 40px rgba(0,0,0,.42)}'
+    +'.dsc-head{display:flex;align-items:center;gap:15px;padding:20px 22px;background:linear-gradient(135deg,rgba(30,144,255,.26),rgba(10,100,214,.08));border-bottom:1px solid rgba(30,144,255,.24)}'
+    +'.dsc-av{width:54px;height:54px;border-radius:15px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#5ab0ff,#0a64d6);color:#fff;font-weight:800;font-size:25px;flex:0 0 auto;box-shadow:0 8px 20px rgba(10,100,214,.5)}'
+    +'.dsc-hmain{display:flex;flex-direction:column;gap:6px;min-width:0}'
+    +'.dsc-nom{font-weight:800;font-size:21px;letter-spacing:.3px;line-height:1.1;overflow:hidden;text-overflow:ellipsis}'
+    +'.dsc-tags{display:flex;align-items:center;gap:10px;flex-wrap:wrap}'
+    +'.dsc-badge{background:linear-gradient(#1e90ff,#0a64d6);color:#fff;font-size:11px;font-weight:700;letter-spacing:.5px;padding:3px 11px;border-radius:20px}'
+    +'.dsc-siren{font-size:12px;opacity:.72}'
+    +'.dsc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 18px 18px}'
+    +'.dsc-item{display:flex;flex-direction:column;gap:3px;padding:11px 13px;border:1px solid rgba(30,144,255,.16);border-radius:11px;background:rgba(30,144,255,.055)}'
+    +'.dsc-item.full{grid-column:1/-1}'
+    +'.dsc-l{font-size:10px;letter-spacing:.9px;text-transform:uppercase;opacity:.6;font-weight:700}'
+    +'.dsc-v{font-size:13.5px;font-weight:600;word-break:break-word}'
+    +'.dsc-empty{grid-column:1/-1;opacity:.65;font-size:13px;padding:6px 2px}'
+    +'@media(max-width:520px){.dsc-grid{grid-template-columns:1fr}}'
     +'.ds-empty{opacity:.7;padding:16px;text-align:center;border:1px dashed rgba(30,144,255,.3);border-radius:12px;max-width:840px;margin:0 auto}'
     +'@media(max-width:820px){.ds-hub-grid{grid-template-columns:1fr}}';
   document.head.appendChild(st);
