@@ -36,7 +36,21 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Module Analyse = CENTRE DE CONTRÔLE (source) + Éditions reliées — v363
+## 🟢 Dernière mise à jour — Nouveau module PILOTAGE (Impôts IS/IR · Actif/Passif · Agenda & RH) — v364
+**Quoi :** ajout d'un **module « Pilotage »** (section Pilotage de la barre latérale, espace cabinet) à **3 onglets** :
+1. **📊 Impôts (IS / IR)** — **Impôt sur les sociétés** : base = résultat fiscal (résultat comptable proposé, modifiable), **taux réduit PME 15 % ≤ 42 500 €** puis **25 %** ; **Impôt sur le revenu** : **barème progressif 2024 par parts** (quotient familial), taux moyen affiché.
+2. **🏦 Actif / Passif** — consultation de **tous les comptes de bilan** à la clôture (actif = soldes débiteurs classes 1-5, passif = soldes créditeurs + résultat), totaux + contrôle d'équilibre.
+3. **📅 Agenda & RH** — **salariés** (nom, poste, entrée, contrat, e-mail, tél.), **congés** (planification par salarié + durée), **absences justifiées / non justifiées** avec **justificatif joignable (pièce jointe) & téléchargeable**, **agenda chronologique** (congés + absences + événements planifiés) + saisie d'événements.
+
+**Comment :**
+- **PAGES** : entrée `{id:'pilotage',ico:'🎯',sec:'Pilotage',lbl:'Pilotage'}` ; dispatch `render()` : `pilotage:pagePilotage` (référence sûre) ; `yada-addon164` : `PILOTAGE=['dash','societe','pilotage','client']` (nav cabinet).
+- **`yada-addon182`** (100% additif) : `pagePilotage()` + onglets ; calculs `pilResultat`/`pilBilan`/`calcIS`/`calcIR` (locaux, sur `db.ecritures`) ; RH CRUD (`pilSalAdd/Del`, `pilCongeAdd/Del`, `pilAbsAdd/Del`, `pilEvAdd/Del`) ; justificatif `pilJustifUpload` (FileReader → dataURL sur l'absence, `justifie=true`) / `pilJustifDl` (ancre `download`) / `pilJustifDel`. Données dans `db.parametres.pilotage` (persistées par `save()`, IndexedDB grande capacité v325). `<style id="pil-mod">`.
+
+**Limites :** l'IR/IS sont des estimations indicatives (hors décote, plafonnement du quotient, réductions/crédits) ; base IS pré-remplie par le résultat comptable (modifiable). Validé : `node --check` (175 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (3 onglets rendus ; IS PME base 100 000 → **20 750 €**, IS normal → **25 000 €**, IR 40 000/1 part → **5 286,23 €** ; Actif/Passif avec totaux ; RH : salarié listé, absence + justificatif téléchargeable, congé, agenda chronologique ; équilibre 34 écritures ✅, 0 pageerror). Badge → **v364**.
+
+---
+
+## 🟢 MAJ précédente — Module Analyse = CENTRE DE CONTRÔLE (source) + Éditions reliées — v363
 **Quoi :** le module **Analyse** (Consultation des comptes) devient le **Centre de Contrôle**, la **source unique** de toute la comptabilité, et les **Éditions** y sont explicitement **reliées** (elles se calculent à partir de ses écritures).
 - **Nav** : « Analyse » → **« Analyse — Centre de Contrôle »**.
 - **Barre de titre de l'Analyse** : mention « — Analyse · Centre de Contrôle » + bouton **« 🖨 Éditions »** (ouvre le module Éditions).
