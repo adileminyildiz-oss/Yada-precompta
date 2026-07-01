@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Connexion : on atterrit toujours sur « Espace dossiers » — v380
+## 🟢 Dernière mise à jour — Écran « Dossier sélectionné » : carte aérée des boutons d'action — v381
+**Quoi :** sur l'écran « Dossier sélectionné », la carte était collée aux boutons du dessous (Changer de dossier / Créer / Importer). Un **espacement vertical** est ajouté sous la carte (34 px) pour aérer la mise en page.
+
+**Comment — 1 édition CSS d'`yada-addon189` :** `.ds-grid-solo{…margin:14px 0 34px!important}` + `.ds-grid-solo + .login-actions{margin-top:8px}`. Validé : `node --check` (182 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (écart carte↔actions = 34 px ; équilibre 34 écritures ✅, 0 pageerror). Badge → **v381**.
+
+---
+
+## 🟢 MAJ précédente — Connexion : on atterrit toujours sur « Espace dossiers » — v380
 **Quoi :** à la **connexion** (login, ou re-connexion après verrouillage / déconnexion dans la même session), l'utilisateur **atterrit toujours sur la page « Espace dossiers »** (accueil avec Liste Dossier / Créer / Importer), au lieu de retomber sur le dernier écran de sélection (dossier sélectionné / hub / rubrique) laissé en mémoire. Un rechargement complet atterrissait déjà sur l'accueil (états `window` frais) ; le cas corrigé est la **re-connexion sans rechargement** (les états `window.dsSel/dsHub/dsRub` persistaient).
 
 **Comment — `yada-addon189` (1 ajout) :** un **garde sur `render`** mémorise l'état `connecte` ; à chaque transition **connecté→déconnecté** (verrouillage / déconnexion, détectée au 1er rendu de re-login où `connecte` est déjà `false` mais l'état précédent était `true`), il **réinitialise le parcours** (`dsSel=null; dsListe=false; dsHub=false; dsRub=null`) → `dsScreen()` renvoie `ecranAccueil()`. Installé une seule fois (`window.__dsHomeGuard`), lit le `let connecte` global. Validé : `node --check` (182 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (entrée module → `connecte=true`+barre latérale ; puis `connecte=false`+rendu → états remis à zéro, titre « Espace dossiers », bouton « Liste Dossier » présent ; équilibre 34 écritures ✅, 0 pageerror). Badge → **v380**.
