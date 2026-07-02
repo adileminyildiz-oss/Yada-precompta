@@ -10982,7 +10982,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v394';
+    b.textContent='YADA · v395';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -21663,8 +21663,13 @@ ${lignes}
   window.dsOuvrirHub=function(){ if(window.dsSel){ window.dsHub=true; if(typeof render==='function') render(); } };
   window.dsEntrer=function(mod){ var id=window.dsSel; if(!id) return; window.dsHub=false; window.dsListe=false; window.dsRub=null;
     try{ choisirDossier(id); }catch(e){} if(mod){ try{ current=mod; if(typeof render==='function') render(); }catch(e){} } };
-  window.dsOuvrirRubrique=function(key){ if(window.dsSel && RUBRIQUES[key]){ window.dsRub=key; window.dsHub=true; if(typeof render==='function') render(); } };
-  window.dsRetourHub=function(){ window.dsRub=null; if(typeof render==='function') render(); };
+  /* Clic sur une rubrique du HUB → entre DIRECTEMENT dans son 1er module (plus de page
+     intermédiaire) ; la rubrique active pilote la barre latérale réduite (addon190). */
+  window.RUBRIQUES=RUBRIQUES; window.modLabel=modLabel;
+  window.dsEntrerRubrique=function(key){ if(!(window.dsSel && RUBRIQUES[key])) return; window.dsActiveRub=key;
+    var first=(RUBRIQUES[key].mods||[])[0]; window.dsEntrer(first); };
+  window.dsOuvrirRubrique=function(key){ window.dsEntrerRubrique(key); }; /* compat : entre dans le module */
+  window.dsRetourHub=function(){ window.dsRub=null; window.dsActiveRub=null; if(typeof render==='function') render(); };
 
   function loginHead(){ var c=db.cabinet||(typeof cabinetDefaut==='function'?cabinetDefaut():{});
     return '<div class="login-head"><div class="login-brand" onclick="dsAccueil()" style="cursor:pointer">'
@@ -21737,7 +21742,7 @@ ${lignes}
       +'</span></div>'
       +'<div class="dsc-grid">'+(items||'<div class="dsc-empty">Informations société à compléter.</div>')+'</div>'
       +'</div>';
-    var tiles=TILES.map(function(t){ return '<button class="ds-tile" onclick="dsOuvrirRubrique(\''+t[1]+'\')"><span class="ds-tile-t">'+esc(t[0])+'</span><span class="ds-tile-d">'+esc(t[2])+'</span><span class="ds-tile-o">Ouvrir →</span></button>'; }).join('');
+    var tiles=TILES.map(function(t){ return '<button class="ds-tile" onclick="dsEntrerRubrique(\''+t[1]+'\')"><span class="ds-tile-t">'+esc(t[0])+'</span><span class="ds-tile-d">'+esc(t[2])+'</span><span class="ds-tile-o">Ouvrir →</span></button>'; }).join('');
     return '<div class="login-wrap ds-hub-wrap">'+loginHead()
       +'<div class="login-title">'+esc(i.nom)+'</div>'
       +'<div class="login-sub">Dossier — choisissez une rubrique.</div>'
@@ -21758,7 +21763,7 @@ ${lignes}
       +'</div>';
   }
   function dsScreen(){
-    if(window.dsRub && window.dsSel && RUBRIQUES[window.dsRub]) return ecranRubrique(window.dsRub);
+    /* Page intermédiaire de rubrique SUPPRIMÉE : on entre directement dans le module. */
     if(window.dsHub && window.dsSel) return ecranHub(window.dsSel);
     if(window.dsListe) return ecranListe();
     if(window.dsSel && dossierEntry(window.dsSel)) return ecranSelUnique(window.dsSel);
@@ -21860,24 +21865,54 @@ ${lignes}
     /* Repères alignés à gauche, empilés proprement (enregistrement / cloud / version). */
     +'body[data-noside="1"] #yada-save-ind{left:12px!important;bottom:12px!important}'
     +'body[data-noside="1"] #yada-cloud-ind{left:12px!important;bottom:48px!important}'
-    +'body[data-noside="1"] #yada-ver{left:12px!important;bottom:84px!important}';
+    +'body[data-noside="1"] #yada-ver{left:12px!important;bottom:84px!important}'
+    /* Barre latérale RÉDUITE (uniquement les modules de la rubrique) : bouton retour + section. */
+    +'#nav .ds-rub-back{display:block;width:100%;text-align:left;margin:0 0 10px;padding:9px 12px;border-radius:10px;'
+    +'border:1px solid rgba(30,144,255,.5);background:linear-gradient(135deg,#14365f,#0a1b34);color:#dbeafe;font-weight:700;font-size:13px;cursor:pointer}'
+    +'#nav .ds-rub-back:hover{border-color:#1e90ff}'
+    +'body[data-rubnav="1"] .side-foot{display:none!important}';
   document.head.appendChild(st);
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 
   /* Retour au HUB du dossier courant (sans repasser par « Espace dossiers »). */
   window.dsRetourModule=function(){ try{ var id=(db&&db.activeId)||window.dsSel; if(!id) return;
-    window._dsSuppressHomeReset=true; window.dsSel=id; window.dsHub=true; window.dsListe=false; window.dsRub=null;
+    window._dsSuppressHomeReset=true; window.dsSel=id; window.dsHub=true; window.dsListe=false; window.dsRub=null; window.dsActiveRub=null;
     try{ connecte=false; }catch(e){}
     if(typeof render==='function') render(); }catch(e){} };
+  /* Navigation d'un module à l'autre DANS la rubrique (barre latérale réduite). */
+  window.dsNavModule=function(mod){ try{ if(typeof current!=='undefined'){ current=mod; if(typeof render==='function') render(); } }catch(e){} };
 
   function ensureChip(){ var c=document.getElementById('ds-back-chip'); if(!c){ c=document.createElement('button');
       c.id='ds-back-chip'; c.type='button'; c.innerHTML='‹ Retour au dossier'; c.onclick=window.dsRetourModule;
       document.body.appendChild(c); } return c; }
 
+  /* Remplace le contenu de la barre latérale par les SEULS modules de la rubrique active. */
+  function buildRubNav(R){ var nav=document.getElementById('nav'); if(!nav) return false;
+    var cur=(typeof current!=='undefined')?current:'';
+    var ml=window.modLabel||function(m){return m;};
+    nav.innerHTML='<button class="nav-btn ds-rub-back" onclick="dsRetourModule()">‹ Retour au dossier</button>'
+      +'<div class="nav-sec">'+esc(R.titre)+'</div>'
+      +(R.mods||[]).map(function(m){ return '<button class="nav-btn'+(cur===m?' active':'')+'" onclick="dsNavModule(\''+m+'\')">'+esc(ml(m))+'</button>'; }).join('');
+    return true; }
+
   function apply(){ try{
     var conn=(typeof connecte!=='undefined')?connecte:false;
     var client=(window.sessionRole==='client');
-    if(conn && !client){ document.body.setAttribute('data-noside','1'); ensureChip(); }
-    else { document.body.removeAttribute('data-noside'); }
+    var foot=document.querySelector('.side-foot');
+    var key=window.dsActiveRub; var R=(conn && !client && key && window.RUBRIQUES)?window.RUBRIQUES[key]:null;
+    if(R && buildRubNav(R)){
+      /* barre latérale réduite visible (aside) → on retire le mode « sans barre » ;
+         outils du bas masqués : uniquement les modules de la rubrique. */
+      document.body.removeAttribute('data-noside'); document.body.setAttribute('data-rubnav','1');
+      if(foot) foot.style.setProperty('display','none','important');
+    } else if(conn && !client){
+      document.body.setAttribute('data-noside','1'); document.body.removeAttribute('data-rubnav'); ensureChip();
+      if(foot) foot.style.removeProperty('display');
+    } else {
+      document.body.removeAttribute('data-noside'); document.body.removeAttribute('data-rubnav');
+      if(foot) foot.style.removeProperty('display');
+    }
   }catch(e){} }
 
   if(typeof render==='function' && !window.__noSideGuard){ window.__noSideGuard=true;
