@@ -4189,20 +4189,12 @@ function render(){
 }
 let selRecherche='';
 function ecranSelectionDossier(){
+  /* ANCIENNE PAGE « Sélectionnez un dossier » (barre de recherche + grille de cartes +
+     Réinitialiser démo) DÉFINITIVEMENT SUPPRIMÉE (v400). Le parcours d'entrée passe par
+     l'override d'addon189 (dsScreen → Espace dossiers / Liste / HUB). Cette fonction de
+     base ne rend plus JAMAIS de barre de recherche ni de grille de cartes : en dernier
+     recours, elle affiche l'accueil « Espace dossiers » (boutons seuls). */
   const cab=db.cabinet||cabinetDefaut();
-  const q=(selRecherche||'').toLowerCase();
-  let liste=cab.dossiers.slice();
-  if(q) liste=liste.filter(d=>(d.nom||'').toLowerCase().includes(q)||(d.ville||'').toLowerCase().includes(q)||(d.activite||'').toLowerCase().includes(q)||(d.siren||'').includes(q));
-  liste.sort((a,b)=>(b.favori?1:0)-(a.favori?1:0));
-  const cartes=liste.map(d=>`<button class="dossier-card" onclick="choisirDossier('${d.id}')">
-      <div class="dc-top"><span class="dc-av">${(d.nom||'?')[0]}</span>
-        <span class="dc-star ${d.favori?'on':''}" onclick="event.stopPropagation();toggleFavoriDossier('${d.id}');render()">${d.favori?'★':'☆'}</span></div>
-      <div class="dc-nom">${d.nom}</div>
-      <div class="dc-meta">${[d.forme,d.activite,d.ville].filter(Boolean).join(' · ')||'—'}</div>
-      <div class="dc-siren">${d.siren?('SIREN '+d.siren):'SIREN —'}</div>
-      <div class="dc-foot"><span class="dc-badge ${d.actif?'on':''}">${d.actif?'Actif':'Inactif'}</span>
-        <span class="dc-open">Ouvrir le dossier →</span></div>
-    </button>`).join('');
   return `<div class="login-wrap">
     <div class="login-head">
       <div class="login-brand" onclick="retourSelectionDossier()" style="cursor:pointer">
@@ -4215,16 +4207,14 @@ function ecranSelectionDossier(){
           <text x="44" y="33" font-family="Fraunces, serif" font-size="29" font-weight="900" fill="#ffffff" letter-spacing="1.5">YADA</text>
         </svg>
         <small>Système intégré · CA3</small></div>
-      <div class="login-cab"><b>${cab.cabinetNom}</b><span>${cab.collaborateur} · ${cab.role}</span></div>
+      <div class="login-cab"><b>${cab.cabinetNom||''}</b><span>${(cab.collaborateur||'')} · ${(cab.role||'')}</span></div>
     </div>
-    <div class="login-title">Sélectionnez un dossier</div>
-    <div class="login-sub">Choisissez la société à ouvrir. Vous pourrez changer de dossier à tout moment (vue cabinet comptable).</div>
-    <input class="login-search" placeholder="Rechercher un dossier (nom, ville, activité, SIREN)…" value="${(selRecherche||'').replace(/"/g,'&quot;')}" oninput="selRecherche=this.value;render()" autofocus>
-    <div class="dossier-grid">${cartes||'<div class="login-empty">Aucun dossier — importez un FEC ou créez un dossier.</div>'}</div>
+    <div class="login-title">Espace dossiers</div>
+    <div class="login-sub">Ouvrez la liste des dossiers, créez ou importez un dossier.</div>
     <div class="login-actions">
-      <button class="btn btn-gold" onclick="ouvrirCreationDossier()">Créer un dossier</button>
+      <button class="btn btn-gold" onclick="dsOuvrirListe()">Liste Dossier</button>
+      <button class="btn btn-ghost" onclick="ouvrirCreationDossier()">Créer un dossier</button>
       <button class="btn btn-ghost" onclick="document.getElementById('imp').click()">Importer des données (JSON)</button>
-      <button class="btn btn-ghost" onclick="yadaConfirm('Réinitialiser avec les données de démonstration ?',function(){seed();save();connecte=false;render();})">↺ Réinitialiser (démo)</button>
     </div>
   </div>`;
 }
@@ -10982,7 +10972,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v399';
+    b.textContent='YADA · v400';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -21659,7 +21649,7 @@ ${lignes}
   /* --- état & actions --- */
   window.dsAccueil=function(){ window.dsListe=false; window.dsHub=false; if(typeof render==='function') render(); };
   window.dsOuvrirListe=function(){ window.dsListe=true; window.dsHub=false; if(typeof render==='function') render(); };
-  window.dsSelectionner=function(id){ window.dsSel=id; window.dsListe=false; window.dsHub=false; if(typeof render==='function') render(); };
+  window.dsSelectionner=function(id){ window.dsSel=id; window.dsListe=false; window.dsHub=true; if(typeof render==='function') render(); };
   window.dsOuvrirHub=function(){ if(window.dsSel){ window.dsHub=true; if(typeof render==='function') render(); } };
   window.dsEntrer=function(mod){ var id=window.dsSel; if(!id) return; window.dsHub=false; window.dsListe=false; window.dsRub=null;
     try{ choisirDossier(id); }catch(e){} if(mod){ try{ current=mod; if(typeof render==='function') render(); }catch(e){} } };
@@ -21763,10 +21753,12 @@ ${lignes}
       +'</div>';
   }
   function dsScreen(){
-    /* Page intermédiaire de rubrique SUPPRIMÉE : on entre directement dans le module. */
+    /* Page intermédiaire de rubrique SUPPRIMÉE : on entre directement dans le module.
+       Page « Dossier sélectionné » SUPPRIMÉE (v400) : sélectionner un dossier dans la
+       liste ouvre DIRECTEMENT le HUB (choix des modules) — plus aucune page intermédiaire. */
     if(window.dsHub && window.dsSel) return ecranHub(window.dsSel);
     if(window.dsListe) return ecranListe();
-    if(window.dsSel && dossierEntry(window.dsSel)) return ecranSelUnique(window.dsSel);
+    if(window.dsSel) return ecranHub(window.dsSel);
     return ecranAccueil();
   }
   if(typeof window.ecranSelectionDossier==='function'){ var _e=window.ecranSelectionDossier;
