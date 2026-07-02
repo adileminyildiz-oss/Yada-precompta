@@ -10982,7 +10982,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v395';
+    b.textContent='YADA · v396';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -21950,14 +21950,15 @@ ${lignes}
    ============================================================ */
 (function(){
   var st=document.createElement('style'); st.id='ds-wheel-mod'; st.textContent=
-    /* Disposition : panneau d'infos à GAUCHE (survol) + liste défilante à DROITE. */
+    /* Disposition : panneau d'infos à GAUCHE (survol) + liste défilante à DROITE,
+       hauteur de la liste synchronisée sur le cadre d'infos (en JS). */
     '.ds-liste-layout{display:grid;grid-template-columns:1fr minmax(440px,600px);gap:28px;align-items:start;margin-top:6px}'
-    +'.ds-info-col{position:sticky;top:8px;min-width:0}'
+    +'.ds-info-col{min-width:0}'
     +'#ds-info-panel{max-width:560px}'
-    +'.ds-info-empty{opacity:.6;font-size:14px;padding:26px 22px;border:1px dashed rgba(30,144,255,.3);border-radius:14px;max-width:520px}'
-    /* Liste défilante à droite ; lignes plus grandes ; fondu (flou) haut/bas. */
-    +'.ds-list-right{max-width:none!important;width:100%;margin:0 0 0 auto!important;'
-    +'max-height:60vh;overflow-y:auto;overflow-x:hidden;perspective:1200px;padding:16vh 6px;'
+    +'.ds-info-empty{opacity:.6;font-size:14px;padding:26px 22px;border:1px dashed rgba(30,144,255,.3);border-radius:14px;max-width:520px;min-height:360px;display:flex;align-items:center}'
+    /* Liste défilante à droite ; lignes plus grandes ; fondu haut/bas. */
+    +'.ds-list-right{max-width:none!important;width:100%;margin:0!important;min-height:0;'
+    +'overflow-y:auto;overflow-x:hidden;perspective:1200px;padding:22px 6px;'
     +'scrollbar-width:none;'
     +'-webkit-mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.25) 7%,#000 22%,#000 78%,rgba(0,0,0,.25) 93%,transparent 100%);'
     +'mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.25) 7%,#000 22%,#000 78%,rgba(0,0,0,.25) 93%,transparent 100%)}'
@@ -22005,7 +22006,15 @@ ${lignes}
       +'<span class="dsc-tags">'+(i.forme?('<span class="dsc-badge">'+esc(i.forme)+'</span>'):'')+(i.siren?('<span class="dsc-siren">SIREN '+esc(i.siren)+'</span>'):'')+'</span></span></div>'
       +'<div class="dsc-grid">'+infoItem('SIREN',i.siren)+infoItem('SIRET',i.siret)+infoItem('Code APE',i.ape)+infoItem('N° TVA',i.tva)
       +infoItem('Forme juridique',i.forme)+infoItem('Dirigeant',i.dirigeant)+infoItem('Activité',i.activite,true)+infoItem('Adresse',i.adresse,true)+'</div>'
-      +'</div>'; }
+      +'</div>';
+    requestAnimationFrame(sync); }
+
+  /* Aligne la hauteur de la liste sur celle du cadre d'infos (bornée pour garder les boutons visibles). */
+  function sync(){ var pan=document.getElementById('ds-info-panel'); var box=document.getElementById('ds-liste-scroll'); if(!pan||!box) return;
+    var h=pan.getBoundingClientRect().height; if(h<=0) return;
+    h=Math.max(300, Math.min(Math.round(h), Math.round(window.innerHeight*0.60)));
+    box.style.height=h+'px'; box.style.maxHeight=h+'px';
+    paint(box); }
 
   function wire(){
     var box=document.getElementById('ds-liste-scroll'); if(!box) return;
@@ -22017,7 +22026,8 @@ ${lignes}
       box.addEventListener('mouseover',function(ev){ var r=ev.target.closest?ev.target.closest('.ds-row[data-id]'):null; if(r){ renderInfo(r.getAttribute('data-id')); } });
       box.addEventListener('focusin',function(ev){ var r=ev.target.closest?ev.target.closest('.ds-row[data-id]'):null; if(r){ renderInfo(r.getAttribute('data-id')); } });
     }
-    requestAnimationFrame(function(){ paint(box); });
+    if(!window.__dsListResize){ window.__dsListResize=true; window.addEventListener('resize',function(){ requestAnimationFrame(sync); }); }
+    requestAnimationFrame(function(){ sync(); paint(box); });
   }
   if(typeof render==='function' && !window.__dsWheelGuard){ window.__dsWheelGuard=true;
     var _r=render; render=function(){ var x=_r.apply(this,arguments); try{ wire(); }catch(e){} return x; };
