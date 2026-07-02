@@ -36,7 +36,20 @@
 
 ---
 
-## 🟢 Dernière mise à jour — L'ancienne page « Sélectionnez un dossier » (recherche + grille) ne peut plus réapparaître — v399
+## 🟢 Dernière mise à jour — Sélectionner un dossier → HUB directement (page « Dossier sélectionné » supprimée) + ancienne page de cartes définitivement retirée + cache vidé — v400
+**Quoi :** deux demandes. (1) **Plus aucune page intermédiaire après avoir sélectionné un dossier** : cliquer un dossier dans la « Liste des dossiers » **atterrit directement dans le HUB** (carte société + choix des rubriques/modules) — l'écran **« Dossier sélectionné »** (une seule carte) est **supprimé**. (2) **L'ancienne page « Sélectionnez un dossier »** (barre de recherche + grille de cartes `.dossier-card` + « Réinitialiser (démo) ») est **définitivement supprimée** du code de base (elle réapparaissait via un **cache** périmé) — la fonction de base ne rend **plus jamais** de barre de recherche ni de grille de cartes ; le **cache du service worker est vidé** (bump `yada-v29 → yada-v30`) pour que la suppression prenne effet immédiatement en ligne.
+
+**Comment — 4 éditions :**
+- `dsSelectionner(id)` : `window.dsHub=false` → **`window.dsHub=true`** (sélection → HUB direct).
+- `dsScreen()` : suppression de la branche `if(window.dsSel && dossierEntry(...)) return ecranSelUnique(...)` → tout `dsSel` sans état liste route vers **`ecranHub`**.
+- **`ecranSelectionDossier()` (fonction de base, ligne ~4191)** : vidée de sa barre de recherche (`.login-search`), de sa grille (`.dossier-grid`/`.dossier-card`) et du bouton « Réinitialiser (démo) » → rend désormais l'**accueil « Espace dossiers »** (boutons seuls : Liste Dossier / Créer / Importer). Belt-and-suspenders : même en dernier recours (catch-de-catch de l'override addon189), **aucune carte ne peut réapparaître**.
+- `sw.js` : `CACHE 'yada-v29' → 'yada-v30'` (invalide l'ancien cache → dernière version servie).
+
+**Validé :** `node --check` (185 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (accueil par défaut : **0** barre de recherche, **0** grille de cartes, bouton « Liste Dossier » présent ; ouvrir liste → `dsListe=true` ; **sélectionner d-1 → `dsHub=true`, `dsListe=false`, HUB rendu (5 rubriques), aucun `ds-grid-solo`** ; accueil de base : 0 `.dossier-card` / 0 `.login-search` ; 0 pageerror) + filet d'équilibre (d-test : vente 1200=1200, achat 600=600 ✅). Badge → **v400**.
+
+---
+
+## 🟢 MAJ précédente — L'ancienne page « Sélectionnez un dossier » (recherche + grille) ne peut plus réapparaître — v399
 **Quoi :** l'override d'`ecranSelectionDossier` (`yada-addon189`) retombait sur l'**ancienne page « Sélectionnez un dossier »** (barre de recherche + grille de cartes + Réinitialiser démo) en cas d'erreur de `dsScreen()`. Désormais, en cas d'erreur, il affiche l'**accueil « Espace dossiers »** (boutons seuls : Liste Dossier / Créer / Importer) — l'ancienne page ne s'affiche **jamais**. (La carte « Dossier sélectionné » utilise déjà le même composant `.dossier-card` que les cartes de l'ancienne page → même taille.)
 
 **Comment — 1 édition d'`yada-addon189` :** `catch(e){ return _e.apply(...) }` → `catch(e){ try{ return ecranAccueil(); }catch(e2){ return _e.apply(...) } }`. Note : dans tous les états testés (`accueil/liste/selUnique/hub`) `dsScreen()` ne lève pas d'erreur ; l'apparition de l'ancienne page côté utilisateur venait d'un **cache** d'une version antérieure — le bump v399 force la mise à jour. Validé : `node --check` (185 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (état par défaut → « Espace dossiers » boutons, **sans** barre de recherche ni grille de cartes ; 0 pageerror) + filet d'équilibre ✅. Badge → **v399**.
