@@ -10972,7 +10972,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v401';
+    b.textContent='YADA · v402';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -22020,6 +22020,54 @@ ${lignes}
     var _r=render; render=function(){ var x=_r.apply(this,arguments); try{ wire(); }catch(e){} return x; };
   }
   try{ wire(); }catch(e){}
+})();
+</script>
+<script id="yada-addon193">
+/* Effet de clic (ripple bleu Crystal) — à CHAQUE clic / toucher, une onde lumineuse
+   bleue jaillit à l'endroit exact du pointeur, partout dans le logiciel (connexion,
+   modules, mobile). 100% additif : overlay éphémère (pointer-events:none, auto-retiré)
+   → ne déplace aucune carte (respecte la règle « interface fixe » v235). */
+(function(){
+  if(window.__yadaClickFx) return; window.__yadaClickFx=true;
+  try{ if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return; }catch(e){}
+  if(!document.getElementById('click-fx-mod')){
+    var st=document.createElement('style'); st.id='click-fx-mod';
+    st.textContent=
+      '.yada-ripple{position:fixed;z-index:2147483000;pointer-events:none;border-radius:50%;'
+      +'width:16px;height:16px;margin:-8px 0 0 -8px;'
+      +'border:2px solid rgba(90,176,255,.95);'
+      +'background:radial-gradient(circle,rgba(90,176,255,.42),rgba(30,144,255,.16) 46%,transparent 70%);'
+      +'box-shadow:0 0 14px rgba(30,144,255,.85),inset 0 0 8px rgba(90,176,255,.55);'
+      +'animation:yadaRippleFx .52s cubic-bezier(.22,.61,.36,1) forwards;will-change:transform,opacity}'
+      +'.yada-ripple-dot{position:fixed;z-index:2147483001;pointer-events:none;border-radius:50%;'
+      +'width:10px;height:10px;margin:-5px 0 0 -5px;'
+      +'background:radial-gradient(circle,#eaf4ff,#5ab0ff 55%,rgba(30,144,255,.2) 100%);'
+      +'box-shadow:0 0 12px rgba(90,176,255,.9);'
+      +'animation:yadaRippleDot .42s ease-out forwards}'
+      +'@keyframes yadaRippleFx{0%{transform:scale(.28);opacity:1;border-width:3px}'
+      +'60%{opacity:.6}100%{transform:scale(4.6);opacity:0;border-width:1px}}'
+      +'@keyframes yadaRippleDot{0%{transform:scale(.6);opacity:.95}100%{transform:scale(1.9);opacity:0}}';
+    document.head.appendChild(st);
+  }
+  function burst(x,y){
+    if(x==null||y==null) return;
+    var frag=document.createDocumentFragment();
+    var ring=document.createElement('span'); ring.className='yada-ripple';
+    ring.style.left=x+'px'; ring.style.top=y+'px';
+    var dot=document.createElement('span'); dot.className='yada-ripple-dot';
+    dot.style.left=x+'px'; dot.style.top=y+'px';
+    frag.appendChild(dot); frag.appendChild(ring);
+    document.body.appendChild(frag);
+    var kill=function(el){ try{ if(el&&el.parentNode) el.parentNode.removeChild(el); }catch(e){} };
+    ring.addEventListener('animationend',function(){ kill(ring); });
+    dot.addEventListener('animationend',function(){ kill(dot); });
+    setTimeout(function(){ kill(ring); kill(dot); },700);
+  }
+  /* pointerdown = réactif au toucher ET à la souris, coordonnées viewport (position:fixed). */
+  document.addEventListener('pointerdown',function(e){
+    try{ if(e.pointerType==='' && e.clientX===0 && e.clientY===0) return; /* clic programmatique */
+      burst(e.clientX, e.clientY); }catch(_e){}
+  }, {capture:true, passive:true});
 })();
 </script>
 </body>

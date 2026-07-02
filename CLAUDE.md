@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — HUB : même disposition que la page « Liste des dossiers » (carte société à gauche + rubriques à droite) — v401
+## 🟢 Dernière mise à jour — Effet de clic (onde bleu Crystal) à chaque clic / toucher, partout — v402
+**Quoi :** un **effet visuel jaillit à CHAQUE clic / toucher**, à l'**endroit exact du pointeur**, dans **tout le logiciel** (écran de connexion, modules, mobile). Une **onde lumineuse bleu Crystal** (anneau qui s'agrandit + point central lumineux) apparaît puis s'estompe (~0,5 s) — retour visuel « flashy blue » cohérent avec la DA.
+
+**Comment — `yada-addon193` (100% additif) :** écouteur `pointerdown` (capture, passif) sur `document` → `burst(clientX, clientY)` crée deux `<span>` en `position:fixed` (anneau `.yada-ripple` + point `.yada-ripple-dot`, `pointer-events:none`, `z-index` très élevé) à la position du pointeur, animés par keyframes (`yadaRippleFx`/`yadaRippleDot`), **auto-retirés** à la fin de l'animation (+ filet `setTimeout 700 ms`). `<style id="click-fx-mod">`. **Respecte** `prefers-reduced-motion: reduce` (désactivé) et la règle « interface fixe » v235 (overlay éphémère, aucune carte déplacée) ; ignore les clics programmatiques (0,0). `pointerdown` = réactif au **toucher ET à la souris**, coordonnées viewport (compatibles `position:fixed`).
+
+**Validé :** `node --check` (186 scripts, 0 erreur) + brace CSS (2010/2010 — CSS de l'addon injectée en JS) + Playwright (clic réel → apparition de `.yada-ripple` + `.yada-ripple-dot` à la position cliquée, puis retrait automatique ; 0 pageerror) + filet d'équilibre (vente 1200=1200, achat 600=600 ✅). Badge → **v402**.
+
+---
+
+## 🟢 MAJ précédente — HUB : même disposition que la page « Liste des dossiers » (carte société à gauche + rubriques à droite) — v401
 **Quoi :** la page du dossier (HUB) reprend **exactement la disposition de la page « Liste des dossiers »** : la **carte société est alignée à GAUCHE** (au niveau du titre, largeur ≤ 560 px comme le cadre d'infos de la liste) et les **rubriques sont à DROITE** (colonne 440–600 px, comme la liste des dossiers). Avant, le bloc HUB était **centré / décalé au milieu** (`max-width:1160px;margin:…auto`, colonnes `.95fr 1.05fr`) → il ne s'alignait pas sur la page de présentation des dossiers.
 
 **Comment — 2 éditions CSS (`ecranHub`, `<style id="ds-flow-mod">`) :**
