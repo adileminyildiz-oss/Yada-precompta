@@ -36,7 +36,14 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Liste des dossiers VIDE : bouton « Créer un dossier » à sa place (fin du grand cadre vide) — v389
+## 🟢 Dernière mise à jour — Création de dossier : K-bis ET Statuts facultatifs — v390
+**Quoi :** on peut désormais **créer un dossier sans joindre le K-bis ni les Statuts** (les deux deviennent facultatifs ; en v194 seuls les Statuts l'étaient). La création n'est plus bloquée par l'absence de pièces légales — on peut les ajouter plus tard.
+
+**Comment — `creerDossierComplet()` :** suppression du blocage `if(!cdDocs.kbis) return toast('Veuillez joindre le K-bis')` ; `kbisRecu/kbisNom/kbisPdf` renseignés seulement si un fichier est joint (`!!cdDocs.kbis`, comme les Statuts) ; libellés du formulaire (« Extrait K-bis (facultatif) », sous-titre « K-bis et Statuts facultatifs ») et toast adaptés (liste des pièces réellement jointes, ou « à joindre plus tard »). Validé : `node --check` (185 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (création avec `cdDocs={}` → dossier créé, `kbisRecu=false`, `statutsRecu=false`, entrée dans le dossier `connecte=true`/`dash` ; 0 pageerror) + filet d'équilibre ✅. Badge → **v390**.
+
+---
+
+## 🟢 MAJ précédente — Liste des dossiers VIDE : bouton « Créer un dossier » à sa place (fin du grand cadre vide) — v389
 **Quoi :** en cliquant « Liste des dossiers » **sans aucun dossier**, l'écran n'affiche plus le grand conteneur « roue » vide (padding `31vh` → énorme espace vide qui décalait le bouton). L'écran vide reprend **exactement la disposition de la première page** : titre + sous-titre + barre d'actions (← Retour · **Créer un dossier** · Importer) — le bouton « Créer un dossier » reste **à sa place** (même position que sur l'accueil). Dès qu'au moins un dossier existe, la liste « roue/cylindre » à droite réapparaît.
 
 **Comment — 1 édition d'`ecranListe` (`yada-addon189`) :** si `dossiers().length===0` → rendu sans `#ds-liste-scroll` (pas de cadre roue), juste `loginHead + titre + sous-titre + actions('← Retour')`. Sinon, rendu inchangé (liste roue). Validé : `node --check` (185 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (liste vide : **aucun** `#ds-liste-scroll`, bouton « Créer un dossier » à **top:278 = identique à l'accueil**, écart 0 px ; liste peuplée : roue présente, 5 lignes ; 0 pageerror) + filet d'équilibre ✅. Badge → **v389**.
