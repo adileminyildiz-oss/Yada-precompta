@@ -10972,7 +10972,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v404';
+    b.textContent='YADA · v405';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -21543,7 +21543,7 @@ ${lignes}
    ============================================================ */
 (function(){
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-  function dossiers(){ var c=db.cabinet||(typeof cabinetDefaut==='function'?cabinetDefaut():{dossiers:[]}); return (c.dossiers||[]).slice().sort(function(a,b){return (b.favori?1:0)-(a.favori?1:0);}); }
+  function dossiers(){ var c=db.cabinet||(typeof cabinetDefaut==='function'?cabinetDefaut():{dossiers:[]}); return (c.dossiers||[]).slice().sort(function(a,b){return String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base',numeric:true}); }); }
   function rowsHTML(){
     return dossiers().map(function(d){ var actif=(d.id===db.activeId);
       return '<div class="df-row'+(actif?' actif':'')+'" onclick="dossierFloatChoisir(\''+d.id+'\')" title="Entrer dans '+esc(d.nom||'')+'">'
@@ -21622,7 +21622,7 @@ ${lignes}
    ============================================================ */
 (function(){
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-  function dossiers(){ var c=db.cabinet||(typeof cabinetDefaut==='function'?cabinetDefaut():{dossiers:[]}); return (c.dossiers||[]).slice().sort(function(a,b){return (b.favori?1:0)-(a.favori?1:0);}); }
+  function dossiers(){ var c=db.cabinet||(typeof cabinetDefaut==='function'?cabinetDefaut():{dossiers:[]}); return (c.dossiers||[]).slice().sort(function(a,b){return String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base',numeric:true}); }); }
   function dossierEntry(id){ return ((db.cabinet&&db.cabinet.dossiers)||[]).find(function(x){return x.id===id;})||null; }
   function societeInfo(id){ var d=dossierEntry(id)||{}; var s=(db.dossiersData&&db.dossiersData[id]&&db.dossiersData[id].societe)||{};
     return { nom:d.nom||s.raison||'—', forme:s.formeJur||d.forme||'', siren:s.siren||d.siren||'', siret:s.siret||'',

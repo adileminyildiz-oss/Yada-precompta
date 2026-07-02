@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Nouvelle identité YADA (logo icône + verbal + baseline) partout + transition de page plus RAPIDE — v404
+## 🟢 Dernière mise à jour — Liste des dossiers : tri par ordre ALPHABÉTIQUE — v405
+**Quoi :** la **« Liste des dossiers »** (et les listes dérivées) est désormais **classée par ordre alphabétique** du nom du dossier, au lieu du tri « favoris d'abord ». Comparaison **française, insensible à la casse et aux accents**, avec ordre **numérique naturel** (ex. « Dossier 2 » avant « Dossier 10 »).
+
+**Comment — 1 édition (les 2 définitions identiques de `dossiers()`) :** `sort((a,b)=>(b.favori?1:0)-(a.favori?1:0))` → **`sort((a,b)=>String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base',numeric:true}))`**. `ecranListe` (et l'accueil/HUB qui lisent `dossiers()`) en héritent.
+
+**Validé :** `node --check` (188 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (portefeuille désordonné [Zéphyr, alpha, Béta, Dossier 10, Dossier 2] → liste rendue **[alpha, Béta, Dossier 2, Dossier 10, Zéphyr]** ; 0 pageerror) + filet d'équilibre (vente 1200=1200, achat 600=600 ✅). Badge → **v405**.
+
+---
+
+## 🟢 MAJ précédente — Nouvelle identité YADA (logo icône + verbal + baseline) partout + transition de page plus RAPIDE — v404
 **Quoi :** (1) **Nouveaux logos officiels** utilisés dans tout le logiciel : **icône dégradée bleu→turquoise** (Y blanc + point vert) + **verbal « YADA »** + **baseline « PAIE · COMPTA · DSN »**. **Écriture BLANCHE sur fond sombre**, **écriture MARINE sur fond clair**. Remplace les anciens logos de la **barre latérale**, du **parcours d'entrée** (Espace dossiers / Liste / HUB), de l'**écran de connexion** et de la **barre mobile** — « logo principal » compris. (2) **Transition entre les pages plus RAPIDE** (demande) : matérialisation ~0,5 s → **~0,24 s** et balayage lumineux ~0,72 s → **~0,4 s**.
 
 **Comment :**
