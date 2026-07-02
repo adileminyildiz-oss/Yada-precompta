@@ -36,7 +36,16 @@
 
 ---
 
-## 🟢 Dernière mise à jour — Liste des dossiers : tri par ordre ALPHABÉTIQUE — v405
+## 🟢 Dernière mise à jour — Éditeur d'écritures VIDE : Entrée / Flèche bas crée la 1ʳᵉ écriture — v406
+**Quoi :** dans l'**éditeur d'écritures façon Sage** (`#ec-win`), quand **aucune écriture n'apparaît** (journal/compte vide, « Aucune écriture… »), appuyer sur **Entrée** ou **Flèche bas** **crée la première écriture** à saisir (curseur placé sur la date). Ces touches **gardent leurs rôles habituels** (champ suivant / descendre / nouvelle écriture) **dès qu'il y a des écritures** — elles ne créent la 1ʳᵉ ligne **qu'à l'état vide** (« au début »).
+
+**Comment — `yada-addon196` (100% additif) :** écouteur `keydown` **capture** sur `document` → si l'overlay `#ec-overlay.show` est ouvert, la liste de comptes (`#ec-sugg`) n'est pas ouverte, et `ecEcritures()` est **vide**, alors `Entrée`/`ArrowDown` → `ecAjouterEcriture()` (+ `preventDefault`). Ne se déclenche **qu'à l'état vide** (aucun conflit avec addon114/140/146, qui exigent le focus sur un champ `.ec-i` inexistant quand c'est vide). `ecEcritures()` **ignore le filtre de recherche** → « vide » = réellement aucune écriture (pas un simple filtrage).
+
+**Validé :** `node --check` (189 scripts, 0 erreur) + brace CSS (2010/2010) + Playwright (éditeur ACH vide : Entrée → 1 écriture créée, curseur sur `ec-datetxt` ; éditeur VTE vide : ArrowDown → 1 écriture ; 0 pageerror) + filet d'équilibre (vente 1200=1200, achat 600=600 ✅). Badge → **v406**.
+
+---
+
+## 🟢 MAJ précédente — Liste des dossiers : tri par ordre ALPHABÉTIQUE — v405
 **Quoi :** la **« Liste des dossiers »** (et les listes dérivées) est désormais **classée par ordre alphabétique** du nom du dossier, au lieu du tri « favoris d'abord ». Comparaison **française, insensible à la casse et aux accents**, avec ordre **numérique naturel** (ex. « Dossier 2 » avant « Dossier 10 »).
 
 **Comment — 1 édition (les 2 définitions identiques de `dossiers()`) :** `sort((a,b)=>(b.favori?1:0)-(a.favori?1:0))` → **`sort((a,b)=>String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base',numeric:true}))`**. `ecranListe` (et l'accueil/HUB qui lisent `dossiers()`) en héritent.

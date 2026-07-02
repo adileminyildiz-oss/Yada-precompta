@@ -10972,7 +10972,7 @@ ${lignes}
 (function(){ try{
   function add(){ if(document.getElementById('yada-ver')) return;
     var b=document.createElement('div'); b.id='yada-ver';
-    b.textContent='YADA · v405';
+    b.textContent='YADA · v406';
     b.title='Repère de version — déploiement GitHub Pages (peut être retiré)';
     b.style.cssText='position:fixed;left:12px;bottom:82px;z-index:9999;font:700 11px system-ui,sans-serif;background:linear-gradient(120deg,#5ab0ff,#0a64d6);color:#ffffff;padding:5px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;pointer-events:none';
     document.body.appendChild(b); }
@@ -22238,6 +22238,32 @@ ${lignes}
   try{ var moT=0; var mo=new MutationObserver(function(){ if(moT) return;
     moT=setTimeout(function(){ moT=0; sweep(); }, 120); });
     mo.observe(document.body,{childList:true,subtree:true}); }catch(e){}
+})();
+</script>
+<script id="yada-addon196">
+/* ÉDITEUR D'ÉCRITURES — quand AUCUNE écriture n'apparaît (journal/compte vide),
+   la FLÈCHE BAS ou la touche ENTRÉE crée la PREMIÈRE écriture à saisir.
+   Ces touches gardent leurs rôles habituels (suivant / descendre) dès qu'il y a des
+   écritures — géré par addon114/140/146 (qui exigent le focus sur un champ `.ec-i`,
+   inexistant à l'état vide). Ici on ne déclenche QU'À L'ÉTAT VIDE (aucun conflit).
+   `ecEcritures()` ignore le filtre de recherche → « vide » = réellement aucune écriture.
+   100% additif, aucune logique comptable modifiée. */
+(function(){
+  if(window.__ecEmptyKey) return; window.__ecEmptyKey=true;
+  document.addEventListener('keydown', function(e){
+    try{
+      if(e.key!=='Enter' && e.key!=='ArrowDown') return;
+      if(e.altKey||e.ctrlKey||e.metaKey||e.shiftKey) return;
+      var ov=document.getElementById('ec-overlay'); if(!ov||!ov.classList.contains('show')) return;
+      if(!document.getElementById('ec-win')) return;
+      /* Liste de comptes ouverte (autocomplétion) → ne pas intercepter. */
+      if(document.getElementById('ec-sugg')) return;
+      var list=(typeof ecEcritures==='function')?ecEcritures():[];
+      if(list && list.length) return;                 /* il y a des écritures → laisser addon114 */
+      e.preventDefault(); e.stopPropagation();
+      if(typeof window.ecAjouterEcriture==='function') window.ecAjouterEcriture();
+    }catch(_e){}
+  }, true);  /* capture → s'exécute avant addon114 (qui ignore de toute façon l'état vide) */
 })();
 </script>
 </body>
